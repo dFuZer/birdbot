@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+    website:
+        build: ./website
+        ports:
+            - "3000:3000"
+        depends_on:
+            - api
+        environment:
+            API_URL: http://api:4000
+        networks:
+            - app-network
+
+    bot:
+        build: ./bot
+        depends_on:
+            - api
+        networks:
+            - app-network
+
+    api:
+        build: ./api
+        ports:
+            - "4000:4000"
+        networks:
+            - app-network
+        environment:
+            DATABASE_URL: "postgresql://user:password@db:5432/bombparty"
+
+    db:
+        image: postgres:15
+        volumes:
+            - db_data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_USER: user
+            POSTGRES_PASSWORD: password
+            POSTGRES_DB: bombparty
+        networks:
+            - app-network
+
+volumes:
+    db_data:
+
+networks:
+    app-network:
