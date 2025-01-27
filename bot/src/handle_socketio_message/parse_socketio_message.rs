@@ -6,7 +6,7 @@ pub struct WebSocketMessage {
     pub json: Value,
 }
 
-pub fn parse_message(msg: Message) -> Result<WebSocketMessage> {
+pub fn parse_socketio_message(msg: Message) -> Result<WebSocketMessage> {
     match msg {
         Message::Text(text) => {
             let str = text.to_string();

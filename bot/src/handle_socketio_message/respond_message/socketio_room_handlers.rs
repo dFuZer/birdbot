@@ -1,4 +1,4 @@
-use super::super::parse_message::WebSocketMessage;
+use super::super::parse_socketio_message::WebSocketMessage;
 use crate::RoomState;
 use futures_util::{stream::SplitSink, SinkExt};
 use std::sync::Arc;
@@ -6,6 +6,8 @@ use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tungstenite::protocol::Message;
+
+mod message_room_handlers;
 
 pub async fn handle_sid(
     socket_write: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
@@ -28,10 +30,14 @@ pub async fn handle_message(
     room_state: &Arc<Mutex<RoomState>>,
     msg: WebSocketMessage,
 ) {
-    println!("[room] received message: {}", msg.json);
+    let msg_type = msg.json[0].as_str().unwrap();
+
+    match msg_type {
+        e => println!("[game] Unknown message type: {}", e),
+    }
 }
 
-pub async fn handle_entry(
+pub async fn handle_room_entry(
     socket_write: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
     room_state: &Arc<Mutex<RoomState>>,
     msg: WebSocketMessage,
