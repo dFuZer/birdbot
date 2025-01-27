@@ -22,7 +22,7 @@ pub async fn handle_message_room(
         "[room] [{}]: {}",
         parsed_message.event_type, parsed_message.json
     );
-    respond_message_room(parsed_message, socket_write, room_state).await;
+    respond_message_room(socket_write, room_state, parsed_message).await;
 }
 
 pub async fn handle_message_game(
@@ -35,5 +35,5 @@ pub async fn handle_message_game(
         "[game] [{}]: {}",
         parsed_message.event_type, parsed_message.json
     );
-    respond_message_game(parsed_message, socket_write, room_state).await;
+    respond_message_game(socket_write, room_state, parsed_message).await;
 }
