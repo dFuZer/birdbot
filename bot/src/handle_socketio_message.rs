@@ -1,10 +1,10 @@
 mod parse_socketio_message;
-mod respond_message;
+mod respond_socketio_message;
 
 use std::sync::Arc;
 
 use futures_util::stream::SplitSink;
-use respond_message::{respond_message_game, respond_message_room};
+use respond_socketio_message::{respond_message_game, respond_message_room};
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};

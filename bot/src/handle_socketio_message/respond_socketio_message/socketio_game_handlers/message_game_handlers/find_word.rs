@@ -246,13 +246,20 @@ pub fn find_word(syllable: &str) -> Option<&str> {
     let syllable_upper = syllable;
     let dict_len = DICTIONARY.len();
     let starting_index = rand::thread_rng().gen_range(0..dict_len);
+
+    let is_valid = |word: &str| -> bool {
+        if !word.contains(syllable_upper) {
+            return false;
+        }
+        true
+    };
     for i in starting_index..dict_len {
-        if DICTIONARY[i].contains(syllable_upper) {
+        if is_valid(DICTIONARY[i]) {
             return Some(DICTIONARY[i]);
         }
     }
     for i in 0..starting_index {
-        if DICTIONARY[i].contains(syllable_upper) {
+        if is_valid(DICTIONARY[i]) {
             return Some(DICTIONARY[i]);
         }
     }
