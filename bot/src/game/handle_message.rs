@@ -1,23 +1,18 @@
-use std::sync::Arc;
-
+use crate::{socketio_parser::WebSocketMessage, RoomState};
 use futures_util::{stream::SplitSink, SinkExt};
+use std::sync::Arc;
 use tokio::{net::TcpStream, sync::Mutex};
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tungstenite::protocol::Message;
-
-use crate::{socketio_parser::WebSocketMessage, RoomState};
 
 use super::find_word::find_word;
 
 pub async fn try_send_word(
     socket_write: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
-    _room_state: &Arc<Mutex<RoomState>>,
+    room_state: &Arc<Mutex<RoomState>>,
     syllable: &str,
 ) {
-    // let mut state = room_state.lock().await;
-    // let history = &mut state.word_history;
-
-    let answer = find_word(syllable);
+    let answer = find_word(room_state, syllable).await;
     match answer {
         Some(word) => {
             socket_write
@@ -29,9 +24,7 @@ pub async fn try_send_word(
         }
         None => {
             socket_write
-                .send(Message::Text(
-                    r#"42["setWord","AUCUN MOT TROUVÉ",true]"#.into(),
-                ))
+                .send(Message::Text(r#"42["setWord","💥",true]"#.into()))
                 .await
                 .expect("Failed to send message");
         }
@@ -63,26 +56,27 @@ pub async fn handle_next_turn(
 
 pub async fn handle_correct_word(
     _socket_write: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
-    _room_state: &Arc<Mutex<RoomState>>,
+    room_state: &Arc<Mutex<RoomState>>,
     _msg: WebSocketMessage,
 ) {
-    /* let mut state = room_state.lock().await;
-    println!(
-        "[game] received correctWord event. word: {}",
-        state.last_word
-    );
+    let mut state = room_state.lock().await;
     let word = state.last_word.clone();
-    state.word_history.push(word); */
+    state.word_history.push(word);
+    println!(
+        "[game] received correctWord event. word: {}. history: {:?}",
+        state.last_word, state.word_history
+    );
 }
 
 pub async fn handle_set_player_word(
     _socket_write: &mut SplitSink<WebSocketStream<MaybeTlsStream<TcpStream>>, Message>,
-    _room_state: &Arc<Mutex<RoomState>>,
-    _msg: WebSocketMessage,
+    room_state: &Arc<Mutex<RoomState>>,
+    msg: WebSocketMessage,
 ) {
-    /* let word = msg.json["2"].to_string();
+    let word = msg.json[2].as_str().unwrap().to_string();
     let mut state = room_state.lock().await;
-    state.word_history.push(word); */
+    println!("lastword is: {}", word);
+    state.last_word = word;
 }
 
 pub async fn handle_set_milestone(
