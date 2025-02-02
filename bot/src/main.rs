@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, thread::park};
 
 use bot::Bot;
 
@@ -26,11 +26,5 @@ async fn main() {
 
     bot.add_room(room_code.as_str()).await;
 
-    let handles = bot.listen_rooms();
-
-    for handle in handles {
-        handle
-            .await
-            .expect("An error has occurred in one of the threads");
-    }
+    park();
 }

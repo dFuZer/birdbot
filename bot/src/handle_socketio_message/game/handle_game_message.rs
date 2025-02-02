@@ -6,7 +6,8 @@ use crate::handle_socketio_message::parse::WebSocketMessageCtx;
 use super::find_word::find_word;
 
 pub async fn try_send_word(ctx: &mut WebSocketMessageCtx<'_>, syllable: &str) {
-    let answer = find_word(ctx, syllable).await;
+    let answer = find_word(ctx, syllable);
+
     match answer {
         Some(word) => {
             ctx.write_socket

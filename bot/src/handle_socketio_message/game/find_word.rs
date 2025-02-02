@@ -1,7 +1,7 @@
 use crate::handle_socketio_message::parse::WebSocketMessageCtx;
 use rand::Rng;
 
-pub async fn find_word(ctx: &mut WebSocketMessageCtx<'_>, syllable: &str) -> Option<String> {
+pub fn find_word(ctx: &mut WebSocketMessageCtx<'_>, syllable: &str) -> Option<String> {
     let history = &ctx.room_state.word_history;
     let dictionary = &ctx.bot_resources.dictionary.list;
     let dict_len = dictionary.len();
@@ -24,5 +24,6 @@ pub async fn find_word(ctx: &mut WebSocketMessageCtx<'_>, syllable: &str) -> Opt
             return Some(dictionary[i].to_string());
         }
     }
+
     None
 }

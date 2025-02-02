@@ -1,4 +1,5 @@
 use futures_util::SinkExt;
+use tokio::time::Instant;
 use tokio_tungstenite::tungstenite::Message;
 
 use crate::handle_socketio_message::{
@@ -12,6 +13,7 @@ use super::handle_game_message::{
 };
 
 pub async fn handle_socketio_game_message(ctx: &mut WebSocketMessageCtx<'_>) {
+    let now = Instant::now();
     match ctx.msg.event_type.as_str() {
         "connect" => handle_connect(ctx.write_socket).await,
         "sid" => handle_sid(ctx).await,
@@ -19,6 +21,12 @@ pub async fn handle_socketio_game_message(ctx: &mut WebSocketMessageCtx<'_>) {
         "message" => handle_game_message(ctx).await,
         _ => println!("[game] Unknown socketio event type: {}", ctx.msg.event_type),
     }
+    let elapsed = now.elapsed().as_micros();
+    println!(
+        "Game event \"{}\" handled in: {} microseconds",
+        ctx.msg.event_type.as_str(),
+        elapsed,
+    );
 }
 
 pub async fn handle_sid(ctx: &mut WebSocketMessageCtx<'_>) {
