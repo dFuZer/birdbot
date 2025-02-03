@@ -1,4 +1,3 @@
-version: "3.9"
 services:
     website:
         build: ./website
@@ -31,6 +30,8 @@ services:
         image: postgres:15
         volumes:
             - db_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
         environment:
             POSTGRES_USER: user
             POSTGRES_PASSWORD: password

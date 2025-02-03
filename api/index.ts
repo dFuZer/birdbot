@@ -1,12 +1,8 @@
 import Fastify from "fastify";
-import prisma from "@prisma/client";
-import z from "zod";
-
+import { AddWordRouteHandler } from "./routes/AddWord/AddWord.route";
 const app = Fastify();
 
-app.get("/", async (req, res) => {
-    res.send({ message: "API is running!" });
-});
+app.post("/add-word", AddWordRouteHandler);
 
 app.listen({ port: 4000 }, (err) => {
     if (err) throw err;
