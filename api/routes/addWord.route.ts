@@ -10,7 +10,7 @@ let AddWordSchema = z.object({
 
 let prisma = new PrismaClient();
 
-export let AddWordRouteHandler: RouteHandlerMethod = async function (req, res) {
+export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
     let wordData = req.body;
     let parsed = AddWordSchema.safeParse(wordData);
     if (!parsed.success) {
