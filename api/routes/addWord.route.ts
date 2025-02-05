@@ -1,31 +1,28 @@
-import { z } from "zod";
 import { PrismaClient } from "@prisma/client";
 import type { RouteHandlerMethod } from "fastify";
-
-let AddWordSchema = z.object({
-    word: z.string().max(30),
-    playerAuthId: z.string(),
-    gameId: z.string().uuid(),
-});
+import { addWordSchema } from "../schemas/addWord.schema";
 
 let prisma = new PrismaClient();
 
 export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
     let wordData = req.body;
-    let parsed = AddWordSchema.safeParse(wordData);
+    let parsed = addWordSchema.safeParse(wordData);
     if (!parsed.success) {
         return res.status(400).send({ message: "Invalid input!" });
     }
-    await prisma.placedWord.create({
+    await prisma.word.create({
         data: {
             word: parsed.data.word,
             player: {
                 connectOrCreate: {
                     create: {
-                        id: parsed.data.playerAuthId,
+                        authId: parsed.data.player.authId,
+                        authProvider: parsed.data.player.authProvider,
+                        authNickname: parsed.data.player.authNickname,
+                        nickname: parsed.data.player.nickname,
                     },
                     where: {
-                        id: parsed.data.playerAuthId,
+                        id: parsed.data.player.authId,
                     },
                 },
             },

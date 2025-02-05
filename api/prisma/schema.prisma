@@ -8,20 +8,25 @@ datasource db {
 }
 
 model Player {
-    id        String   @id
+    id        String   @id @default(uuid()) @db.Uuid
     createdAt DateTime @default(now())
+    nickname  String
 
-    words PlacedWord[]
+    authNickname String
+    authProvider String
+    authId       String
+
+    words Word[]
 }
 
 model Game {
     id        String   @id @default(uuid()) @db.Uuid
     createdAt DateTime @default(now())
 
-    words PlacedWord[]
+    words Word[]
 }
 
-model PlacedWord {
+model Word {
     id        String   @id @default(uuid()) @db.Uuid
     createdAt DateTime @default(now())
     word      String
@@ -30,4 +35,6 @@ model PlacedWord {
 
     player Player @relation(fields: [playerId], references: [id])
     game   Game   @relation(fields: [gameId], references: [id])
+
+    @@map("PlacedWord")
 }
