@@ -36,6 +36,8 @@ pub struct RoomState {
     pub word_history: Vec<String>,
     pub last_word: String,
     pub players: Vec<Player>,
+    pub current_player_peer_id: i32,
+    pub self_peer_id: i32,
 }
 
 pub struct Room {
@@ -57,6 +59,8 @@ impl Room {
             word_history: vec![],
             user_token: create_user_token().to_string(),
             players: vec![],
+            current_player_peer_id: 0,
+            self_peer_id: 0,
         }));
 
         let room_socket = Arc::new(Mutex::new(Socket::new(room_code).await));
