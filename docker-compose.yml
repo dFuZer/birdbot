@@ -29,7 +29,7 @@ services:
             DATABASE_URL: "postgresql://user:password@db:5432/bombparty"
 
     db:
-        image: postgres:15
+        image: postgres:13.18-alpine3.20
         volumes:
             - db_data:/var/lib/postgresql/data
         ports:
