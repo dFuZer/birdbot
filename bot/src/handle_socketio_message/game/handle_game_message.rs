@@ -157,6 +157,29 @@ pub async fn handle_set_player_word(ctx: &mut WebSocketMessageCtx<'_>) {
     ctx.room_state.last_word = word.to_string();
 }
 
+pub async fn handle_end_round(ctx: &mut WebSocketMessageCtx<'_>) {
+    ctx.room_state.word_history.clear();
+    ctx.room_state.players.clear();
+    ctx.write_socket
+        .send(Message::Text(r#"42["joinRound"]"#.into()))
+        .await
+        .expect("Failed to send message");
+}
+
+pub async fn handle_start_round(ctx: &mut WebSocketMessageCtx<'_>) {
+    println!("[game] received round milestone.");
+    let syllable = uwstr(&ctx.msg.json[1]["syllable"], "syllable");
+    let player_peer_id = uwi32(
+        &ctx.msg.json[1]["currentPlayerPeerId"],
+        "currentPlayerPeerId",
+    );
+    ctx.room_state.current_player_peer_id = player_peer_id;
+    if ctx.room_state.self_peer_id == player_peer_id {
+        println!("[game] It's my turn! syllable: {}", syllable);
+        try_send_word(ctx, &syllable).await;
+    }
+}
+
 pub async fn handle_set_milestone(ctx: &mut WebSocketMessageCtx<'_>) {
     let tmp = uwstr(&ctx.msg.json[1]["name"], "milestone name");
     let milestone_name = tmp.as_str();
@@ -166,36 +189,12 @@ pub async fn handle_set_milestone(ctx: &mut WebSocketMessageCtx<'_>) {
         "[game] received milestone event. milestone: {}",
         milestone_name
     );
-    if milestone_name == "seating" {
-        if !ctx
-            .room_state
-            .players
-            .iter()
-            .any(|p| p.peer_id == ctx.room_state.self_peer_id)
-        {
-            ctx.write_socket
-                .send(Message::Text(r#"42["joinRound"]"#.into()))
-                .await
-                .expect("Failed to send message");
-        }
-    }
 
     if previous_milestone != milestone_name {
         if milestone_name == "seating" {
-            ctx.room_state.word_history.clear();
-            ctx.room_state.players.clear();
+            handle_end_round(ctx).await;
         } else if milestone_name == "round" {
-            println!("[game] received round milestone.");
-            let syllable = uwstr(&ctx.msg.json[1]["syllable"], "syllable");
-            let player_peer_id = uwi32(
-                &ctx.msg.json[1]["currentPlayerPeerId"],
-                "currentPlayerPeerId",
-            );
-            ctx.room_state.current_player_peer_id = player_peer_id;
-            if ctx.room_state.self_peer_id == player_peer_id {
-                println!("[game] It's my turn! syllable: {}", syllable);
-                try_send_word(ctx, &syllable).await;
-            }
+            handle_start_round(ctx).await;
         }
     }
 
