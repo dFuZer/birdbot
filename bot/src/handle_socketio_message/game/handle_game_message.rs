@@ -9,6 +9,28 @@ use crate::{
 
 use super::find_word::find_word;
 
+pub fn uwstr(value: &Value, value_name: &str) -> String {
+    let v = value.as_str();
+    match v {
+        Some(v) => {
+            let to_str = v.to_string();
+            return to_str;
+        }
+        None => panic!("Could not unwrap {}", value_name),
+    };
+}
+
+pub fn uwi32(value: &Value, value_name: &str) -> i32 {
+    let v = value.as_i64();
+    match v {
+        Some(v) => {
+            let n = v as i32;
+            return n;
+        }
+        None => panic!("Could not unwrap {}", value_name),
+    };
+}
+
 pub async fn try_send_word(ctx: &mut WebSocketMessageCtx<'_>, syllable: &str) {
     let answer = find_word(ctx, syllable);
 
@@ -30,7 +52,7 @@ pub async fn try_send_word(ctx: &mut WebSocketMessageCtx<'_>, syllable: &str) {
     }
 }
 
-async fn extract_player_json(player_value: &Value) -> Player {
+fn extract_player_json(player_value: &Value) -> Player {
     let player_auth_struct: Option<PlayerAuth> = {
         let player_auth = player_value["profile"]["auth"].clone();
         if player_auth.is_null() {
@@ -54,19 +76,14 @@ async fn extract_player_json(player_value: &Value) -> Player {
     };
 
     Player {
-        name: player_value["profile"]["nickname"]
-            .as_str()
-            .expect("Could not unwrap nickname")
-            .to_string(),
-        peer_id: player_value["profile"]["peerId"]
-            .as_i64()
-            .expect("Could not unwrap peerId") as i32,
+        name: uwstr(&player_value["profile"]["nickname"], "nickname"),
+        peer_id: uwi32(&player_value["profile"]["peerId"], "peerId"),
         auth: player_auth_struct,
     }
 }
 
 pub async fn handle_add_player(ctx: &mut WebSocketMessageCtx<'_>) {
-    let player = extract_player_json(&ctx.msg.json[1]).await;
+    let player = extract_player_json(&ctx.msg.json[1]);
     ctx.room_state.players.push(player);
     println!(
         "[game] player ids: {:?}",
@@ -79,7 +96,7 @@ pub async fn handle_add_player(ctx: &mut WebSocketMessageCtx<'_>) {
 }
 
 pub async fn handle_remove_player(ctx: &mut WebSocketMessageCtx<'_>) {
-    let peer_id = ctx.msg.json[1].as_i64().expect("Could not unwrap peerId") as i32;
+    let peer_id = uwi32(&ctx.msg.json[1], "peerId");
     ctx.room_state
         .players
         .retain(|player| player.peer_id != peer_id);
@@ -99,13 +116,12 @@ pub async fn handle_setup(ctx: &mut WebSocketMessageCtx<'_>) {
         .as_array()
         .expect("Could not unwrap players");
     for player in players {
-        let player = extract_player_json(player).await;
+        let player = extract_player_json(player);
         ctx.room_state.players.push(player);
     }
-    ctx.room_state.self_peer_id = ctx.msg.json[1]["selfPeerId"]
-        .as_i64()
-        .expect("Could not unwrap self peerId") as i32;
+    ctx.room_state.self_peer_id = uwi32(&ctx.msg.json[1]["selfPeerId"], "selfPeerId");
     ctx.room_state.game_connected = true;
+    ctx.room_state.milestone_name = uwstr(&ctx.msg.json[1]["milestone"]["name"], "milestone name");
     ctx.write_socket
         .send(Message::Text(r#"42["joinRound"]"#.into()))
         .await
@@ -113,11 +129,8 @@ pub async fn handle_setup(ctx: &mut WebSocketMessageCtx<'_>) {
 }
 
 pub async fn handle_next_turn(ctx: &mut WebSocketMessageCtx<'_>) {
-    let player_peer_id = ctx.msg.json[1].as_i64().expect("Could not unwrap peerId") as i32;
-    let syllable = ctx.msg.json[2]
-        .as_str()
-        .expect("Could not unwrap syllable")
-        .to_string();
+    let player_peer_id = uwi32(&ctx.msg.json[1], "playerPeerId");
+    let syllable = uwstr(&ctx.msg.json[2], "syllable");
     println!("[game] received nextTurn event. syllable: {}", syllable);
     ctx.room_state.current_player_peer_id = player_peer_id;
     if ctx.room_state.self_peer_id == player_peer_id {
@@ -144,53 +157,47 @@ pub async fn handle_set_player_word(ctx: &mut WebSocketMessageCtx<'_>) {
     ctx.room_state.last_word = word.to_string();
 }
 
-pub fn uwstr(value: &Value, value_name: &str) -> String {
-    let v = value.as_str();
-    match v {
-        Some(v) => {
-            let to_str = v.to_string();
-            return to_str;
-        }
-        None => panic!("Could not unwrap {}", value_name),
-    };
-}
-
-pub async fn uwi32(value: &Value, value_name: &str) -> i32 {
-    let v = value.as_i64();
-    match v {
-        Some(v) => {
-            let n = v as i32;
-            return n;
-        }
-        None => panic!("Could not unwrap {}", value_name),
-    };
-}
-
 pub async fn handle_set_milestone(ctx: &mut WebSocketMessageCtx<'_>) {
     let tmp = uwstr(&ctx.msg.json[1]["name"], "milestone name");
     let milestone_name = tmp.as_str();
+    let previous_milestone = ctx.room_state.milestone_name.clone();
 
-    match milestone_name {
-        "round" => {
+    println!(
+        "[game] received milestone event. milestone: {}",
+        milestone_name
+    );
+    if milestone_name == "seating" {
+        if !ctx
+            .room_state
+            .players
+            .iter()
+            .any(|p| p.peer_id == ctx.room_state.self_peer_id)
+        {
+            ctx.write_socket
+                .send(Message::Text(r#"42["joinRound"]"#.into()))
+                .await
+                .expect("Failed to send message");
+        }
+    }
+
+    if previous_milestone != milestone_name {
+        if milestone_name == "seating" {
+            ctx.room_state.word_history.clear();
+            ctx.room_state.players.clear();
+        } else if milestone_name == "round" {
             println!("[game] received round milestone.");
-            let syllable = ctx.msg.json[1]["syllable"]
-                .as_str()
-                .expect("Could not unwrap syllable")
-                .to_string();
-            let player_peer_id = ctx.msg.json[1]["currentPlayerPeerId"].as_i64().unwrap() as i32;
+            let syllable = uwstr(&ctx.msg.json[1]["syllable"], "syllable");
+            let player_peer_id = uwi32(
+                &ctx.msg.json[1]["currentPlayerPeerId"],
+                "currentPlayerPeerId",
+            );
             ctx.room_state.current_player_peer_id = player_peer_id;
             if ctx.room_state.self_peer_id == player_peer_id {
                 println!("[game] It's my turn! syllable: {}", syllable);
                 try_send_word(ctx, &syllable).await;
             }
         }
-        "seating" => {
-            println!("[game] received seating milestone. Joining game...");
-            ctx.write_socket
-                .send(Message::Text(r#"42["joinRound"]"#.into()))
-                .await
-                .expect("Failed to send message");
-        }
-        _ => println!("[game] Unknown milestone name: {}", milestone_name),
     }
+
+    ctx.room_state.milestone_name = milestone_name.to_string();
 }
