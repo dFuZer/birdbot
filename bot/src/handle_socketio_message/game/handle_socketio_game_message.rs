@@ -8,8 +8,8 @@ use crate::handle_socketio_message::{
 };
 
 use super::handle_game_message::{
-    handle_correct_word, handle_next_turn, handle_set_milestone, handle_set_player_word,
-    handle_setup,
+    handle_add_player, handle_correct_word, handle_next_turn, handle_remove_player,
+    handle_set_milestone, handle_set_player_word, handle_setup,
 };
 
 pub async fn handle_socketio_game_message(ctx: &mut WebSocketMessageCtx<'_>) {
@@ -52,6 +52,8 @@ pub async fn handle_game_message(ctx: &mut WebSocketMessageCtx<'_>) {
         "setMilestone" => handle_set_milestone(ctx).await,
         "correctWord" => handle_correct_word(ctx).await,
         "setPlayerWord" => handle_set_player_word(ctx).await,
+        "addPlayer" => handle_add_player(ctx).await,
+        "removePlayer" => handle_remove_player(ctx).await,
         e => println!("[game] Unknown message type: {}", e),
     }
 }

@@ -15,6 +15,18 @@ use crate::{
     PROFILE_PIC,
 };
 
+pub struct Player {
+    pub peer_id: i32,
+    pub name: String,
+    pub auth: Option<PlayerAuth>,
+}
+
+pub struct PlayerAuth {
+    pub auth_id: String,
+    pub auth_name: String,
+    pub auth_provider: String,
+}
+
 pub struct RoomState {
     pub room_connected: bool,
     pub game_connected: bool,
@@ -23,6 +35,10 @@ pub struct RoomState {
     pub profile_pic: String,
     pub word_history: Vec<String>,
     pub last_word: String,
+    pub players: Vec<Player>,
+    pub current_player_peer_id: i32,
+    pub self_peer_id: i32,
+    pub milestone_name: String,
 }
 
 pub struct Room {
@@ -43,6 +59,10 @@ impl Room {
             room_code: room_code.to_string(),
             word_history: vec![],
             user_token: create_user_token().to_string(),
+            players: vec![],
+            current_player_peer_id: 0,
+            self_peer_id: 0,
+            milestone_name: "".to_string(),
         }));
 
         let room_socket = Arc::new(Mutex::new(Socket::new(room_code).await));
@@ -115,6 +135,7 @@ impl Room {
                 }
             })
         };
+
         return Self {
             room_state: room_state_original,
             game_thread_handle: game_handle,
