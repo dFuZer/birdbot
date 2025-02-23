@@ -5,31 +5,10 @@ use tokio_tungstenite::tungstenite::Message;
 use crate::{
     handle_socketio_message::parse::WebSocketMessageCtx,
     room::{Player, PlayerAuth},
+    utils::{uwi32, uwstr},
 };
 
 use super::find_word::find_word;
-
-pub fn uwstr(value: &Value, value_name: &str) -> String {
-    let v = value.as_str();
-    match v {
-        Some(v) => {
-            let to_str = v.to_string();
-            return to_str;
-        }
-        None => panic!("Could not unwrap {}", value_name),
-    };
-}
-
-pub fn uwi32(value: &Value, value_name: &str) -> i32 {
-    let v = value.as_i64();
-    match v {
-        Some(v) => {
-            let n = v as i32;
-            return n;
-        }
-        None => panic!("Could not unwrap {}", value_name),
-    };
-}
 
 pub async fn try_send_word(ctx: &mut WebSocketMessageCtx<'_>, syllable: &str) {
     let answer = find_word(ctx, syllable);
