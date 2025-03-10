@@ -5,8 +5,6 @@ services:
             - "3000:3000"
         depends_on:
             - api
-        environment:
-            API_URL: http://api:4000
         networks:
             - app-network
 
@@ -26,7 +24,8 @@ services:
         networks:
             - app-network
         environment:
-            DATABASE_URL: "postgresql://user:password@db:5432/bombparty"
+            DATABASE_URL: ${DB_URL}
+            API_KEY: ${API_KEY}
 
     db:
         image: postgres:13.18-alpine3.20
@@ -35,9 +34,9 @@ services:
         ports:
             - "5432:5432"
         environment:
-            POSTGRES_USER: user
-            POSTGRES_PASSWORD: password
-            POSTGRES_DB: bombparty
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
         networks:
             - app-network
 
