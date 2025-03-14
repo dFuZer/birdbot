@@ -23,8 +23,8 @@ export default function Home() {
                     </div>
                 </div>
                 <div className="relative h-[25rem] w-[20rem]">
-                    <div className="bg-primary-500 absolute top-1/2 left-1/2 h-40 w-[24rem] -translate-1/2 blur-[180px]"></div>
-                    <LandingBird className="absolute top-0 left-0 w-[25rem]" />
+                    <div className="bg-primary-500 absolute top-1/2 left-10 h-40 w-[25rem] -translate-y-1/2 blur-[180px]"></div>
+                    <LandingBird className="absolute top-1/2 left-10 w-[25rem] -translate-y-1/2" />
                 </div>
             </div>
             <div className="mt-40">
