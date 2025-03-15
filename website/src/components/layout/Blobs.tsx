@@ -8,16 +8,16 @@ export default function Blobs() {
     return (
         <div className="absolute top-0 right-0 left-0 -z-10 h-full overflow-hidden">
             <div className="mt-[50rem] flex w-full justify-between px-[6rem]">
-                <div className="bg-highlight-500/80 h-32 w-[20rem] blur-[180px]"></div>
-                <div className="bg-primary-500/80 mt-32 h-32 w-[20rem] blur-[180px]"></div>
+                <div className="bg-primary-500 mt-32 h-40 w-[20vw] blur-[160px]"></div>
+                <div className="bg-highlight-500 h-40 w-[20vw] blur-[160px]"></div>
             </div>
-            <div className="mt-[35rem] flex w-full justify-between px-[6rem]">
-                <div className="bg-primary-500/80 mt-32 h-32 w-[20rem] blur-[180px]"></div>
-                <div className="bg-highlight-500/80 h-32 w-[20rem] blur-[180px]"></div>
+            <div className="mt-[25rem] flex w-full justify-between px-[6rem]">
+                <div className="bg-highlight-500/60 h-40 w-[20vw] blur-[160px]"></div>
+                <div className="bg-primary-500/60 mt-32 h-40 w-[20vw] blur-[160px]"></div>
             </div>
-            <div className="mt-[32rem] flex w-full justify-between px-[6rem]">
-                <div className="bg-highlight-500/80 h-32 w-[20rem] blur-[180px]"></div>
-                <div className="bg-primary-500/80 mt-32 h-32 w-[20rem] blur-[180px]"></div>
+            <div className="mt-[20rem] flex w-full justify-between px-[6rem]">
+                <div className="bg-primary-500 h-40 w-[20vw] blur-[160px]"></div>
+                <div className="bg-highlight-500 mt-30 h-40 w-[20vw] blur-[160px]"></div>
             </div>
         </div>
     );

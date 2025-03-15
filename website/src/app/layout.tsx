@@ -3,6 +3,7 @@ import "./globals.css";
 import { interFont } from "./font";
 import LayoutHeader from "@/components/layout/LayoutHeader";
 import Blobs from "@/components/layout/Blobs";
+import LayoutFooter from "@/components/layout/LayoutFooter";
 
 export const metadata: Metadata = {
     title: "BirdBot",
@@ -20,6 +21,7 @@ export default function RootLayout({
                 <LayoutHeader />
                 <Blobs />
                 <div className="relative flex-1 pt-[3.5rem]">{children}</div>
+                <LayoutFooter />
             </body>
         </html>
     );

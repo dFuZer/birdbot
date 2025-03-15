@@ -171,3 +171,12 @@
         @apply bg-background text-foreground;
     }
 }
+.blackGradientStart {
+    background: var(--color-neutral-950);
+    background: linear-gradient(90deg, var(--color-neutral-950) 80%, #777777 100%);
+}
+
+.blackGradientEnd {
+    background: var(--color-neutral-950);
+    background: linear-gradient(90deg, #777777 0%, var(--color-neutral-200) 20%);
+}
