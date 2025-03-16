@@ -89,6 +89,12 @@
     --sidebar-ring: oklch(0.708 0 0);
 }
 
+@media (max-width: 700px) {
+    :root {
+        font-size: 15px;
+    }
+}
+
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -171,12 +177,14 @@
         @apply bg-background text-foreground;
     }
 }
-.blackGradientStart {
-    background: var(--color-neutral-950);
-    background: linear-gradient(90deg, var(--color-neutral-950) 80%, #777777 100%);
-}
 
-.blackGradientEnd {
+.barTip::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 10rem;
+    right: 0;
     background: var(--color-neutral-950);
-    background: linear-gradient(90deg, #777777 0%, var(--color-neutral-200) 20%);
+    background: linear-gradient(90deg, var(--color-neutral-950) 0%, var(--color-neutral-200) 100%);
 }

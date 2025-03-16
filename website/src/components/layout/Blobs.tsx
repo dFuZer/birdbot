@@ -13,7 +13,7 @@ export default function Blobs() {
             </div>
             <div className="mt-[25rem] flex w-full justify-between px-[6rem]">
                 <div className="bg-highlight-500/60 h-40 w-[20vw] blur-[160px]"></div>
-                <div className="bg-primary-500/60 mt-32 h-40 w-[20vw] blur-[160px]"></div>
+                <div className="bg-primary-500/30 mt-32 h-40 w-[20vw] blur-[160px]"></div>
             </div>
             <div className="mt-[20rem] flex w-full justify-between px-[6rem]">
                 <div className="bg-primary-500 h-40 w-[20vw] blur-[160px]"></div>
