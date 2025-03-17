@@ -20,7 +20,7 @@ export default function RootLayout({
             <body className={`relative flex min-h-screen flex-col ${interFont.className}`}>
                 <LayoutHeader />
                 <Blobs />
-                <div className="relative flex-1">{children}</div>
+                <div className="relative flex-1 pt-[3.5rem]">{children}</div>
                 <LayoutFooter />
             </body>
         </html>

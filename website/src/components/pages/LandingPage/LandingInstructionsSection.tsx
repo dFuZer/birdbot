@@ -50,7 +50,7 @@ export default function LandingInstructionsSection() {
     }, []);
 
     return (
-        <div ref={divRef} className="mt-30 flex flex-col justify-center py-10 text-center lg:px-20">
+        <div ref={divRef} className="adaptivePadding mt-30 flex flex-col justify-center py-10 text-center">
             <h2 className={`${katibehFont.className} text-center text-6xl leading-14`}>How it works</h2>
             <p className="mt-5 text-center text-neutral-700">Here how you can get started with BirdBot.</p>
             <div className="flex flex-col py-10">

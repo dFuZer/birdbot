@@ -1,5 +1,6 @@
 import { AcademicCapIcon, CpuChipIcon, MagnifyingGlassIcon, TrophyIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { katibehFont } from "@/app/font";
+
 type FeatureCardProps = {
     TitleElement: React.ReactNode;
     DescriptionElement: React.ReactNode;
@@ -49,7 +50,7 @@ const featuresList: FeatureCardProps[] = [
 
 export default function LandingPageFeaturesSection() {
     return (
-        <div className="xl:px-15">
+        <div className="adaptivePadding">
             <h2 className={`${katibehFont.className} text-center text-6xl leading-14`}>BirdBot's Features</h2>
             <p className="mt-5 text-center text-neutral-700">
                 Whether you want to improve at the game or enhance your

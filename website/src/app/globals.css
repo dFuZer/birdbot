@@ -95,6 +95,10 @@
     }
 }
 
+.adaptivePadding {
+    @apply px-3 sm:px-5 md:px-10 lg:px-20;
+}
+
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export default function LayoutHeader() {
     return (
         <header className="fixed z-50 flex h-[3.5rem] w-full items-center border-b border-neutral-200 bg-white/50 backdrop-blur-md">
-            <div className="mx-20 flex w-full items-center justify-between gap-10">
+            <div className="adaptivePadding flex w-full items-center justify-between gap-10">
                 <Link href="/" className="ml-6 flex items-center gap-2">
                     <BirdBotLogo className="size-8" />
                     <span
@@ -18,16 +18,16 @@ export default function LayoutHeader() {
                     </span>
                 </Link>
                 <div className="flex items-center gap-1 font-normal">
-                    <Link className="px-1.5" href={"/"}>
+                    <Link className="px-1.5" href={"/play"}>
                         Play
                     </Link>
-                    <Link className="px-1.5" href={"/"}>
+                    <Link className="px-1.5" href={"/players"}>
                         Players
                     </Link>
-                    <Link className="px-1.5" href={"/"}>
+                    <Link className="px-1.5" href={"/records"}>
                         Records
                     </Link>
-                    <Link className="px-1.5" href={"/"}>
+                    <Link className="px-1.5" href={"/about"}>
                         About
                     </Link>
                 </div>
