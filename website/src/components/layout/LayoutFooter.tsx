@@ -1,4 +1,5 @@
 import { katibehFont } from "@/app/font";
+import { DISCORD_SERVER_LINK } from "@/lib/constants";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import FooterBlob from "~/public/footerBlob.svg";
@@ -24,7 +25,7 @@ export default function LayoutFooter() {
                     <div className="w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>Support us</h3>
                         <div className="flex flex-col">
-                            <Link href="/">Join our Discord Server</Link>
+                            <Link href={DISCORD_SERVER_LINK}>Join our Discord Server</Link>
                             <Link href="/about/support">Support us on PayPal</Link>
                         </div>
                     </div>

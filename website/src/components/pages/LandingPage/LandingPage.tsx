@@ -4,6 +4,8 @@ import LandingBird from "~/public/landingBird.svg";
 import DiscordIcon from "~/public/discordIcon.svg";
 import LandingInstructionsSection from "./LandingInstructionsSection";
 import LandingPageFeaturesSection from "./LandingPageFeaturesSection";
+import Link from "next/link";
+import { DISCORD_SERVER_LINK } from "@/lib/constants";
 
 export default function LandingPage() {
     return (
@@ -20,11 +22,15 @@ export default function LandingPage() {
                         Push Your Limits. Set New Records. Master BombParty.
                     </p>
                     <div className="mt-10 flex justify-center gap-3 md:justify-start">
-                        <Button>Play with BirdBot</Button>
-                        <Button variant="primary-outline">
-                            <DiscordIcon className="fill-primary-700" />
-                            <span>Join us on Discord</span>
-                        </Button>
+                        <Link href="/play">
+                            <Button>Play with BirdBot</Button>
+                        </Link>
+                        <Link href={DISCORD_SERVER_LINK}>
+                            <Button variant="primary-outline">
+                                <DiscordIcon className="fill-primary-700" />
+                                <span>Join us on Discord</span>
+                            </Button>
+                        </Link>
                     </div>
                 </div>
                 <div className="relative -z-10 hidden size-[20rem] h-[10rem] md:block">
@@ -38,11 +44,15 @@ export default function LandingPage() {
                 <h2 className={`${katibehFont.className} text-center text-6xl leading-14`}>Got it. Now let’s play!</h2>
                 <p className="mt-5 text-center text-neutral-700">Thank you so much for being awesome and using BirdBot.</p>
                 <div className="mt-10 flex gap-3">
-                    <Button>Play with BirdBot</Button>
-                    <Button variant="primary-outline">
-                        <DiscordIcon className="fill-primary-700" />
-                        <span>Join us on Discord</span>
-                    </Button>
+                    <Link href="/play">
+                        <Button>Play with BirdBot</Button>
+                    </Link>
+                    <Link href={DISCORD_SERVER_LINK}>
+                        <Button variant="primary-outline">
+                            <DiscordIcon className="fill-primary-700" />
+                            <span>Join us on Discord</span>
+                        </Button>
+                    </Link>
                 </div>
             </div>
         </div>
