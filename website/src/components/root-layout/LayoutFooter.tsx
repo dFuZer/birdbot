@@ -1,5 +1,5 @@
 import { katibehFont } from "@/app/fonts";
-import { DISCORD_SERVER_LINK } from "@/lib/constants";
+import { DISCORD_SERVER_LINK, LINKS } from "@/lib/constants";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import FooterBlob from "~/public/footerBlob.svg";
@@ -14,10 +14,11 @@ export default function LayoutFooter() {
                     <div className="w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>BirdBot</h3>
                         <div className="flex flex-col">
-                            <Link href="/play">Play</Link>
-                            <Link href="/players">Players</Link>
-                            <Link href="/records">Records</Link>
-                            <Link href="/about">About</Link>
+                            {LINKS.map((link) => (
+                                <Link key={link.href} href={link.href}>
+                                    {link.label}
+                                </Link>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -34,10 +35,11 @@ export default function LayoutFooter() {
                     <div className="w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>Help</h3>
                         <div className="flex flex-col">
-                            <Link href="/about">About</Link>
-                            <Link href="/about/faq">FAQ</Link>
-                            <Link href="/about/commands">Commands</Link>
-                            <Link href="/about/support">Support us</Link>
+                            {LINKS[3].children!.map((link) => (
+                                <Link key={link.href} href={link.href}>
+                                    {link.label}
+                                </Link>
+                            ))}
                         </div>
                     </div>
                 </div>

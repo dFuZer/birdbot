@@ -10,7 +10,7 @@ export default function AppRootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`relative flex min-h-screen flex-col ${interFont.className}`}>
+            <body className={`relative flex min-h-screen flex-col bg-neutral-50 ${interFont.className}`}>
                 <LayoutHeader />
                 <Blobs />
                 <div className="relative flex-1 pt-[3.5rem]">{children}</div>
