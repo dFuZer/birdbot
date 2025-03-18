@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { katibehFont } from "@/app/font";
+import { katibehFont } from "@/app/fonts";
 import LandingBird from "~/public/landingBird.svg";
 import DiscordIcon from "~/public/discordIcon.svg";
 import LandingInstructionsSection from "./LandingInstructionsSection";

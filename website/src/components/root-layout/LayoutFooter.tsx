@@ -1,4 +1,4 @@
-import { katibehFont } from "@/app/font";
+import { katibehFont } from "@/app/fonts";
 import { DISCORD_SERVER_LINK } from "@/lib/constants";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -36,7 +36,7 @@ export default function LayoutFooter() {
                         <div className="flex flex-col">
                             <Link href="/about">About</Link>
                             <Link href="/about/faq">FAQ</Link>
-                            <Link href="/about/command">Commands</Link>
+                            <Link href="/about/commands">Commands</Link>
                             <Link href="/about/support">Support us</Link>
                         </div>
                     </div>

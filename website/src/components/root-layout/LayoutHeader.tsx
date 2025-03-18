@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { katibehFont } from "@/app/font";
+import { katibehFont } from "@/app/fonts";
 import BirdBotLogo from "~/public/icon.svg";
 import FrenchFlag from "~/public/frenchFlag.svg";
 import { SunIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";

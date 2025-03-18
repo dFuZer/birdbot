@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
+import AppRootLayout from "@/components/root-layout/AppRootLayout";
 import "./globals.css";
-import { interFont } from "./font";
-import LayoutHeader from "@/components/layout/LayoutHeader";
-import Blobs from "@/components/layout/Blobs";
-import LayoutFooter from "@/components/layout/LayoutFooter";
 
 export const metadata: Metadata = {
     title: "BirdBot",
@@ -15,14 +12,5 @@ export default function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return (
-        <html lang="en">
-            <body className={`relative flex min-h-screen flex-col ${interFont.className}`}>
-                <LayoutHeader />
-                <Blobs />
-                <div className="relative flex-1 pt-[3.5rem]">{children}</div>
-                <LayoutFooter />
-            </body>
-        </html>
-    );
+    return <AppRootLayout>{children}</AppRootLayout>;
 }

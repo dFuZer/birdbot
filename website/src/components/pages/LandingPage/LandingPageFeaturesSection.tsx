@@ -1,5 +1,5 @@
 import { AcademicCapIcon, CpuChipIcon, MagnifyingGlassIcon, TrophyIcon, UserGroupIcon } from "@heroicons/react/24/outline";
-import { katibehFont } from "@/app/font";
+import { katibehFont } from "@/app/fonts";
 
 type FeatureCardProps = {
     TitleElement: React.ReactNode;

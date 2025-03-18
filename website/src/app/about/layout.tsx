@@ -1,7 +1,9 @@
+import AboutLayout from "@/components/pages/AboutPage/AboutLayout";
+
 export default function Layout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    return <div>{children}</div>;
+    return <AboutLayout>{children}</AboutLayout>;
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { katibehFont } from "@/app/font";
+import { katibehFont } from "@/app/fonts";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 type HoveredSection = null | 1 | 2 | 3;
@@ -101,16 +102,27 @@ export default function LandingInstructionsSection() {
                         ></div>
                     </div>
                 </div>
+                {/* ADD CORRECT LINKS */}
                 <div className="flex w-full py-5">
                     <div className="w-1/3 px-3">
                         <p className="text-sm text-neutral-800 md:text-base">
-                            By using /b in a BombParty room where BirdBot is present in the Play tab, it will create a room for
-                            you. Note that you must be connected to use the /b command.
+                            By using /b in a BombParty room where BirdBot is present in the{" "}
+                            <Link className="underline" href={"/play"}>
+                                Play Page
+                            </Link>
+                            , it will create a room for you. Note that you{" "}
+                            <Link className="underline" href={"/about"}>
+                                must be connected
+                            </Link>{" "}
+                            to use the /b command.
                         </p>
                     </div>
                     <div className="w-1/3 px-3">
                         <p className="text-sm text-neutral-800 md:text-base">
-                            Join the room that the bot created for you or that you found in the Play tab
+                            Join the room that the bot created for you or that you found in the{" "}
+                            <Link className="underline" href={"/play"}>
+                                Play Page
+                            </Link>
                             <br />
                             <br />
                             <span className="text-xs text-neutral-700 md:text-sm">
@@ -121,7 +133,11 @@ export default function LandingInstructionsSection() {
                     </div>
                     <div className="w-1/3 px-3">
                         <p className="text-sm text-neutral-800 md:text-base">
-                            Once you are in a room with BirdBot, you can play against it, and use its full power and commands.
+                            Once you are in a room with BirdBot, you can play against it, and use its full power and{" "}
+                            <Link className="underline" href={"/about/commands"}>
+                                commands
+                            </Link>
+                            .
                         </p>
                     </div>
                 </div>
