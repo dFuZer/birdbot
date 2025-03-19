@@ -96,7 +96,7 @@
 }
 
 .adaptivePadding {
-    @apply px-3 sm:px-5 md:px-10 lg:px-20;
+    @apply px-3 sm:px-5 md:px-10 lg:px-15;
 }
 
 .dark {

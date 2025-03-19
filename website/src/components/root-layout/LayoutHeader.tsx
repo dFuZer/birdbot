@@ -10,7 +10,7 @@ import ChangeLanguageButton from "./ChangeLanguageButton";
 export default function LayoutHeader() {
     return (
         <header className="fixed z-50 flex h-[3.5rem] w-full items-center border-b border-neutral-200 bg-white/50 backdrop-blur-md">
-            <div className="hidden w-full items-center justify-between gap-10 px-3 md:flex lg:px-20">
+            <div className="hidden w-full items-center justify-between gap-8 px-5 md:flex lg:px-20">
                 <Link href="/" className="flex items-center gap-2">
                     <BirdBotLogo className="size-8" />
                     <span
@@ -44,7 +44,7 @@ export default function LayoutHeader() {
                     </Button>
                 </div>
                 <ChangeLanguageButton />
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/" className="ml-4 flex items-center gap-2">
                     <BirdBotLogo className="size-8 min-h-max min-w-max" />
                     <span
                         className={`${katibehFont.className} text-primary-700 hidden h-8 align-middle text-[2.5rem] leading-4 tracking-tight lowercase sm:inline`}
