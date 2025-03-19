@@ -3,9 +3,9 @@ import { katibehFont } from "@/app/fonts";
 import BirdBotLogo from "~/public/icon.svg";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
-import BurgerMenu from "./BurgerMenu";
 import { LINKS } from "@/lib/constants";
 import ChangeLanguageButton from "./ChangeLanguageButton";
+import MobileHeader from "./MobileHeader";
 
 export default function LayoutHeader() {
     return (
@@ -20,7 +20,7 @@ export default function LayoutHeader() {
                     </span>
                 </Link>
                 <div className="flex items-center gap-1 font-normal">
-                    {LINKS.map((link) => (
+                    {LINKS.filter((x) => !x.hideHeader).map((link) => (
                         <Link key={link.href} className="px-1.5" href={link.href}>
                             {link.label}
                         </Link>
@@ -35,24 +35,7 @@ export default function LayoutHeader() {
                     </Button>
                 </div>
             </div>
-            <div className="flex w-full items-center justify-between px-8 md:hidden">
-                <BurgerMenu />
-                <div className="flex-1 px-8">
-                    <Button className="flex w-full items-center justify-between gap-4" variant={"outline"}>
-                        <span className="font-light text-neutral-400">Rechercher</span>
-                        <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
-                    </Button>
-                </div>
-                <ChangeLanguageButton />
-                <Link href="/" className="ml-4 flex items-center gap-2">
-                    <BirdBotLogo className="size-8 min-h-max min-w-max" />
-                    <span
-                        className={`${katibehFont.className} text-primary-700 hidden h-8 align-middle text-[2.5rem] leading-4 tracking-tight lowercase sm:inline`}
-                    >
-                        BirdBot
-                    </span>
-                </Link>
-            </div>
+            <MobileHeader />
         </header>
     );
 }

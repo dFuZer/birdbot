@@ -1,12 +1,16 @@
 "use client";
 
 import { LINKS } from "@/lib/constants";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createRef, useEffect, useState } from "react";
+import { katibehFont } from "@/app/fonts";
+import BirdBotLogo from "~/public/icon.svg";
+import { Button } from "@/components/ui/button";
+import ChangeLanguageButton from "@/components/root-layout/ChangeLanguageButton";
 
-export default function BurgerMenu() {
+export default function MobileHeader() {
     let [open, setOpen] = useState(false);
     const location = usePathname();
     const firstLinkRef = createRef<HTMLAnchorElement>();
@@ -36,7 +40,7 @@ export default function BurgerMenu() {
     }, [open]);
 
     return (
-        <>
+        <div className="flex w-full items-center justify-between px-8 md:hidden">
             <button onClick={invertOpen} className="flex h-8 w-8 items-center justify-center">
                 {open ? (
                     <XMarkIcon className="size-8 min-h-max min-w-max" />
@@ -61,6 +65,21 @@ export default function BurgerMenu() {
                     </Link>
                 ))}
             </div>
-        </>
+            <div className="flex-1 px-8">
+                <Button className="flex w-full items-center justify-between gap-4" variant={"outline"}>
+                    <span className="font-light text-neutral-400">Rechercher</span>
+                    <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
+                </Button>
+            </div>
+            <ChangeLanguageButton />
+            <Link onClick={() => closeIfSameLocation("/")} href="/" className="ml-4 flex items-center gap-2">
+                <BirdBotLogo className="size-8 min-h-max min-w-max" />
+                <span
+                    className={`${katibehFont.className} text-primary-700 hidden h-8 align-middle text-[2.5rem] leading-4 tracking-tight lowercase sm:inline`}
+                >
+                    BirdBot
+                </span>
+            </Link>
+        </div>
     );
 }
