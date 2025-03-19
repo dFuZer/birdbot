@@ -9,9 +9,12 @@ import { katibehFont } from "@/app/fonts";
 import BirdBotLogo from "~/public/icon.svg";
 import { Button } from "@/components/ui/button";
 import ChangeLanguageButton from "@/components/root-layout/ChangeLanguageButton";
+import { atom, useAtom } from "jotai";
+
+export const mobileHeaderOpenAtom = atom(false);
 
 export default function MobileHeader() {
-    let [open, setOpen] = useState(false);
+    const [open, setOpen] = useAtom(mobileHeaderOpenAtom);
     const location = usePathname();
     const firstLinkRef = createRef<HTMLAnchorElement>();
 
@@ -49,8 +52,9 @@ export default function MobileHeader() {
                 )}
             </button>
             <div
-                className={`absolute top-[3.5rem] left-0 flex h-[calc(100vh-3.5rem)] w-full flex-col overflow-hidden bg-neutral-50 py-2 ${open ? "visible" : "invisible"}`}
+                className={`absolute top-0 left-0 -z-1 flex h-screen w-full flex-col overflow-hidden bg-neutral-50 py-2 pt-[calc(3.5rem-1px)] ${open ? "visible" : "invisible"}`}
             >
+                <div className="h-[1px] bg-neutral-200"></div>
                 {LINKS.map((link, index) => (
                     <Link
                         ref={index === 0 ? firstLinkRef : undefined}

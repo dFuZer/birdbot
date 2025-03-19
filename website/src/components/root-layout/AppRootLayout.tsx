@@ -1,7 +1,7 @@
-import { interFont } from "@/app/fonts";
 import LayoutHeader from "@/components/root-layout/LayoutHeader";
 import Blobs from "@/components/root-layout/Blobs";
 import LayoutFooter from "@/components/root-layout/LayoutFooter";
+import LayoutBody from "./LayoutBody";
 
 export default function AppRootLayout({
     children,
@@ -10,12 +10,12 @@ export default function AppRootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={`relative flex min-h-screen flex-col bg-neutral-50 ${interFont.className}`}>
+            <LayoutBody>
                 <LayoutHeader />
                 <Blobs />
                 <div className="relative flex-1 pt-[3.5rem]">{children}</div>
                 <LayoutFooter />
-            </body>
+            </LayoutBody>
         </html>
     );
 }
