@@ -22,8 +22,9 @@ export default function LayoutFooter() {
                         </div>
                     </div>
                 </div>
-                <div className="flex justify-center">
-                    <div className="w-fit">
+                <div className="order-1 sm:hidden"></div>
+                <div className="order-1 flex justify-center sm:order-none">
+                    <div className="w-[12rem] sm:w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>Support us</h3>
                         <div className="flex flex-col">
                             <Link href={DISCORD_SERVER_LINK}>Join our Discord Server</Link>
@@ -32,7 +33,7 @@ export default function LayoutFooter() {
                     </div>
                 </div>
                 <div className="flex justify-center">
-                    <div className="w-fit">
+                    <div className="w-[12rem] sm:w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>Help</h3>
                         <div className="flex flex-col">
                             {ABOUT_LINKS.children!.map((link) => (
