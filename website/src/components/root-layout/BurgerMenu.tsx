@@ -38,18 +38,23 @@ export default function BurgerMenu() {
                 )}
             </button>
             <div
-                className={`absolute top-[3.5rem] left-0 h-[calc(100vh-3.5rem)] w-full space-y-1 bg-neutral-50 py-2 ${open ? "block" : "hidden"}`}
+                className={`absolute top-[3.5rem] left-0 h-[calc(100vh-3.5rem)] w-full overflow-hidden bg-neutral-950 transition-all duration-350 ${open ? "opacity-20" : "opacity-0"}`}
+            ></div>
+            <div
+                className={`absolute top-[3.5rem] left-0 w-full overflow-hidden bg-neutral-50 transition-all duration-350 ${open ? "h-[calc(100vh-3.5rem)]" : "h-0"}`}
             >
-                {LINKS.map((link) => (
-                    <Link
-                        key={link.href}
-                        onClick={() => closeIfSameLocation(link.href)}
-                        className="mx-2 flex items-center rounded-full px-8 py-3 hover:bg-neutral-200"
-                        href={link.href}
-                    >
-                        {link.label}
-                    </Link>
-                ))}
+                <div className="space-y-1 py-2">
+                    {LINKS.map((link) => (
+                        <Link
+                            key={link.href}
+                            onClick={() => closeIfSameLocation(link.href)}
+                            className="mx-2 flex items-center rounded-full px-8 py-3 font-semibold hover:bg-neutral-200"
+                            href={link.href}
+                        >
+                            {link.label}
+                        </Link>
+                    ))}
+                </div>
             </div>
         </>
     );
