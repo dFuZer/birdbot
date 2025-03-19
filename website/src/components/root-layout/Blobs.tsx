@@ -4,7 +4,16 @@ import { usePathname } from "next/navigation";
 
 export default function Blobs() {
     let pathname = usePathname();
-    if (pathname !== "/") return <></>;
+    if (pathname !== "/")
+        return (
+            <div className="absolute top-0 right-0 left-0 -z-10 h-full overflow-hidden">
+                <div className="mt-[20rem] flex w-full justify-between px-[6rem]">
+                    <div className="bg-primary-500 mt-32 h-40 w-[20vw] blur-[160px]"></div>
+                    <div className="bg-highlight-500 h-40 w-[20vw] blur-[160px]"></div>
+                </div>
+            </div>
+        );
+
     return (
         <div className="absolute top-0 right-0 left-0 -z-10 h-full overflow-hidden">
             <div className="mt-[50rem] flex w-full justify-between px-[6rem]">
