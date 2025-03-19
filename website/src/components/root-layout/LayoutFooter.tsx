@@ -7,8 +7,8 @@ import FooterBlob from "~/public/footerBlob.svg";
 export default function LayoutFooter() {
     return (
         <footer className="bg-primary-900 relative mx-2 mb-2 overflow-hidden rounded-xl pt-10 text-neutral-100">
-            <FooterBlob className="absolute -top-20 -left-20 z-20 size-50" />
-            <FooterBlob className="absolute top-1/2 -right-20 z-20 size-50 -translate-y-1/2" />
+            <FooterBlob className="absolute -top-20 -right-20 z-20 size-50 sm:right-auto sm:-left-20" />
+            <FooterBlob className="absolute top-1/2 -right-20 z-20 hidden size-50 -translate-y-1/2 sm:block" />
             <div className="adaptivePadding relative z-30 grid grid-cols-2 gap-5 text-nowrap sm:grid-cols-3">
                 <div className="flex justify-center">
                     <div className="w-fit">
@@ -22,7 +22,9 @@ export default function LayoutFooter() {
                         </div>
                     </div>
                 </div>
-                <div className="order-1 sm:hidden"></div>
+                <div className="relative order-1 sm:hidden">
+                    <FooterBlob className="absolute top-1/2 left-1/2 z-20 size-30 -translate-1/2 rotate-45" />
+                </div>
                 <div className="order-1 flex justify-center sm:order-none">
                     <div className="w-[12rem] sm:w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>Support us</h3>
