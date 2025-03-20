@@ -8,20 +8,48 @@ export function getTrophyGraphicByRank(rank: number, props?: React.SVGProps<SVGS
     } else if (rank === 3) {
         return <BronzeTrophyGraphic {...props} />;
     } else {
-        return <TrophyGraphic {...props} basecolorrgb="#D6D6D6" startcolorrgb="#A7A7A7" className="size-12" />;
+        return (
+            <TrophyGraphic
+                {...props}
+                basecolorrgb="#D6D6D6"
+                startcolorrgb="#A7A7A7"
+                className="size-12 min-h-max min-w-max md:size-8 lg:size-12"
+            />
+        );
     }
 }
 
 export function GoldenTrophyGraphic(props: React.SVGProps<SVGSVGElement>) {
-    return <TrophyGraphic {...props} basecolorrgb="#FFC54D" startcolorrgb="#EDB248" className="size-12" />;
+    return (
+        <TrophyGraphic
+            {...props}
+            basecolorrgb="#FFC54D"
+            startcolorrgb="#EDB248"
+            className="size-12 min-h-max min-w-max md:size-8 lg:size-12"
+        />
+    );
 }
 
 export function SilverTrophyGraphic(props: React.SVGProps<SVGSVGElement>) {
-    return <TrophyGraphic {...props} basecolorrgb="#D6D6D6" startcolorrgb="#A7A7A7" className="size-12" />;
+    return (
+        <TrophyGraphic
+            {...props}
+            basecolorrgb="#D6D6D6"
+            startcolorrgb="#A7A7A7"
+            className="size-12 min-h-max min-w-max md:size-8 lg:size-12"
+        />
+    );
 }
 
 export function BronzeTrophyGraphic(props: React.SVGProps<SVGSVGElement>) {
-    return <TrophyGraphic {...props} basecolorrgb="#D79B20" startcolorrgb="#9C6C15" className="size-12" />;
+    return (
+        <TrophyGraphic
+            {...props}
+            basecolorrgb="#D79B20"
+            startcolorrgb="#9C6C15"
+            className="size-12 min-h-max min-w-max md:size-8 lg:size-12"
+        />
+    );
 }
 
 export default function TrophyGraphic(props: React.SVGProps<SVGSVGElement> & { startcolorrgb: string; basecolorrgb: string }) {

@@ -5,14 +5,13 @@ import { TrophyIcon as TrophyIconSolid, AcademicCapIcon as AcademicCapIconSolid 
 import { AcademicCapIcon as AcademicCapIconOutline, TrophyIcon as TrophyIconOutline } from "@heroicons/react/24/outline";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-
-type IPlayersPageMode = "experience" | "records";
+import { type IPlayersPageSortMode } from "@/components/pages/PlayersPage/PlayersPage";
 
 export default function PlayersPageSwitchModeButtons() {
     const router = useRouter();
     let searchParams = useSearchParams();
 
-    let currentSortMode = useMemo<IPlayersPageMode>(() => {
+    let currentSortMode = useMemo<IPlayersPageSortMode>(() => {
         let sort = searchParams.get("sort");
         if (sort === "experience" || sort === "records") {
             return sort;
@@ -20,7 +19,7 @@ export default function PlayersPageSwitchModeButtons() {
         return "experience";
     }, [searchParams]);
 
-    function onChangeMode(mode: IPlayersPageMode) {
+    function onChangeMode(mode: IPlayersPageSortMode) {
         router.push(`/players?sort=${mode}`);
     }
 

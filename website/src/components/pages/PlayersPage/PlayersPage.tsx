@@ -4,6 +4,8 @@ import PlayersPageSwitchModeButtons from "@/components/pages/PlayersPage/Players
 import { getTrophyGraphicByRank } from "@/components/pages/PlayersPage/TrophyGraphic";
 import getPlaceStringFromRank from "@/lib/getPlaceStringFromRank";
 
+export type IPlayersPageSortMode = "experience" | "records";
+
 type IPlayerCardData = {
     name: string;
     avatarUrl?: string;
@@ -31,9 +33,9 @@ const playerSampleData: IPlayerCardData[] = Array.from({ length: 10 })
 function PlayerCard({ props }: { props: { playerData: IPlayerCardData } }) {
     return (
         <div
-            className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${props.playerData.rank === 1 ? "col-span-2 md:col-span-1" : ""}`}
+            className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${props.playerData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}
         >
-            <div className="flex items-center justify-between gap-8">
+            <div className="flex items-center justify-center gap-8">
                 <div className="flex items-center gap-4">
                     <img src={samplePlayerCardData.avatarUrl} alt="avatar" className="h-10 w-10 rounded-md" />
                     <div>
@@ -93,21 +95,22 @@ function PlayerRow({ props }: { props: { playerData: IPlayerCardData } }) {
     );
 }
 
-export default function PlayersPage() {
+export default function PlayersPage({ sortMode }: { sortMode: IPlayersPageSortMode }) {
+    let currentSortMode = sortMode;
     let top3Players = playerSampleData.slice(0, 3);
     let otherPlayers = playerSampleData.slice(3);
 
     return (
         <div className="flex min-h-screen justify-center px-4 py-10">
             <div className="max-w-4xl flex-1 rounded-xl bg-white/70 p-4 shadow-xl">
-                <div className="flex w-full justify-between">
+                <div className="flex w-full justify-between gap-4">
                     <PlayersPageSwitchModeButtons />
                     <Button className="flex min-w-48 items-center justify-between gap-6" variant={"outline"}>
                         <span className="font-light text-neutral-400">Search for a player</span>
                         <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                     </Button>
                 </div>
-                <div className="mt-8 grid grid-cols-2 items-center gap-3 md:grid-cols-3">
+                <div className="mt-8 grid grid-cols-1 items-center gap-3 sm:grid-cols-2 md:grid-cols-3">
                     {top3Players.map((player, i) => {
                         return <PlayerCard key={i} props={{ playerData: player }} />;
                     })}
