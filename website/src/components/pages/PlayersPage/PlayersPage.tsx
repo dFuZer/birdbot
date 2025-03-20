@@ -30,40 +30,40 @@ const playerSampleData: IPlayerCardData[] = Array.from({ length: 10 })
         return { ...player, rank: i + 1, name: `${player.name} ${i + 1}` };
     });
 
-function PlayerCard({ props }: { props: { playerData: IPlayerCardData } }) {
+function PlayerCard({ playerData }: { playerData: IPlayerCardData }) {
     return (
         <div
-            className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${props.playerData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}
+            className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${playerData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}
         >
             <div className="flex items-center justify-center gap-8">
                 <div className="flex items-center gap-4">
                     <img src={samplePlayerCardData.avatarUrl} alt="avatar" className="h-10 w-10 rounded-md" />
                     <div>
-                        <p className="font-bold">{props.playerData.name}</p>
-                        <p className="text-sm text-neutral-600">Level {props.playerData.level}</p>
+                        <p className="font-bold">{playerData.name}</p>
+                        <p className="text-sm text-neutral-600">Level {playerData.level}</p>
                     </div>
                 </div>
-                {getTrophyGraphicByRank(props.playerData.rank)}
+                {getTrophyGraphicByRank(playerData.rank)}
             </div>
             <div className="my-6 flex items-center gap-3">
                 <div className="h-[1px] flex-1 bg-neutral-200"></div>
-                <div className="text-xs tracking-[.2rem] text-neutral-500">{getPlaceStringFromRank(props.playerData.rank)}</div>
+                <div className="text-xs tracking-[.2rem] text-neutral-500">{getPlaceStringFromRank(playerData.rank)}</div>
                 <div className="h-[1px] flex-1 bg-neutral-200"></div>
             </div>
             <div className="space-y-1">
                 <div className="flex items-center justify-between text-sm font-medium text-neutral-600">
                     <p>
-                        Level <span className="text-neutral-950">{props.playerData.level}</span>
+                        Level <span className="text-neutral-950">{playerData.level}</span>
                     </p>
                     <p className="text-xs font-normal">
-                        {props.playerData.experience} / {props.playerData.experienceNeededForNextLevel} xp
+                        {playerData.experience} / {playerData.experienceNeededForNextLevel} xp
                     </p>
                 </div>
                 <div className="h-2 rounded bg-neutral-100">
                     <div
                         className="bg-primary-500 h-2 rounded"
                         style={{
-                            width: `${((props.playerData.experience / props.playerData.experienceNeededForNextLevel) * 100).toFixed(5)}%`,
+                            width: `${((playerData.experience / playerData.experienceNeededForNextLevel) * 100).toFixed(5)}%`,
                         }}
                     ></div>
                 </div>
@@ -72,23 +72,21 @@ function PlayerCard({ props }: { props: { playerData: IPlayerCardData } }) {
     );
 }
 
-function PlayerRow({ props }: { props: { playerData: IPlayerCardData } }) {
+function PlayerRow({ playerData }: { playerData: IPlayerCardData }) {
     return (
         <div className="grid w-full grid-cols-3 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-1.5">
             <div>
-                <div className="flex h-5 w-5 items-center justify-center rounded-md p-4 font-semibold">
-                    {props.playerData.rank}
-                </div>
+                <div className="flex h-5 w-5 items-center justify-center rounded-md p-4 font-semibold">{playerData.rank}</div>
             </div>
             <div>
                 <div className="flex items-center gap-4">
                     <img src={samplePlayerCardData.avatarUrl} alt="avatar" className="h-8 w-8 rounded-md" />
-                    <p className="font-bold text-neutral-950">{props.playerData.name}</p>
+                    <p className="font-bold text-neutral-950">{playerData.name}</p>
                 </div>
             </div>
             <div>
                 <p className="text-sm text-neutral-600">
-                    Level <span className="font-bold text-neutral-950">{props.playerData.level}</span>
+                    Level <span className="font-bold text-neutral-950">{playerData.level}</span>
                 </p>
             </div>
         </div>
@@ -96,7 +94,6 @@ function PlayerRow({ props }: { props: { playerData: IPlayerCardData } }) {
 }
 
 export default function PlayersPage({ sortMode }: { sortMode: IPlayersPageSortMode }) {
-    let currentSortMode = sortMode;
     let top3Players = playerSampleData.slice(0, 3);
     let otherPlayers = playerSampleData.slice(3);
 
@@ -112,7 +109,7 @@ export default function PlayersPage({ sortMode }: { sortMode: IPlayersPageSortMo
                 </div>
                 <div className="mt-8 grid grid-cols-1 items-center gap-3 sm:grid-cols-2 md:grid-cols-3">
                     {top3Players.map((player, i) => {
-                        return <PlayerCard key={i} props={{ playerData: player }} />;
+                        return <PlayerCard key={i} playerData={player} />;
                     })}
                 </div>
                 <div className="mt-12 space-y-2">
@@ -122,7 +119,7 @@ export default function PlayersPage({ sortMode }: { sortMode: IPlayersPageSortMo
                         <div>Score</div>
                     </div>
                     {otherPlayers.map((player, i) => {
-                        return <PlayerRow key={i} props={{ playerData: player }} />;
+                        return <PlayerRow key={i} playerData={player} />;
                     })}
                 </div>
             </div>
