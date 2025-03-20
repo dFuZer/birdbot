@@ -5,7 +5,7 @@ import { TrophyIcon as TrophyIconSolid, AcademicCapIcon as AcademicCapIconSolid 
 import { AcademicCapIcon as AcademicCapIconOutline, TrophyIcon as TrophyIconOutline } from "@heroicons/react/24/outline";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { type TPlayersPageSortMode } from "@/components/pages/PlayersPage/PlayersPage";
+import { type TPlayersPageSortMode } from "@/types";
 
 export default function PlayersPageSwitchModeButtons() {
     const router = useRouter();

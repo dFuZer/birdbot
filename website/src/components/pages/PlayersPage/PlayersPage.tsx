@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import PlayersPageSwitchModeButtons from "@/components/pages/PlayersPage/PlayersPageSwitchModeButtons";
 import PlayersPageContentSortByRecords from "./PlayersPageContentSortByRecords";
 import PlayersPageContentSortByExperience from "@/components/pages/PlayersPage/PlayersPageContentSortByExperience";
-
-export type TPlayersPageSortMode = "experience" | "records";
+import { type TPlayersPageSortMode } from "@/types";
 
 export default function PlayersPage({ sortMode }: { sortMode: TPlayersPageSortMode }) {
     return (
