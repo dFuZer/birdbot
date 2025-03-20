@@ -1,26 +1,27 @@
 import { getTrophyGraphicByRank } from "@/components/pages/PlayersPage/TrophyGraphic";
 import getPlaceStringFromRank from "@/lib/getPlaceStringFromRank";
+import OptionalImage from "@/components/ui/OptionalAvatar";
 
-type IPlayerCardData = {
+interface IPlayerCardData {
     name: string;
     avatarUrl?: string;
     rank: number;
     experience: number;
     level: number;
     experienceNeededForNextLevel: number;
-};
+}
 
 const samplePlayerCardData: IPlayerCardData = {
     name: "dFuZer",
     rank: 1,
-    avatarUrl: "https://avatars.githubusercontent.com/u/1402801?v=4",
+    //avatarUrl: "https://avatars.githubusercontent.com/u/1402801?v=4",
     experience: 243,
     level: 12,
     experienceNeededForNextLevel: 500,
 };
 
 const playerSampleData: IPlayerCardData[] = Array.from({ length: 10 })
-    .map((x) => samplePlayerCardData)
+    .map(() => samplePlayerCardData)
     .map((player, i) => {
         return { ...player, rank: i + 1, name: `${player.name} ${i + 1}` };
     });
@@ -32,7 +33,13 @@ function PlayerCard({ playerData }: { playerData: IPlayerCardData }) {
         >
             <div className="flex items-center justify-center gap-8">
                 <div className="flex items-center gap-4">
-                    <img src={samplePlayerCardData.avatarUrl} alt="avatar" className="h-10 w-10 rounded-md" />
+                    <OptionalImage
+                        src={playerData.avatarUrl}
+                        commonClasses="h-10 w-10"
+                        height={100}
+                        width={100}
+                        placeholderType="user"
+                    />
                     <div>
                         <p className="font-bold">{playerData.name}</p>
                         <p className="text-sm text-neutral-600">Level {playerData.level}</p>
@@ -75,7 +82,7 @@ function PlayerRow({ playerData }: { playerData: IPlayerCardData }) {
             </div>
             <div>
                 <div className="flex items-center gap-4">
-                    <img src={samplePlayerCardData.avatarUrl} alt="avatar" className="h-8 w-8 rounded-md" />
+                    <OptionalImage src={playerData.avatarUrl} commonClasses="h-8 w-8" height={100} width={100} />
                     <p className="font-bold text-neutral-950">{playerData.name}</p>
                 </div>
             </div>
@@ -89,8 +96,8 @@ function PlayerRow({ playerData }: { playerData: IPlayerCardData }) {
 }
 
 export default function PlayersPageContentSortByExperience() {
-    let top3Players = playerSampleData.slice(0, 3);
-    let otherPlayers = playerSampleData.slice(3);
+    const top3Players = playerSampleData.slice(0, 3);
+    const otherPlayers = playerSampleData.slice(3);
 
     return (
         <>

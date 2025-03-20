@@ -4,7 +4,7 @@ import { LINKS } from "@/lib/constants";
 import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createRef, useEffect, useState } from "react";
+import { createRef, useCallback, useEffect } from "react";
 import { katibehFont } from "@/app/fonts";
 import BirdBotLogo from "~/public/icon.svg";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,9 @@ export default function MobileHeader() {
     const location = usePathname();
     const firstLinkRef = createRef<HTMLAnchorElement>();
 
-    function close() {
+    const close = useCallback(() => {
         if (open) setOpen(false);
-    }
+    }, [setOpen, open]);
 
     function invertOpen() {
         setOpen((prev) => !prev);
@@ -34,13 +34,13 @@ export default function MobileHeader() {
 
     useEffect(() => {
         if (open) close();
-    }, [location]);
+    }, [location, open, close]);
 
     useEffect(() => {
         if (open) {
             firstLinkRef.current?.focus();
         }
-    }, [open]);
+    }, [open, firstLinkRef]);
 
     return (
         <div className="flex w-full items-center justify-between px-8 md:hidden">

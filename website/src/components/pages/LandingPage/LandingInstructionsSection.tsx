@@ -19,15 +19,15 @@ function getCircleColorClass(circleNumber: number, hoveredSection: HoveredSectio
 }
 
 export default function LandingInstructionsSection() {
-    let [hoveredSection, setHoveredSection] = useState<HoveredSection>(null);
-    let divRef = useRef<HTMLDivElement>(null);
+    const [hoveredSection, setHoveredSection] = useState<HoveredSection>(null);
+    const divRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const currentDiv = divRef.current;
 
         const handleMouseMove = (event: MouseEvent) => {
             if (!currentDiv) return;
-            let x = event.clientX - currentDiv.getBoundingClientRect().left;
+            const x = event.clientX - currentDiv.getBoundingClientRect().left;
             if (x < currentDiv.clientWidth / 3) setHoveredSection(1);
             else if (x < (currentDiv.clientWidth / 3) * 2) setHoveredSection(2);
             else setHoveredSection(3);

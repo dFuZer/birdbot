@@ -1,11 +1,11 @@
 export const DISCORD_SERVER_LINK = "/";
 
-type ILink = {
+interface ILink {
     href: string;
     label: string;
     children?: ILink[];
     hideHeader?: true;
-};
+}
 
 export const ABOUT_LINKS: ILink = {
     href: "/about",

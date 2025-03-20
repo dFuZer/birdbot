@@ -9,7 +9,7 @@ export default function LayoutBody({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    let mobileHamburgerMenu = useAtomValue(mobileHeaderOpenAtom);
+    const mobileHamburgerMenu = useAtomValue(mobileHeaderOpenAtom);
 
     return (
         <body

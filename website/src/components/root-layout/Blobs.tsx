@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 
 export default function Blobs() {
-    let pathname = usePathname();
+    const pathname = usePathname();
     if (pathname !== "/")
         return (
             <div className="absolute top-0 right-0 left-0 -z-10 h-full overflow-hidden">
