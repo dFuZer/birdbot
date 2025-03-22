@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/tailwindClasses";
 
 export function getTrophyGraphicByRank(rank: number, props?: React.SVGProps<SVGSVGElement>) {
     if (rank === 1) {

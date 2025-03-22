@@ -15,11 +15,11 @@ export enum GameModesEnum {
 }
 
 export enum LanguagesEnum {
-    ENGLISH = "english",
-    FRENCH = "french",
-    GERMAN = "german",
+    ENGLISH = "en",
+    FRENCH = "fr",
+    GERMAN = "de",
     BRPT = "brpt",
-    SPANISH = "spanish",
+    SPANISH = "es",
 }
 
 interface IRecordData {
@@ -50,9 +50,9 @@ export const GAME_MODES_DATA: { [key in GameModesEnum]: IGameModeData } = {
 };
 
 export const LANGUAGES_DATA: { [key in LanguagesEnum]: ILanguageData } = {
-    english: { displayName: "English", shortDisplayName: "EN" },
-    french: { displayName: "French", shortDisplayName: "FR" },
-    german: { displayName: "German", shortDisplayName: "DE" },
+    en: { displayName: "English", shortDisplayName: "EN" },
+    fr: { displayName: "French", shortDisplayName: "FR" },
+    de: { displayName: "German", shortDisplayName: "DE" },
     brpt: { displayName: "BRPT", shortDisplayName: "BRPT" },
-    spanish: { displayName: "Spanish", shortDisplayName: "ES" },
+    es: { displayName: "Spanish", shortDisplayName: "ES" },
 };
