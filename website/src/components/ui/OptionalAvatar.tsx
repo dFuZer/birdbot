@@ -21,7 +21,6 @@ export default function OptionalImage({
     width: number;
     placeholderType?: TPlaceHolderType;
 }) {
-    console.log(placeholderType);
     if (src)
         return (
             <Image

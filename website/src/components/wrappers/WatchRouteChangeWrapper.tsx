@@ -15,7 +15,6 @@ export default function WatchRouteChangeWrapper({
 
     useEffect(() => {
         setOpen(false);
-        console.log("location changed", location);
     }, [location, setOpen]);
 
     return children;
