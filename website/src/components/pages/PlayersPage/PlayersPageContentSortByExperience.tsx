@@ -1,32 +1,9 @@
-import { getTrophyGraphicByRank } from "@/components/pages/PlayersPage/TrophyGraphic";
-import getPlaceStringFromRank from "@/lib/getPlaceStringFromRank";
 import OptionalImage from "@/components/ui/OptionalAvatar";
+import { getTrophyGraphicByRank } from "@/components/ui/TrophyGraphic";
+import getPlaceStringFromRank from "@/lib/getPlaceStringFromRank";
+import { IPlayerCardDataExperience } from "./PlayersPage";
 
-interface IPlayerCardData {
-    name: string;
-    avatarUrl?: string;
-    rank: number;
-    experience: number;
-    level: number;
-    experienceNeededForNextLevel: number;
-}
-
-const samplePlayerCardData: IPlayerCardData = {
-    name: "dFuZer",
-    rank: 1,
-    //avatarUrl: "https://avatars.githubusercontent.com/u/1402801?v=4",
-    experience: 243,
-    level: 12,
-    experienceNeededForNextLevel: 500,
-};
-
-const playerSampleData: IPlayerCardData[] = Array.from({ length: 10 })
-    .map(() => samplePlayerCardData)
-    .map((player, i) => {
-        return { ...player, rank: i + 1, name: `${player.name} ${i + 1}` };
-    });
-
-function PlayerCard({ playerData }: { playerData: IPlayerCardData }) {
+function PlayerCard({ playerData }: { playerData: IPlayerCardDataExperience }) {
     return (
         <div
             className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${playerData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}
@@ -74,7 +51,7 @@ function PlayerCard({ playerData }: { playerData: IPlayerCardData }) {
     );
 }
 
-function PlayerRow({ playerData }: { playerData: IPlayerCardData }) {
+function PlayerRow({ playerData }: { playerData: IPlayerCardDataExperience }) {
     return (
         <div className="grid w-full grid-cols-3 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-1.5">
             <div>
@@ -95,9 +72,9 @@ function PlayerRow({ playerData }: { playerData: IPlayerCardData }) {
     );
 }
 
-export default function PlayersPageContentSortByExperience() {
-    const top3Players = playerSampleData.slice(0, 3);
-    const otherPlayers = playerSampleData.slice(3);
+export default function PlayersPageContentSortByExperience({ data }: { data: IPlayerCardDataExperience[] }) {
+    const top3Players = data.slice(0, 3);
+    const otherPlayers = data.slice(3);
 
     return (
         <>

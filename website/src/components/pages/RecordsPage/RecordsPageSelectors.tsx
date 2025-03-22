@@ -4,11 +4,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { GAME_MODES_DATA, GameModesEnum, LANGUAGES_DATA, LanguagesEnum, RECORDS_DATA, RecordsEnum } from "@/records";
 import { useRouter, useSearchParams } from "next/navigation";
 
-interface RecordsPageProps {
+type RecordsPageProps = {
     language: LanguagesEnum;
     mode: GameModesEnum;
     record: RecordsEnum;
-}
+};
 
 export default function RecordsPageSelectors({ language, mode, record }: RecordsPageProps) {
     const router = useRouter();

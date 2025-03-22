@@ -1,5 +1,5 @@
 import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
-import { TPlayersPageSortMode } from "@/types";
+import { PlayersPageSortModeEnum } from "@/types";
 
 type SearchParamOption = string | string[] | undefined;
 
@@ -18,6 +18,6 @@ export function isValidLanguage(language: SearchParamOption): language is Langua
     return (Object.values(LanguagesEnum) as string[]).includes(language);
 }
 
-export function isValidPlayersPageSortParam(sortParam: SearchParamOption): sortParam is TPlayersPageSortMode {
-    return sortParam === "experience" || sortParam === "records";
+export function isValidPlayersPageSortParam(sortParam: SearchParamOption): sortParam is PlayersPageSortModeEnum {
+    return sortParam === PlayersPageSortModeEnum.Experience || sortParam === PlayersPageSortModeEnum.Records;
 }

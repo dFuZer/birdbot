@@ -3,6 +3,27 @@ import { isValidGameMode, isValidLanguage, isValidRecord } from "@/lib/searchPar
 import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
 import { TSearchParams } from "@/types";
 
+export interface IScoreData {
+    name: string;
+    avatarUrl?: string;
+    rank: number;
+    level: number;
+    score: number;
+}
+
+const sampleRecordCardData: IScoreData = {
+    name: "dFuZer",
+    rank: 1,
+    level: 12,
+    score: 45,
+};
+
+const recordSampleData: IScoreData[] = Array.from({ length: 10 })
+    .map(() => sampleRecordCardData)
+    .map((record, i) => {
+        return { ...record, rank: i + 1, name: `${record.name} ${i + 1}` };
+    });
+
 export default async function Page({ searchParams }: { searchParams: TSearchParams }) {
     const params = await searchParams;
     const languageParamValue = params.l;
@@ -14,5 +35,5 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
     const recordParamValue = params.r;
     const selectedRecord = isValidRecord(recordParamValue) ? recordParamValue : RecordsEnum.WORDS;
 
-    return <RecordsPage language={selectedLanguage} mode={selectedMode} record={selectedRecord} />;
+    return <RecordsPage data={recordSampleData} language={selectedLanguage} mode={selectedMode} record={selectedRecord} />;
 }

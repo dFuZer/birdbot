@@ -1,11 +1,16 @@
-import { getTrophyGraphicByRank } from "@/components/pages/PlayersPage/TrophyGraphic";
-import { IScoreData } from "@/components/pages/RecordsPage/RecordsPage";
+import { IScoreData } from "@/app/records/page";
 import ScoreDisplayComponent from "@/components/pages/RecordsPage/RecordsPageScoreDisplayComponent";
 import OptionalImage from "@/components/ui/OptionalAvatar";
+import { getTrophyGraphicByRank } from "@/components/ui/TrophyGraphic";
 import getPlaceStringFromRank from "@/lib/getPlaceStringFromRank";
 import { RecordsEnum } from "@/records";
 
-export default function RecordsPageScoreCard({ recordData, recordType }: { recordData: IScoreData; recordType: RecordsEnum }) {
+type RecordsPageScoreCardProps = {
+    recordData: IScoreData;
+    recordType: RecordsEnum;
+};
+
+export default function RecordsPageScoreCard({ recordData, recordType }: RecordsPageScoreCardProps) {
     return (
         <div
             className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${recordData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}

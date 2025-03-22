@@ -1,25 +1,25 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { TrophyIcon as TrophyIconSolid, AcademicCapIcon as AcademicCapIconSolid } from "@heroicons/react/24/solid";
+import { PlayersPageSortModeEnum } from "@/types";
 import { AcademicCapIcon as AcademicCapIconOutline, TrophyIcon as TrophyIconOutline } from "@heroicons/react/24/outline";
+import { AcademicCapIcon as AcademicCapIconSolid, TrophyIcon as TrophyIconSolid } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { type TPlayersPageSortMode } from "@/types";
 
 export default function PlayersPageSwitchModeButtons() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    const currentSortMode = useMemo<TPlayersPageSortMode>(() => {
+    const currentSortMode = useMemo<PlayersPageSortModeEnum>(() => {
         const sort = searchParams.get("sort");
-        if (sort === "experience" || sort === "records") {
+        if (sort === PlayersPageSortModeEnum.Experience || sort === PlayersPageSortModeEnum.Records) {
             return sort;
         }
-        return "experience";
+        return PlayersPageSortModeEnum.Experience;
     }, [searchParams]);
 
-    function onChangeMode(mode: TPlayersPageSortMode) {
+    function onChangeMode(mode: PlayersPageSortModeEnum) {
         router.push(`/players?sort=${mode}`);
     }
 
@@ -27,10 +27,10 @@ export default function PlayersPageSwitchModeButtons() {
         <div className="flex gap-3">
             <Button
                 className="transition-colors duration-250"
-                variant={currentSortMode === "experience" ? "primary" : "ghost"}
-                onClick={() => onChangeMode("experience")}
+                variant={currentSortMode === PlayersPageSortModeEnum.Experience ? "primary" : "ghost"}
+                onClick={() => onChangeMode(PlayersPageSortModeEnum.Experience)}
             >
-                {currentSortMode === "experience" ? (
+                {currentSortMode === PlayersPageSortModeEnum.Experience ? (
                     <AcademicCapIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />
                 ) : (
                     <AcademicCapIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />
@@ -39,10 +39,10 @@ export default function PlayersPageSwitchModeButtons() {
             </Button>
             <Button
                 className="transition-colors duration-250"
-                variant={currentSortMode === "records" ? "primary" : "ghost"}
-                onClick={() => onChangeMode("records")}
+                variant={currentSortMode === PlayersPageSortModeEnum.Records ? "primary" : "ghost"}
+                onClick={() => onChangeMode(PlayersPageSortModeEnum.Records)}
             >
-                {currentSortMode === "records" ? (
+                {currentSortMode === PlayersPageSortModeEnum.Records ? (
                     <TrophyIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />
                 ) : (
                     <TrophyIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />

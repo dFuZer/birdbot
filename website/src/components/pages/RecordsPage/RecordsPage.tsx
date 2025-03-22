@@ -1,38 +1,19 @@
+import { IScoreData } from "@/app/records/page";
 import RecordsPageScoreCard from "@/components/pages/RecordsPage/RecordsPageScoreCard";
 import RecordsPageScoreRow from "@/components/pages/RecordsPage/RecordsPageScoreRow";
 import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
 import RecordsPageSelectors from "./RecordsPageSelectors";
 
-export interface IScoreData {
-    name: string;
-    avatarUrl?: string;
-    rank: number;
-    level: number;
-    score: number;
-}
-
-const sampleRecordCardData: IScoreData = {
-    name: "dFuZer",
-    rank: 1,
-    level: 12,
-    score: 45,
-};
-
-const recordSampleData: IScoreData[] = Array.from({ length: 10 })
-    .map(() => sampleRecordCardData)
-    .map((record, i) => {
-        return { ...record, rank: i + 1, name: `${record.name} ${i + 1}` };
-    });
-
 type RecordsPageProps = {
     language: LanguagesEnum;
     mode: GameModesEnum;
     record: RecordsEnum;
+    data: IScoreData[];
 };
 
-export default function RecordsPage({ language, mode, record }: RecordsPageProps) {
-    const top3Records = recordSampleData.slice(0, 3);
-    const otherRecords = recordSampleData.slice(3);
+export default function RecordsPage({ data, language, mode, record }: RecordsPageProps) {
+    const top3Records = data.slice(0, 3);
+    const otherRecords = data.slice(3);
 
     return (
         <div className="flex min-h-screen justify-center px-4 py-10">
