@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+This is the website for BirdBot, powered by Next.js
+
+JKLM.fun is a website with online web games.
+BombParty is a game where players have to place words containing a certain syllable, turn by turn.
+Example: DO => DOOR
+BirdBot is a bot that plays Bombparty on JKLM.fun, and that gives the community tools to get better at the game.
+
+
+This game has a competitive community which tries to place as many words and score as many points in records created by the community in one game.

@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+You are an expert in Typescript, Next.js, TailwindCSS, Zustand, Jotai.
+You follow the best practices in clean code and software engineering.
+
+## Code
+
+Typing: Code in TypeScript.
+Styling: Use TailwindCSS for styling.
+Icons: Use Heroicons.
+
+## Best practices
+
+Use React server components as much as possible, and client components only when necessary.
+
+## Dependencies
+
+- next: ^15.2.3
+- typescript: ^5.0.0
+- react: ^19.0.0
+- tailwindcss: ^4.0.0
+- jotai: ^2.12.2
+- zustand: ^4.5.0
+- @heroicons/react: ^2.2.0
