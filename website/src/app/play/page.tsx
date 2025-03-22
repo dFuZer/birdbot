@@ -2,7 +2,7 @@ import PlayPage, { IPlayPageData, IRoom } from "@/components/pages/PlayPage/Play
 import { LanguagesEnum } from "@/records";
 
 const sampleRoom: IRoom = {
-    roomName: "",
+    roomName: "Room Name",
     playerCount: 2,
     currentGameDuration: 10,
     roomCode: "123456",

@@ -4,7 +4,7 @@ import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
 import { TSearchParams } from "@/types";
 
 const sampleRecordCardData: IScoreData = {
-    name: "dFuZer",
+    name: "This name can be really long and it should be truncated",
     rank: 1,
     level: 12,
     score: 45,
