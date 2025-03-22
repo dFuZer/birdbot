@@ -1,15 +1,15 @@
 "use client";
 
+import { katibehFont } from "@/app/fonts";
+import ChangeLanguageButton from "@/components/root-layout/ChangeLanguageButton";
+import { Button } from "@/components/ui/button";
 import { LINKS } from "@/lib/constants";
-import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { atom, useAtom } from "jotai";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createRef, useCallback, useEffect } from "react";
-import { katibehFont } from "@/app/fonts";
+import { createRef, useEffect } from "react";
 import BirdBotLogo from "~/public/icon.svg";
-import { Button } from "@/components/ui/button";
-import ChangeLanguageButton from "@/components/root-layout/ChangeLanguageButton";
-import { atom, useAtom } from "jotai";
 
 export const mobileHeaderOpenAtom = atom(false);
 
@@ -18,23 +18,16 @@ export default function MobileHeader() {
     const location = usePathname();
     const firstLinkRef = createRef<HTMLAnchorElement>();
 
-    const close = useCallback(() => {
-        if (open) setOpen(false);
-    }, [setOpen, open]);
-
     function invertOpen() {
         setOpen((prev) => !prev);
     }
 
-    function closeIfSameLocation(href: string) {
-        if (location === href) {
-            close();
+    function closeIfSameLocation(event: React.MouseEvent<HTMLAnchorElement>, href: string) {
+        if (location === href && open) {
+            event.preventDefault();
+            setOpen(false);
         }
     }
-
-    useEffect(() => {
-        if (open) close();
-    }, [location, open, close]);
 
     useEffect(() => {
         if (open) {
@@ -61,7 +54,9 @@ export default function MobileHeader() {
                         key={link.href}
                         tabIndex={open ? 0 : -1}
                         role="menuitem"
-                        onClick={() => closeIfSameLocation(link.href)}
+                        onClick={(e) => {
+                            closeIfSameLocation(e, link.href);
+                        }}
                         className="mx-2 rounded-full px-8 py-3 font-semibold hover:bg-neutral-200"
                         href={link.href}
                     >
@@ -76,7 +71,7 @@ export default function MobileHeader() {
                 </Button>
             </div>
             <ChangeLanguageButton />
-            <Link onClick={() => closeIfSameLocation("/")} href="/" className="ml-4 flex items-center gap-2">
+            <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4 flex items-center gap-2">
                 <BirdBotLogo className="size-8 min-h-max min-w-max" />
                 <span
                     className={`${katibehFont.className} text-primary-700 hidden h-8 align-middle text-[2.5rem] leading-4 tracking-tight lowercase sm:inline`}
