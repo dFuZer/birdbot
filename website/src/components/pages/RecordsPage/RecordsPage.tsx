@@ -1,8 +1,17 @@
-import { IScoreData } from "@/app/records/page";
-import RecordsPageScoreCard from "@/components/pages/RecordsPage/RecordsPageScoreCard";
-import RecordsPageScoreRow from "@/components/pages/RecordsPage/RecordsPageScoreRow";
+import ScoreDisplayComponent from "@/components/pages/RecordsPage/RecordsPageScoreDisplayComponent";
 import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
+import PlayerCard from "../common/PlayerCard";
+import PlayerRow from "../common/PlayerRow";
+import RecordsListLayout from "../common/RecordListLayout";
 import RecordsPageSelectors from "./RecordsPageSelectors";
+
+export interface IScoreData {
+    name: string;
+    avatarUrl?: string;
+    rank: number;
+    level: number;
+    score: number;
+}
 
 type RecordsPageProps = {
     language: LanguagesEnum;
@@ -15,30 +24,45 @@ export default function RecordsPage({ data, language, mode, record }: RecordsPag
     const top3Records = data.slice(0, 3);
     const otherRecords = data.slice(3);
 
+    const rows = otherRecords.map((recordData, i) => {
+        return (
+            <PlayerRow
+                key={i}
+                playerData={recordData}
+                PlayerRowContentSection={
+                    <div>
+                        <ScoreDisplayComponent score={recordData.score} recordType={record} />
+                    </div>
+                }
+            />
+        );
+    });
+
+    const cards = top3Records.map((recordData, i) => {
+        return (
+            <PlayerCard
+                key={i}
+                playerData={recordData}
+                PlayerCardContentSection={
+                    <div className="h-[2rem] space-y-1">
+                        <div className="flex items-center justify-center font-medium">
+                            <ScoreDisplayComponent score={recordData.score} recordType={record} />
+                        </div>
+                    </div>
+                }
+            />
+        );
+    });
+
     return (
-        <div className="flex min-h-screen justify-center px-4 py-10">
-            <div className="max-w-4xl flex-1 rounded-xl bg-white/70 p-4 pb-6 shadow-xl">
-                <div className="flex w-full justify-between gap-4">
-                    <div className="flex gap-3">
-                        <RecordsPageSelectors language={language} mode={mode} record={record} />
-                    </div>
+        <RecordsListLayout
+            Selectors={
+                <div className="flex gap-3">
+                    <RecordsPageSelectors language={language} mode={mode} record={record} />
                 </div>
-                <div className="mt-8 grid grid-cols-1 items-center gap-3 sm:grid-cols-2 md:grid-cols-3">
-                    {top3Records.map((recordData, i) => {
-                        return <RecordsPageScoreCard key={i} recordData={recordData} recordType={record} />;
-                    })}
-                </div>
-                <div className="mt-12 space-y-2">
-                    <div className="grid w-full grid-cols-3 items-center gap-2 px-4 text-sm text-gray-600">
-                        <div>Place</div>
-                        <div>User</div>
-                        <div>Score</div>
-                    </div>
-                    {otherRecords.map((recordData, i) => {
-                        return <RecordsPageScoreRow key={i} recordData={recordData} recordType={record} />;
-                    })}
-                </div>
-            </div>
-        </div>
+            }
+            Rows={rows}
+            Cards={cards}
+        />
     );
 }

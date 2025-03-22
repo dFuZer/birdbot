@@ -4,7 +4,7 @@ import { PlayersPageSortModeEnum, TSearchParams } from "@/types";
 
 const samplePlayerCardDataExperience: IPlayerCardDataExperience = {
     experience: 100,
-    name: "John Doe",
+    name: "",
     avatarUrl: "https://avatars.githubusercontent.com/u/1",
     level: 1,
     rank: 1,
@@ -12,7 +12,7 @@ const samplePlayerCardDataExperience: IPlayerCardDataExperience = {
 };
 const samplePlayersDataExperience: IPlayerCardDataExperience[] = Array.from({ length: 10 }, (_, i) => ({
     ...samplePlayerCardDataExperience,
-    name: `${samplePlayerCardDataExperience.name} ${i + 1}`,
+    name: `Player ${i + 1}`,
     rank: i + 1,
 }));
 const samplePageDataExperience = {
@@ -21,7 +21,7 @@ const samplePageDataExperience = {
 };
 
 const samplePlayerCardDataRecords: IPlayerCardDataRecords = {
-    name: "John Doe",
+    name: "",
     avatarUrl: "https://avatars.githubusercontent.com/u/1",
     level: 1,
     rank: 1,
@@ -29,7 +29,7 @@ const samplePlayerCardDataRecords: IPlayerCardDataRecords = {
 };
 const samplePlayersDataRecords: IPlayerCardDataRecords[] = Array.from({ length: 10 }, (_, i) => ({
     ...samplePlayerCardDataRecords,
-    name: `${samplePlayerCardDataRecords.name} ${i + 1}`,
+    name: `Player ${i + 1}`,
     rank: i + 1,
 }));
 const samplePageDataRecords = {

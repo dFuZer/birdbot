@@ -1,0 +1,41 @@
+import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
+import OptionalImage from "@/components/ui/OptionalAvatar";
+import { getTrophyGraphicByRank } from "@/components/ui/TrophyGraphic";
+import getPlaceStringFromRank from "@/lib/getPlaceStringFromRank";
+
+export default function PlayerCard<T extends IPlayerScoreCommonProps>({
+    playerData,
+    PlayerCardContentSection,
+}: {
+    playerData: T;
+    PlayerCardContentSection: React.ReactNode;
+}) {
+    return (
+        <div
+            className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${playerData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}
+        >
+            <div className="flex items-center justify-center gap-8">
+                <div className="flex items-center gap-4">
+                    <OptionalImage
+                        src={playerData.avatarUrl}
+                        commonClasses="h-10 w-10"
+                        height={100}
+                        width={100}
+                        placeholderType="user"
+                    />
+                    <div>
+                        <p className="font-bold">{playerData.name}</p>
+                        <p className="text-sm text-neutral-600">Level {playerData.level}</p>
+                    </div>
+                </div>
+                {getTrophyGraphicByRank(playerData.rank)}
+            </div>
+            <div className="my-6 flex items-center gap-3">
+                <div className="h-[1px] flex-1 bg-neutral-200"></div>
+                <div className="text-xs tracking-[.2rem] text-neutral-500">{getPlaceStringFromRank(playerData.rank)}</div>
+                <div className="h-[1px] flex-1 bg-neutral-200"></div>
+            </div>
+            {PlayerCardContentSection}
+        </div>
+    );
+}

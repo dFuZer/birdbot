@@ -1,15 +1,7 @@
-import RecordsPage from "@/components/pages/RecordsPage/RecordsPage";
+import RecordsPage, { IScoreData } from "@/components/pages/RecordsPage/RecordsPage";
 import { isValidGameMode, isValidLanguage, isValidRecord } from "@/lib/searchParamUtils";
 import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
 import { TSearchParams } from "@/types";
-
-export interface IScoreData {
-    name: string;
-    avatarUrl?: string;
-    rank: number;
-    level: number;
-    score: number;
-}
 
 const sampleRecordCardData: IScoreData = {
     name: "dFuZer",

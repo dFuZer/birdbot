@@ -1,9 +1,8 @@
-import PlayersPageContentSortByExperience from "@/components/pages/PlayersPage/PlayersPageContentSortByExperience";
-import PlayersPageSwitchModeButtons from "@/components/pages/PlayersPage/PlayersPageSwitchModeButtons";
-import { Button } from "@/components/ui/button";
 import { PlayersPageSortModeEnum } from "@/types";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import PlayersPageContentSortByRecords from "./PlayersPageContentSortByRecords";
+import PlayerCard from "../common/PlayerCard";
+import PlayerRow from "../common/PlayerRow";
+import RecordsListLayout from "../common/RecordListLayout";
+import PlayersPageSwitchModeButtons from "./PlayersPageSwitchModeButtons";
 
 export interface IPlayerCardDataExperience {
     name: string;
@@ -33,22 +32,92 @@ export type PlayersPageData =
       };
 
 export default function PlayersPage({ pageData }: { pageData: PlayersPageData }) {
-    return (
-        <div className="flex min-h-screen justify-center px-4 py-10">
-            <div className="max-w-4xl flex-1 rounded-xl bg-white/70 p-4 pb-6 shadow-xl">
-                <div className="flex w-full justify-between gap-4">
-                    <PlayersPageSwitchModeButtons />
-                    <Button className="flex min-w-48 items-center justify-between gap-6" variant={"outline"}>
-                        <span className="font-light text-neutral-400">Search for a player</span>
-                        <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
-                    </Button>
-                </div>
-                {pageData.sortMode === PlayersPageSortModeEnum.Experience ? (
-                    <PlayersPageContentSortByExperience data={pageData.data} />
-                ) : (
-                    <PlayersPageContentSortByRecords data={pageData.data} />
-                )}
-            </div>
-        </div>
-    );
+    const firstThreeScores = pageData.data.slice(0, 3);
+    const otherScores = pageData.data.slice(3);
+    const rows =
+        pageData.sortMode === PlayersPageSortModeEnum.Experience
+            ? otherScores.map((player, i) => {
+                  const p = player as IPlayerCardDataExperience;
+                  return (
+                      <PlayerRow
+                          key={i}
+                          PlayerRowContentSection={
+                              <div>
+                                  <p className="text-sm text-neutral-600">
+                                      Level <span className="font-bold text-neutral-950">{p.level}</span>
+                                  </p>
+                              </div>
+                          }
+                          playerData={player}
+                      />
+                  );
+              })
+            : otherScores.map((player, i) => {
+                  const p = player as IPlayerCardDataRecords;
+                  return (
+                      <PlayerRow
+                          key={i}
+                          PlayerRowContentSection={
+                              <div>
+                                  <p className="text-sm text-neutral-600">
+                                      <span className="font-bold text-neutral-950">{p.recordsCount}</span> records
+                                  </p>
+                              </div>
+                          }
+                          playerData={player}
+                      />
+                  );
+              });
+
+    const cards =
+        pageData.sortMode === PlayersPageSortModeEnum.Experience
+            ? firstThreeScores.map((player, i) => {
+                  const p = player as IPlayerCardDataExperience;
+                  return (
+                      <PlayerCard
+                          key={i}
+                          playerData={p}
+                          PlayerCardContentSection={
+                              <div className="h-[2rem] space-y-1">
+                                  <div className="flex items-center justify-between text-sm font-medium text-neutral-600">
+                                      <p>
+                                          Level <span className="text-neutral-950">{player.level}</span>
+                                      </p>
+                                      <p className="text-xs font-normal">
+                                          {p.experience} / {p.experienceNeededForNextLevel} xp
+                                      </p>
+                                  </div>
+                                  <div className="h-2 rounded bg-neutral-100">
+                                      <div
+                                          className="bg-primary-500 h-2 rounded"
+                                          style={{
+                                              width: `${((p.experience / p.experienceNeededForNextLevel) * 100).toFixed(5)}%`,
+                                          }}
+                                      ></div>
+                                  </div>
+                              </div>
+                          }
+                      />
+                  );
+              })
+            : firstThreeScores.map((player, i) => {
+                  const p = player as IPlayerCardDataRecords;
+                  return (
+                      <PlayerCard
+                          key={i}
+                          playerData={p}
+                          PlayerCardContentSection={
+                              <div className="h-[2rem] space-y-1">
+                                  <div className="flex items-center justify-center text-sm font-medium text-neutral-600">
+                                      <p>
+                                          <span className="text-neutral-950">{p.recordsCount}</span> records
+                                      </p>
+                                  </div>
+                              </div>
+                          }
+                      />
+                  );
+              });
+
+    return <RecordsListLayout Selectors={<PlayersPageSwitchModeButtons />} Rows={rows} Cards={cards} />;
 }
