@@ -10,7 +10,7 @@ export default function SupportPage() {
             <p className="mt-2 text-sm font-medium">
                 First of all, thank you so much for considering ways to support me and the project.
             </p>
-            <h2 className="mt-10 text-xl font-semibold">Donations</h2>
+            <h2 className="mt-10 text-xl font-semibold">1. Donations</h2>
             <p className="mt-2">
                 If you want to support the project financially, you can do so by <strong>donating to the project</strong>.
             </p>
@@ -19,7 +19,7 @@ export default function SupportPage() {
                 <SiPaypal className="fill-white" />
                 <span>Donate to BirdBot</span>
             </Link>
-            <h2 className="mt-10 text-xl font-semibold">Join the Discord server</h2>
+            <h2 className="mt-10 text-xl font-semibold">2. Join the Discord server</h2>
             <p className="mt-2">
                 A simple thing you can do to support BirdBot is to <strong>join our Discord server</strong>.
             </p>
@@ -30,7 +30,7 @@ export default function SupportPage() {
                 <SiDiscord className="fill-white" />
                 <span>Join us on Discord</span>
             </Link>
-            <h2 className="mt-10 text-xl font-semibold">Star us on GitHub</h2>
+            <h2 className="mt-10 text-xl font-semibold">3. Star us on GitHub</h2>
             <p className="mt-2">
                 If you like BirdBot, you can <strong>star the repository on GitHub</strong>.
             </p>

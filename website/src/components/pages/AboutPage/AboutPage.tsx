@@ -13,7 +13,7 @@ export default function AboutPage() {
                 <strong>BirdBot is an automated player that plays BombParty.</strong>
             </p>
             <p className="mt-4">While it looks like pointless cheating, playing against BirdBot has several advantages.</p>
-            <ul className="mt-4 list-disc space-y-2 md:ml-4">
+            <ul className="mt-4 ml-4 list-disc space-y-2">
                 <li>
                     First of all, playing against BirdBot is a great way to <strong>practice your skills</strong>. BirdBot will
                     never lose, so you can <strong>focus on your own gameplay</strong>.
