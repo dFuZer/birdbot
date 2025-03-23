@@ -7,7 +7,7 @@ const sampleRecordCardData: IScoreData = {
     name: "This name can be really long and it should be truncated",
     rank: 1,
     level: 12,
-    score: 45,
+    score: 1000 * 60 * 60 * 2 + 1000 * 60 * 3 + 1000 * 45,
 };
 
 const recordSampleData: IScoreData[] = Array.from({ length: 10 })
