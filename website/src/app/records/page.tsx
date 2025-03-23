@@ -2,6 +2,12 @@ import RecordsPage, { IScoreData } from "@/components/pages/RecordsPage/RecordsP
 import { isValidGameMode, isValidLanguage, isValidRecord } from "@/lib/searchParamUtils";
 import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
 import { TSearchParams } from "@/types";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Records",
+    description: "View the best scores achieved by players against BirdBot.",
+};
 
 const sampleRecordCardData: IScoreData = {
     name: "This name can be really long and it should be truncated",

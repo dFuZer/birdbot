@@ -1,6 +1,12 @@
 import PlayersPage, { IPlayerCardDataExperience, IPlayerCardDataRecords } from "@/components/pages/PlayersPage/PlayersPage";
 import { isValidPlayersPageSortParam } from "@/lib/searchParamUtils";
 import { PlayersPageSortModeEnum, TSearchParams } from "@/types";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Players",
+    description: "View the most experienced players and their records.",
+};
 
 const samplePlayerCardDataExperience: IPlayerCardDataExperience = {
     experience: 100,

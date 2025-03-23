@@ -1,5 +1,11 @@
 import PlayPage, { IPlayPageData, IRoom } from "@/components/pages/PlayPage/PlayPage";
 import { LanguagesEnum } from "@/records";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+    title: "Play",
+    description: "Play against BirdBot in one of the available rooms.",
+};
 
 const sampleRoom: IRoom = {
     roomName: "Room Name",
