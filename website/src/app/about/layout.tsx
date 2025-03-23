@@ -2,7 +2,10 @@ import AboutLayout from "@/components/pages/AboutPage/AboutLayout";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "About",
+    title: {
+        template: "%s | BirdBot",
+        default: "BirdBot",
+    },
     description: "Learn more about BirdBot.",
 };
 
