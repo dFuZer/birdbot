@@ -1,4 +1,6 @@
 export const DISCORD_SERVER_LINK = "/";
+export const GITHUB_REPO_LINK = "/";
+export const PAYPAL_DONATE_LINK = "/";
 
 interface ILink {
     href: string;

@@ -1,5 +1,5 @@
 import { buttonVariants } from "@/components/ui/button";
-import { DISCORD_SERVER_LINK } from "@/constants";
+import { DISCORD_SERVER_LINK, GITHUB_REPO_LINK, PAYPAL_DONATE_LINK } from "@/constants";
 import { SiDiscord, SiGithub, SiPaypal } from "@icons-pack/react-simple-icons";
 import Link from "next/link";
 
@@ -15,7 +15,7 @@ export default function SupportPage() {
                 If you want to support the project financially, you can do so by <strong>donating to the project</strong>.
             </p>
             <p className="mt-1 text-xs text-neutral-600">This helps me cover the server costs of the project.</p>
-            <Link href={DISCORD_SERVER_LINK} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
+            <Link href={PAYPAL_DONATE_LINK} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
                 <SiPaypal className="fill-white" />
                 <span>Donate to BirdBot</span>
             </Link>
@@ -37,7 +37,7 @@ export default function SupportPage() {
             <p className="mt-1 text-xs text-neutral-600">
                 Similar to joining the Discord server, this gives the project more credibility.
             </p>
-            <Link href={""} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
+            <Link href={GITHUB_REPO_LINK} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
                 <SiGithub className="fill-white" />
                 <span>Star us on GitHub</span>
             </Link>
