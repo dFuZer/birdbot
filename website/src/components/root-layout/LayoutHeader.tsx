@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { katibehFont } from "@/app/fonts";
-import BirdBotLogo from "~/public/icon.svg";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
-import { LINKS } from "@/lib/constants";
+import { LINKS } from "@/constants";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import BirdBotLogo from "~/public/icon.svg";
 import ChangeLanguageButton from "./ChangeLanguageButton";
 import MobileHeader from "./MobileHeader";
 

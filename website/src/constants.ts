@@ -15,6 +15,7 @@ export const ABOUT_LINKS: ILink = {
         { href: "/about/faq", label: "FAQ" },
         { href: "/about/commands", label: "Commands" },
         { href: "/about/support", label: "Support us" },
+        { href: "/about/history", label: "History" },
     ],
 };
 

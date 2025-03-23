@@ -1,11 +1,11 @@
-import { Button } from "@/components/ui/button";
 import { katibehFont } from "@/app/fonts";
+import { Button } from "@/components/ui/button";
+import { DISCORD_SERVER_LINK } from "@/constants";
+import { SiDiscord } from "@icons-pack/react-simple-icons";
+import Link from "next/link";
 import LandingBird from "~/public/landingBird.svg";
-import DiscordIcon from "~/public/discordIcon.svg";
 import LandingInstructionsSection from "./LandingInstructionsSection";
 import LandingPageFeaturesSection from "./LandingPageFeaturesSection";
-import Link from "next/link";
-import { DISCORD_SERVER_LINK } from "@/lib/constants";
 
 export default function LandingPage() {
     return (
@@ -27,7 +27,7 @@ export default function LandingPage() {
                         </Link>
                         <Link href={DISCORD_SERVER_LINK}>
                             <Button variant="primary-outline">
-                                <DiscordIcon className="fill-primary-700" />
+                                <SiDiscord className="fill-primary-700" />
                                 <span>Join us on Discord</span>
                             </Button>
                         </Link>
@@ -49,7 +49,7 @@ export default function LandingPage() {
                     </Link>
                     <Link href={DISCORD_SERVER_LINK}>
                         <Button variant="primary-outline">
-                            <DiscordIcon className="fill-primary-700" />
+                            <SiDiscord className="fill-primary-700" />
                             <span>Join us on Discord</span>
                         </Button>
                     </Link>
