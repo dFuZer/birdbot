@@ -12,6 +12,7 @@ export enum GameModesEnum {
     EASY = "easy",
     SUB500 = "sub500",
     SUB50 = "sub50",
+    FREEPLAY = "freeplay",
 }
 
 export enum LanguagesEnum {
@@ -47,6 +48,7 @@ export const GAME_MODES_DATA: { [key in GameModesEnum]: IGameModeData } = {
     easy: { displayName: "Easy" },
     sub500: { displayName: "Sub 500" },
     sub50: { displayName: "Sub 50" },
+    freeplay: { displayName: "Freeplay" },
 };
 
 export const LANGUAGES_DATA: { [key in LanguagesEnum]: ILanguageData } = {
