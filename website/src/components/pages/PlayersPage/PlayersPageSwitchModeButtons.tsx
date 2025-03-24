@@ -24,9 +24,9 @@ export default function PlayersPageSwitchModeButtons() {
     }
 
     return (
-        <div className="flex gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:flex">
             <Button
-                className="transition-colors duration-250"
+                className={`!px-8 transition-colors duration-250 ${currentSortMode === PlayersPageSortModeEnum.Experience ? "" : "bg-neutral-50"}`}
                 variant={currentSortMode === PlayersPageSortModeEnum.Experience ? "primary" : "ghost"}
                 onClick={() => onChangeMode(PlayersPageSortModeEnum.Experience)}
             >
@@ -38,7 +38,7 @@ export default function PlayersPageSwitchModeButtons() {
                 Experience
             </Button>
             <Button
-                className="transition-colors duration-250"
+                className={`!px-8 transition-colors duration-250 ${currentSortMode === PlayersPageSortModeEnum.Records ? "" : "bg-neutral-50"}`}
                 variant={currentSortMode === PlayersPageSortModeEnum.Records ? "primary" : "ghost"}
                 onClick={() => onChangeMode(PlayersPageSortModeEnum.Records)}
             >

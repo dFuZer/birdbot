@@ -34,42 +34,51 @@ export default function RecordsPageSelectors({ language, mode, record }: Records
 
     return (
         <>
-            <Select value={language} onValueChange={onChangeLanguage}>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                    {Object.entries(LANGUAGES_DATA).map(([key, value]) => (
-                        <SelectItem key={key} value={key}>
-                            {value.displayName}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Select value={mode} onValueChange={onChangeMode}>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select mode" />
-                </SelectTrigger>
-                <SelectContent>
-                    {Object.entries(GAME_MODES_DATA).map(([key, value]) => (
-                        <SelectItem key={key} value={key}>
-                            {value.displayName}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Select value={record} onValueChange={onChangeRecord}>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select record" />
-                </SelectTrigger>
-                <SelectContent>
-                    {Object.entries(RECORDS_DATA).map(([key, value]) => (
-                        <SelectItem key={key} value={key}>
-                            {value.displayName}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <div>
+                <p className="mb-1 text-sm font-medium">Language</p>
+                <Select value={language} onValueChange={onChangeLanguage}>
+                    <SelectTrigger className="w-full md:w-[12rem]">
+                        <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Object.entries(LANGUAGES_DATA).map(([key, value]) => (
+                            <SelectItem key={key} value={key}>
+                                {value.displayName}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div>
+                <p className="mb-1 text-sm font-medium">Mode</p>
+                <Select value={mode} onValueChange={onChangeMode}>
+                    <SelectTrigger className="w-full md:w-[12rem]">
+                        <SelectValue placeholder="Select mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Object.entries(GAME_MODES_DATA).map(([key, value]) => (
+                            <SelectItem key={key} value={key}>
+                                {value.displayName}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+            <div>
+                <p className="mb-1 text-sm font-medium">Record</p>
+                <Select value={record} onValueChange={onChangeRecord}>
+                    <SelectTrigger className="w-full md:w-[12rem]">
+                        <SelectValue placeholder="Select record" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {Object.entries(RECORDS_DATA).map(([key, value]) => (
+                            <SelectItem key={key} value={key}>
+                                {value.displayName}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </>
     );
 }
