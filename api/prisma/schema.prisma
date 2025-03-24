@@ -45,6 +45,7 @@ model Player {
     id         String   @id @default(uuid()) @db.Uuid
     created_at DateTime @default(now())
 
+    auth_nickname String @db.VarChar(50)
     auth_provider String @db.VarChar(50)
     auth_id       String @db.VarChar(50)
 
