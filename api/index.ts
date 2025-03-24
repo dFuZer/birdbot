@@ -1,6 +1,7 @@
 import Fastify from "fastify";
-import { addWordRouteHandler } from "./routes/addWord.route";
 import { authMiddleware } from "./middleware/auth";
+import { addPlayerRouteHandler } from "./routes/addPlayer.route";
+import { addWordRouteHandler } from "./routes/addWord.route";
 
 const app = Fastify();
 
@@ -9,6 +10,7 @@ app.addHook("preHandler", authMiddleware);
 
 // API Routes
 app.post("/add-word", addWordRouteHandler);
+app.post("/add-player", addPlayerRouteHandler);
 
 // Start the API
 app.listen({ port: 4000 }, (err) => {
