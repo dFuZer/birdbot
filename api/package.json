@@ -3,7 +3,8 @@
     "module": "index.ts",
     "type": "module",
     "scripts": {
-        "start": "bun run index.ts"
+        "start": "bun run index.ts",
+        "seed": "bun run scripts/seed.ts"
     },
     "devDependencies": {
         "@types/bun": "^1.2.0"
