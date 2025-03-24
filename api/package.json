@@ -9,11 +9,12 @@
         "@types/bun": "^1.2.0"
     },
     "peerDependencies": {
-        "typescript": "^5.0.0"
+        "typescript": "^5.8.2"
     },
     "dependencies": {
-        "@prisma/client": "6.3.1",
+        "@prisma/client": "^6.5.0",
         "fastify": "^5.2.1",
+        "prisma": "^6.5.0",
         "zod": "^3.24.1"
     }
 }
