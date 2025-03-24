@@ -1,7 +1,7 @@
 import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
 import OptionalImage from "@/components/ui/OptionalAvatar";
 import { getTrophyGraphicByRank } from "@/components/ui/TrophyGraphic";
-import getPlaceStringFromRank from "@/lib/getPlaceStringFromRank";
+import getPlaceStringFromRank from "@/lib/stringGenerators";
 
 export default function PlayerCard<T extends IPlayerScoreCommonProps>({
     playerData,

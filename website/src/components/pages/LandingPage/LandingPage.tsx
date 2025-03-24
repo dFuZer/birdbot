@@ -1,6 +1,6 @@
 import { katibehFont } from "@/app/fonts";
 import { Button } from "@/components/ui/button";
-import { DISCORD_SERVER_LINK } from "@/constants";
+import { DISCORD_SERVER_LINK } from "@/lib/links";
 import { SiDiscord } from "@icons-pack/react-simple-icons";
 import Link from "next/link";
 import LandingBird from "~/public/landingBird.svg";

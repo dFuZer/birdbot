@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/tailwindClasses";
+import { cn } from "@/lib/tailwindUtils";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as React from "react";

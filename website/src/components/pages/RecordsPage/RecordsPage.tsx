@@ -1,5 +1,5 @@
 import ScoreDisplayComponent from "@/components/pages/RecordsPage/RecordsPageScoreDisplayComponent";
-import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
+import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/lib/records";
 import PlayerCard from "../common/PlayerCard";
 import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";

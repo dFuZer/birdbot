@@ -1,6 +1,5 @@
 import PlayersPage, { IPlayerCardDataExperience, IPlayerCardDataRecords } from "@/components/pages/PlayersPage/PlayersPage";
-import { isValidPlayersPageSortParam } from "@/lib/searchParamUtils";
-import { PlayersPageSortModeEnum, TSearchParams } from "@/types";
+import { isValidPlayersPageSortParam, PlayersPageSortModeEnum, TSearchParams } from "@/lib/params";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

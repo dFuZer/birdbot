@@ -1,5 +1,5 @@
 import { katibehFont } from "@/app/fonts";
-import { ABOUT_LINKS, DISCORD_SERVER_LINK, LINKS } from "@/constants";
+import { ABOUT_LINKS, DISCORD_SERVER_LINK, LINKS } from "@/lib/links";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import FooterBlob from "~/public/footerBlob.svg";

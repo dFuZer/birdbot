@@ -1,4 +1,4 @@
-import { RecordsEnum } from "@/records";
+import { RecordsEnum } from "@/lib/records";
 
 function getTimeDisplayFromMilliseconds(milliseconds: number) {
     let seconds = Math.floor(milliseconds / 1000);

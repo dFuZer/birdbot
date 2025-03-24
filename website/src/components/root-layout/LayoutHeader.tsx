@@ -1,6 +1,6 @@
 import { katibehFont } from "@/app/fonts";
 import { Button } from "@/components/ui/button";
-import { LINKS } from "@/constants";
+import { LINKS } from "@/lib/links";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import BirdBotLogo from "~/public/icon.svg";

@@ -1,4 +1,4 @@
-import { DISCORD_SERVER_LINK } from "@/constants";
+import { DISCORD_SERVER_LINK } from "@/lib/links";
 import Link from "next/link";
 
 export default function HistoryPage() {

@@ -1,7 +1,6 @@
 import RecordsPage, { IScoreData } from "@/components/pages/RecordsPage/RecordsPage";
-import { isValidGameMode, isValidLanguage, isValidRecord } from "@/lib/searchParamUtils";
-import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/records";
-import { TSearchParams } from "@/types";
+import { isValidGameModeParam, isValidLanguageParam, isValidRecordParam, TSearchParams } from "@/lib/params";
+import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/lib/records";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -25,13 +24,13 @@ const recordSampleData: IScoreData[] = Array.from({ length: 10 })
 export default async function Page({ searchParams }: { searchParams: TSearchParams }) {
     const params = await searchParams;
     const languageParamValue = params.l;
-    const selectedLanguage = isValidLanguage(languageParamValue) ? languageParamValue : LanguagesEnum.ENGLISH;
+    const selectedLanguage = isValidLanguageParam(languageParamValue) ? languageParamValue : LanguagesEnum.ENGLISH;
 
     const modeParamValue = params.m;
-    const selectedMode = isValidGameMode(modeParamValue) ? modeParamValue : GameModesEnum.REGULAR;
+    const selectedMode = isValidGameModeParam(modeParamValue) ? modeParamValue : GameModesEnum.REGULAR;
 
     const recordParamValue = params.r;
-    const selectedRecord = isValidRecord(recordParamValue) ? recordParamValue : RecordsEnum.WORDS;
+    const selectedRecord = isValidRecordParam(recordParamValue) ? recordParamValue : RecordsEnum.WORDS;
 
     return <RecordsPage data={recordSampleData} language={selectedLanguage} mode={selectedMode} record={selectedRecord} />;
 }

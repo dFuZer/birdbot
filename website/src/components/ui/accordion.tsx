@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/tailwindClasses";
+import { cn } from "@/lib/tailwindUtils";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import * as React from "react";

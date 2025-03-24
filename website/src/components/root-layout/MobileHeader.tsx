@@ -3,7 +3,7 @@
 import { katibehFont } from "@/app/fonts";
 import ChangeLanguageButton from "@/components/root-layout/ChangeLanguageButton";
 import { Button } from "@/components/ui/button";
-import { LINKS } from "@/constants";
+import { LINKS } from "@/lib/links";
 import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { atom, useAtom } from "jotai";
 import Link from "next/link";

@@ -1,5 +1,5 @@
 import PlayPage, { IPlayPageData, IRoom } from "@/components/pages/PlayPage/PlayPage";
-import { LanguagesEnum } from "@/records";
+import { LanguagesEnum } from "@/lib/records";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

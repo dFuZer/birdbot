@@ -1,4 +1,4 @@
-import { cn } from "@/lib/tailwindClasses";
+import { cn } from "@/lib/tailwindUtils";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { PlayersPageSortModeEnum } from "@/types";
+import { PlayersPageSortModeEnum } from "@/lib/params";
 import { AcademicCapIcon as AcademicCapIconOutline, TrophyIcon as TrophyIconOutline } from "@heroicons/react/24/outline";
 import { AcademicCapIcon as AcademicCapIconSolid, TrophyIcon as TrophyIconSolid } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";

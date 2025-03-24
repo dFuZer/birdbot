@@ -1,6 +1,6 @@
 import { katibehFont } from "@/app/fonts";
 import { Button } from "@/components/ui/button";
-import { LanguagesEnum } from "@/records";
+import { LanguagesEnum } from "@/lib/records";
 import { ClockIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import FrenchFlag from "~/public/frenchFlag.svg";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GAME_MODES_DATA, GameModesEnum, LANGUAGES_DATA, LanguagesEnum, RECORDS_DATA, RecordsEnum } from "@/records";
+import { GAME_MODES_DATA, GameModesEnum, LANGUAGES_DATA, LanguagesEnum, RECORDS_DATA, RecordsEnum } from "@/lib/records";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type RecordsPageProps = {

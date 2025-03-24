@@ -1,4 +1,4 @@
-import { PlayersPageSortModeEnum } from "@/types";
+import { PlayersPageSortModeEnum } from "@/lib/params";
 import PlayerCard from "../common/PlayerCard";
 import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";

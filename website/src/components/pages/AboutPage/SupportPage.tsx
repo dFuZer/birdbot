@@ -1,5 +1,5 @@
 import { buttonVariants } from "@/components/ui/button";
-import { DISCORD_SERVER_LINK, GITHUB_REPO_LINK, PAYPAL_DONATE_LINK } from "@/constants";
+import { DISCORD_SERVER_LINK, GITHUB_REPO_LINK, PAYPAL_DONATE_LINK } from "@/lib/links";
 import { SiDiscord, SiGithub, SiPaypal } from "@icons-pack/react-simple-icons";
 import Link from "next/link";
 
