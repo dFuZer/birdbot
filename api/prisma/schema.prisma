@@ -4,37 +4,80 @@ generator client {
 
 datasource db {
     provider = "postgresql"
-    url      = env("DATABASE_URL")
+    url      = env("DB_URL")
+}
+
+enum Language {
+    FR
+    EN
+    DE
+    ES
+    BRPT
+
+    @@map("language")
+}
+
+enum GameMode {
+    REGULAR
+    EASY
+    BLITZ
+    SUB500
+    SUB50
+    FREEPLAY
+
+    @@map("game_mode")
+}
+
+model PlayerUsername {
+    id String @id @default(uuid()) @db.Uuid
+
+    username   String   @db.VarChar(50)
+    created_at DateTime @default(now())
+
+    player_id String @db.Uuid
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@map("player_username")
 }
 
 model Player {
-    id        String   @id @default(uuid()) @db.Uuid
-    createdAt DateTime @default(now())
-    nickname  String
+    id         String   @id @default(uuid()) @db.Uuid
+    created_at DateTime @default(now())
 
-    authNickname String
-    authProvider String
-    authId       String
+    auth_provider String @db.VarChar(50)
+    auth_id       String @db.VarChar(50)
 
-    words Word[]
+    words     Word[]
+    usernames PlayerUsername[]
+
+    @@map("player")
 }
 
 model Game {
-    id        String   @id @default(uuid()) @db.Uuid
-    createdAt DateTime @default(now())
+    id         String    @id @default(uuid()) @db.Uuid
+    started_at DateTime  @default(now())
+    ended_at   DateTime?
+
+    language Language
+    mode     GameMode
 
     words Word[]
+
+    @@map("game")
 }
 
 model Word {
-    id        String   @id @default(uuid()) @db.Uuid
-    createdAt DateTime @default(now())
-    word      String
-    playerId  String
-    gameId    String   @db.Uuid
+    id         String   @id @default(uuid()) @db.Uuid
+    created_at DateTime @default(now())
 
-    player Player @relation(fields: [playerId], references: [id])
-    game   Game   @relation(fields: [gameId], references: [id])
+    word String @db.VarChar(50)
 
-    @@map("PlacedWord")
+    player_id String @db.Uuid
+    game_id   String @db.Uuid
+
+    player Player @relation(fields: [player_id], references: [id])
+    game   Game   @relation(fields: [game_id], references: [id])
+
+    @@map("word")
 }
