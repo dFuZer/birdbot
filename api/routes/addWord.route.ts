@@ -1,10 +1,8 @@
-import { PrismaClient } from "@prisma/client";
 import { randomUUIDv7 } from "bun";
 import type { RouteHandlerMethod } from "fastify";
 import Logger from "../lib/logger";
+import prisma from "../prisma/client";
 import { addWordSchema } from "../schemas/word.zod";
-
-let prisma = new PrismaClient();
 
 export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
     let requestJson = req.body;

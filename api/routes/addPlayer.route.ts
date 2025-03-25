@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import type { RouteHandlerMethod } from "fastify";
 import Logger from "../lib/logger";
+import prisma from "../prisma/client";
 import { addPlayersSchema } from "../schemas/player.zod";
-
-let prisma = new PrismaClient();
 
 export let addPlayerRouteHandler: RouteHandlerMethod = async function (req, res) {
     let requestJson = req.body;
