@@ -48,11 +48,11 @@ export default class Logger {
         const { type, log: logData } = log;
         const color = type === "log" ? Logger.LOG_COLOR : type === "error" ? Logger.ERROR_COLOR : Logger.WARN_COLOR;
         const text = type === "log" ? Logger.LOG_TEXT : type === "error" ? Logger.ERROR_TEXT : Logger.WARN_TEXT;
-        console.info(`${color}${text} ${logData.message}\x1b[0m`);
+        console.info(`${color}${text} (${logData.path}) ${logData.message}\x1b[0m`);
 
         if (type === "error" && "error" in logData) {
             if (logData.errorType === "zod") {
-                console.error(logData.error.errors.map((error) => `(${error.code}: ${error.fatal ? "fatal" : "non-fatal"}) (${error.path.join(".")}): ${error.message}`).join(", "));
+                console.error(logData.error.errors.map((error) => `(${error.code}) (${error.path.join(".")}): ${error.message}`).join(", "));
             } else {
                 console.error(logData.error);
             }
