@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { playerSchema } from "./addPlayer.schema";
+import { gameSchema } from "./game.zod";
+import { playerSchema } from "./player.zod";
 
 let addWordSchema = z.object({
     player: playerSchema,
-    gameId: z.string().uuid(),
-    word: z.string().max(30),
+    game: gameSchema,
+    word: z.string().max(50),
     flip: z.boolean(),
     correct: z.boolean(),
     prompt: z.string().max(10),

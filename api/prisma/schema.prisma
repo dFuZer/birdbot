@@ -74,8 +74,11 @@ model Word {
 
     word String @db.VarChar(50)
 
-    player_id String @db.Uuid
-    game_id   String @db.Uuid
+    player_id String  @db.Uuid
+    game_id   String  @db.Uuid
+    flip      Boolean
+    correct   Boolean
+    prompt    Boolean
 
     player Player @relation(fields: [player_id], references: [id])
     game   Game   @relation(fields: [game_id], references: [id])
