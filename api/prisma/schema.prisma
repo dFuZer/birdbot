@@ -101,7 +101,7 @@ model Word {
     word    String  @db.VarChar(50)
     flip    Boolean
     correct Boolean
-    prompt  Boolean
+    prompt  String  @db.VarChar(10)
 
     player Player @relation(fields: [player_id], references: [id])
     game   Game   @relation(fields: [game_id], references: [id])
