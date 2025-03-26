@@ -1,42 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { GameMode, Language, PrismaClient } from "@prisma/client";
 import { randomUUIDv7 } from "bun";
-
-const exampleGames: Prisma.GameCreateInput[] = [
-    {
-        language: "FR",
-        mode: "REGULAR",
-    },
-    {
-        language: "EN",
-        mode: "BLITZ",
-    },
-    {
-        language: "ES",
-        mode: "FREEPLAY",
-    },
-    {
-        language: "DE",
-        mode: "REGULAR",
-    },
-];
-
-const examplePlayers: Prisma.PlayerCreateInput[] = [
-    {
-        auth_id: randomUUIDv7(),
-        auth_provider: "discord",
-        auth_nickname: "John Doe",
-    },
-    {
-        auth_id: randomUUIDv7(),
-        auth_provider: "twitter",
-        auth_nickname: "Jane Doe",
-    },
-    {
-        auth_id: randomUUIDv7(),
-        auth_provider: "google",
-        auth_nickname: "Bob Doe",
-    },
-];
 
 const exampleWords: string[] = [
     "apple",
@@ -63,21 +26,34 @@ const exampleWords: string[] = [
     "zucchini",
 ];
 
+let languageArray = Object.values(Language);
+let modeArray = Object.values(GameMode);
+
 async function seed() {
     let prisma = new PrismaClient();
     await prisma.$connect();
 
     let games = await prisma.game.createManyAndReturn({
-        data: exampleGames,
+        data: Array.from({ length: 90 }, () => {
+            let randomLanguage = languageArray[Math.floor(Math.random() * languageArray.length)];
+            let randomMode = modeArray[Math.floor(Math.random() * modeArray.length)];
+            return { language: randomLanguage, mode: randomMode };
+        }),
     });
 
     let players = await prisma.player.createManyAndReturn({
-        data: examplePlayers,
+        data: Array.from({ length: 30 }, () => {
+            return {
+                auth_id: randomUUIDv7(),
+                auth_provider: "discord",
+                auth_nickname: "John" + " " + Math.floor(Math.random() * 1000),
+            };
+        }),
     });
 
-    const randomNewUsernames = Array.from({ length: 100 }, () => {
+    const randomNewUsernames = Array.from({ length: 40 }, () => {
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
-        const randomUsername = randomPlayer.auth_nickname + " " + Math.floor(Math.random() * 1000000);
+        const randomUsername = randomPlayer.auth_nickname + " " + Math.floor(Math.random() * 1000);
 
         return {
             player_id: randomPlayer.id,
@@ -89,7 +65,7 @@ async function seed() {
         data: randomNewUsernames,
     });
 
-    const newWords = Array.from({ length: 100 }, () => {
+    const newWords = Array.from({ length: 500 }, () => {
         const randomGame = games[Math.floor(Math.random() * games.length)];
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
         const randomWord = exampleWords[Math.floor(Math.random() * exampleWords.length)];
@@ -107,15 +83,15 @@ async function seed() {
         data: newWords,
     });
 
-    const newGameRecaps = Array.from({ length: 100 })
+    const newGameRecaps = Array.from({ length: 30 * 90 })
         .map((x, i) => {
-            const player = players[i];
+            const player = players[Math.floor(Math.random() * players.length)];
             const game = games[i];
             if (!player || !game) return undefined;
             return {
                 player_id: player.id,
                 game_id: game.id,
-                died_at: new Date(),
+                died_at: new Date(game.started_at.getTime() + 1000 * 60 * 60 * Math.random()),
                 words_count: Math.floor(Math.random() * 500),
                 flips_count: Math.floor(Math.random() * 500),
                 depleted_syllables_count: Math.floor(Math.random() * 500),
