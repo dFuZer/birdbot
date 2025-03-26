@@ -6,6 +6,7 @@ import prisma from "../prisma/client";
 import { gameRecap } from "../schemas/game.zod";
 
 export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, res) {
+    Logger.log({ message: "-- addGameRecap route handler --", path: "addGameRecap.route.ts" });
     let requestJson = req.body;
     let parsed = gameRecap.safeParse(requestJson);
     if (!parsed.success) {
@@ -18,8 +19,10 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
         const [game, player] = await Promise.all([addGameIfNotExist(gameRecapData.game), addPlayerIfNotExist(gameRecapData.player)]);
         Logger.log({ message: `Inserting game recap: ${game.id}, ${player.id}`, path: "addGameRecap.route.ts" });
         await prisma.$executeRaw`
-            INSERT INTO game_recap (game_id,
+            INSERT INTO game_recap (id,
+            game_id,
             player_id,
+            died_at,
             words_count,
             flips_count,
             depleted_syllables_count,
@@ -29,8 +32,10 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             multi_syllables_count,
             hyphen_words_count,
             more_than_20_letters_words_count)
-            VALUES (${game.id}::UUID,
+            VALUES (gen_random_uuid(),
+            ${game.id}::UUID,
             ${player.id}::UUID,
+            ${new Date(gameRecapData.diedAt)},
             ${gameRecapData.wordsCount},
             ${gameRecapData.flipsCount},
             ${gameRecapData.depletedSyllablesCount},
@@ -41,6 +46,7 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             ${gameRecapData.hyphenWordsCount},
             ${gameRecapData.moreThan20LettersWordsCount})
         `;
+        return res.status(200).send({ message: "Game recap added successfully" });
     } catch (e) {
         Logger.error({ message: "Failed to add game recap", path: "addGameRecap.route.ts", errorType: "unknown", error: e });
         return res.status(500).send({ message: "Failed to add game recap" });

@@ -15,8 +15,7 @@ let gameRecap = z.object({
     player: playerSchema,
 
     // Non-listed records
-    startTimestamp: z.number(),
-    endTimestamp: z.number(),
+    diedAt: z.number(),
     wordsCount: z.number(),
     flipsCount: z.number(),
     depletedSyllablesCount: z.number(),

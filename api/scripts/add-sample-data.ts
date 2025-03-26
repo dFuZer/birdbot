@@ -93,16 +93,44 @@ async function seed() {
         const randomGame = games[Math.floor(Math.random() * games.length)];
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
         const randomWord = exampleWords[Math.floor(Math.random() * exampleWords.length)];
-
         return {
-            game_id: randomGame.id,
-            player_id: randomPlayer.id,
             word: randomWord,
+            flip: true,
+            correct: true,
+            prompt: "TEST",
+            player_id: randomPlayer.id,
+            game_id: randomGame.id,
         };
     });
 
     let words = await prisma.word.createMany({
         data: newWords,
+    });
+
+    const newGameRecaps = Array.from({ length: 100 })
+        .map((x, i) => {
+            const player = players[i];
+            const game = games[i];
+            if (!player || !game) return undefined;
+            return {
+                player_id: player.id,
+                game_id: game.id,
+                died_at: new Date(),
+                words_count: Math.floor(Math.random() * 500),
+                flips_count: Math.floor(Math.random() * 500),
+                depleted_syllables_count: Math.floor(Math.random() * 500),
+                alpha_count: Math.floor(Math.random() * 500),
+                words_without_death_count: Math.floor(Math.random() * 500),
+                previous_syllables_count: Math.floor(Math.random() * 500),
+                multi_syllables_count: Math.floor(Math.random() * 500),
+                hyphen_words_count: Math.floor(Math.random() * 500),
+                more_than_20_letters_words_count: Math.floor(Math.random() * 500),
+            };
+        })
+        .filter((x) => x !== undefined);
+
+    const gameRecaps = await prisma.gameRecap.createManyAndReturn({
+        data: newGameRecaps,
     });
 }
 

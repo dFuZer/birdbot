@@ -6,6 +6,7 @@ import prisma from "../prisma/client";
 import { addWordSchema } from "../schemas/word.zod";
 
 export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
+    Logger.log({ message: "-- addWord route handler --", path: "addWord.route.ts" });
     let requestJson = req.body;
     let parsed = addWordSchema.safeParse(requestJson);
     if (!parsed.success) {

@@ -75,6 +75,7 @@ model GameRecap {
     game_id   String @db.Uuid
     player_id String @db.Uuid
 
+    died_at                          DateTime
     words_count                      Int
     flips_count                      Int
     depleted_syllables_count         Int

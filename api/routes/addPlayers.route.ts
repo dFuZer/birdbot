@@ -4,6 +4,7 @@ import Logger from "../lib/logger";
 import { addPlayersSchema } from "../schemas/player.zod";
 
 export let addPlayersRouteHandler: RouteHandlerMethod = async function (req, res) {
+    Logger.log({ message: "-- addPlayers route handler --", path: "addPlayers.route.ts" });
     let requestJson = req.body;
     let parsed = addPlayersSchema.safeParse(requestJson);
 
