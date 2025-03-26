@@ -5,7 +5,7 @@ import Logger from "../lib/logger";
 import prisma from "../prisma/client";
 import { gameRecap } from "../schemas/game.zod";
 
-export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
+export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, res) {
     let requestJson = req.body;
     let parsed = gameRecap.safeParse(requestJson);
     if (!parsed.success) {
