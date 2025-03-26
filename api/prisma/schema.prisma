@@ -31,10 +31,10 @@ enum GameMode {
 model PlayerUsername {
     id String @id @default(uuid()) @db.Uuid
 
+    player_id String @db.Uuid
+
     username   String   @db.VarChar(50)
     created_at DateTime @default(now())
-
-    player_id String @db.Uuid
 
     player Player @relation(fields: [player_id], references: [id])
 
@@ -49,8 +49,9 @@ model Player {
     auth_provider String @db.VarChar(50)
     auth_id       String @db.VarChar(50)
 
-    words     Word[]
-    usernames PlayerUsername[]
+    words      Word[]
+    usernames  PlayerUsername[]
+    gameRecaps GameRecap[]
 
     @@map("player")
 }
@@ -60,25 +61,47 @@ model Game {
     started_at DateTime  @default(now())
     ended_at   DateTime?
 
-    language Language
-    mode     GameMode
-
-    words Word[]
+    language   Language
+    mode       GameMode
+    words      Word[]
+    gameRecaps GameRecap[]
 
     @@map("game")
+}
+
+model GameRecap {
+    id String @id @default(uuid()) @db.Uuid
+
+    game_id   String @db.Uuid
+    player_id String @db.Uuid
+
+    words_count                      Int
+    flips_count                      Int
+    depleted_syllables_count         Int
+    alpha_count                      Int
+    words_without_death_count        Int
+    previous_syllables_count         Int
+    multi_syllables_count            Int
+    hyphen_words_count               Int
+    more_than_20_letters_words_count Int
+
+    game   Game   @relation(fields: [game_id], references: [id])
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@map("game_recap")
 }
 
 model Word {
     id         String   @id @default(uuid()) @db.Uuid
     created_at DateTime @default(now())
 
-    word String @db.VarChar(50)
+    player_id String @db.Uuid
+    game_id   String @db.Uuid
 
-    player_id String  @db.Uuid
-    game_id   String  @db.Uuid
-    flip      Boolean
-    correct   Boolean
-    prompt    Boolean
+    word    String  @db.VarChar(50)
+    flip    Boolean
+    correct Boolean
+    prompt  Boolean
 
     player Player @relation(fields: [player_id], references: [id])
     game   Game   @relation(fields: [game_id], references: [id])
