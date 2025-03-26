@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { playerSchema } from "./player.zod";
-
-let languages = z.enum(["FR", "EN", "DE", "ES", "BRPT"]);
-let modes = z.enum(["REGULAR", "EASY", "BLITZ", "SUB500", "SUB50", "FREEPLAY"]);
+import { languages, modes } from "./records.zod";
 
 let gameSchema = z.object({
     id: z.string().max(50),
