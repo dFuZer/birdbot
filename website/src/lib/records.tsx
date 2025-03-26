@@ -1,9 +1,14 @@
-import { BookOpenIcon, ClockIcon } from "@heroicons/react/24/outline";
-import React from "react";
-
 export enum RecordsEnum {
     WORDS = "words",
     TIME = "time",
+    MULTI_SYLLABLE = "multi_syllable",
+    PREVIOUS_SYLLABLE = "previous_syllable",
+    FLIPS = "flips",
+    DEPLETED_SYLLABLES = "depleted_syllables",
+    NO_DEATH = "no_death",
+    ALPHA = "alpha",
+    HYPHEN = "hyphen",
+    MORE_THAN_20_LETTERS = "more_than_20_letters",
 }
 
 export enum GameModesEnum {
@@ -25,7 +30,6 @@ export enum LanguagesEnum {
 
 interface IRecordData {
     displayName: string;
-    getIcon: (classes: string) => React.ReactElement;
 }
 
 interface ILanguageData {
@@ -38,8 +42,16 @@ interface IGameModeData {
 }
 
 export const RECORDS_DATA: { [key in RecordsEnum]: IRecordData } = {
-    time: { displayName: "Time", getIcon: (classes) => <ClockIcon className={classes} /> },
-    words: { displayName: "Words", getIcon: (classes) => <BookOpenIcon className={classes} /> },
+    time: { displayName: "Time" },
+    words: { displayName: "Words" },
+    multi_syllable: { displayName: "Multi-syllable" },
+    previous_syllable: { displayName: "Previous syllable" },
+    flips: { displayName: "Flips" },
+    depleted_syllables: { displayName: "Depleted syllables" },
+    no_death: { displayName: "No death" },
+    alpha: { displayName: "Alpha" },
+    hyphen: { displayName: "Hyphen" },
+    more_than_20_letters: { displayName: "More than 20 letters" },
 };
 
 export const GAME_MODES_DATA: { [key in GameModesEnum]: IGameModeData } = {
