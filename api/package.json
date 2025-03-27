@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "start": "bun run index.ts",
-        "seed": "bun run scripts/add-sample-data.ts"
+        "sample": "bun run scripts/add-sample-data.ts",
+        "seed": "bun run scripts/seed.ts",
+        "reset-seed": "bunx prisma db push --force-reset && bun run seed && bun run sample "
     },
     "devDependencies": {
         "@types/bun": "^1.2.0"

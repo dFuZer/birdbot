@@ -29,20 +29,20 @@ const exampleWords: string[] = [
 let languageArray = Object.values(Language);
 let modeArray = Object.values(GameMode);
 
-async function seed() {
+async function add_sample() {
     let prisma = new PrismaClient();
     await prisma.$connect();
 
     let games = await prisma.game.createManyAndReturn({
-        data: Array.from({ length: 90 }, () => {
-            let randomLanguage = languageArray[Math.floor(Math.random() * languageArray.length)];
-            let randomMode = modeArray[Math.floor(Math.random() * modeArray.length)];
+        data: Array.from({ length: 400 }, () => {
+            const randomLanguage = languageArray[Math.floor(Math.random() * languageArray.length)];
+            const randomMode = modeArray[Math.floor(Math.random() * modeArray.length)];
             return { language: randomLanguage, mode: randomMode };
         }),
     });
 
     let players = await prisma.player.createManyAndReturn({
-        data: Array.from({ length: 30 }, () => {
+        data: Array.from({ length: 10 }, () => {
             return {
                 auth_id: randomUUIDv7(),
                 auth_provider: "discord",
@@ -60,7 +60,7 @@ async function seed() {
         }),
     });
 
-    const randomNewUsernames = Array.from({ length: 40 }, () => {
+    const randomNewUsernames = Array.from({ length: 50 }, () => {
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
         const randomUsername = randomPlayer.auth_nickname + " " + Math.floor(Math.random() * 1000);
 
@@ -92,11 +92,11 @@ async function seed() {
         data: newWords,
     });
 
-    const newGameRecaps = Array.from({ length: 30 * 90 })
+    const newGameRecaps = Array.from({ length: 400 })
         .map((x, i) => {
             const player = players[Math.floor(Math.random() * players.length)];
             const game = games[i];
-            if (!player || !game) return undefined;
+            if (!game) return undefined;
             return {
                 player_id: player.id,
                 game_id: game.id,
@@ -119,4 +119,4 @@ async function seed() {
     });
 }
 
-seed();
+await add_sample();
