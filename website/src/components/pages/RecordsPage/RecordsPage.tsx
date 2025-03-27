@@ -1,5 +1,5 @@
 import ScoreDisplayComponent from "@/components/pages/RecordsPage/RecordsPageScoreDisplayComponent";
-import { GameModesEnum, LanguagesEnum, RecordsEnum } from "@/lib/records";
+import { type LanguageEnum, type ModesEnum, type RecordsEnum } from "@/lib/records";
 import PlayerCard from "../common/PlayerCard";
 import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";
@@ -14,8 +14,8 @@ export interface IScoreData {
 }
 
 type RecordsPageProps = {
-    language: LanguagesEnum;
-    mode: GameModesEnum;
+    language: LanguageEnum;
+    mode: ModesEnum;
     record: RecordsEnum;
     data: IScoreData[];
 };

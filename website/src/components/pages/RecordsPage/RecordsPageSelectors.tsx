@@ -1,12 +1,19 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GAME_MODES_DATA, GameModesEnum, LANGUAGES_DATA, LanguagesEnum, RECORDS_DATA, RecordsEnum } from "@/lib/records";
+import {
+    GAME_MODES_DATA,
+    LANGUAGES_DATA,
+    RECORDS_DATA,
+    type LanguageEnum,
+    type ModesEnum,
+    type RecordsEnum,
+} from "@/lib/records";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type RecordsPageProps = {
-    language: LanguagesEnum;
-    mode: GameModesEnum;
+    language: LanguageEnum;
+    mode: ModesEnum;
     record: RecordsEnum;
 };
 
@@ -14,13 +21,13 @@ export default function RecordsPageSelectors({ language, mode, record }: Records
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    function onChangeLanguage(value: LanguagesEnum) {
+    function onChangeLanguage(value: LanguageEnum) {
         const currentMode = searchParams.get("m") || mode;
         const currentRecord = searchParams.get("r") || record;
         router.push(`/records?l=${value}&m=${currentMode}&r=${currentRecord}`);
     }
 
-    function onChangeMode(value: GameModesEnum) {
+    function onChangeMode(value: ModesEnum) {
         const currentLanguage = searchParams.get("l") || language;
         const currentRecord = searchParams.get("r") || record;
         router.push(`/records?l=${currentLanguage}&m=${value}&r=${currentRecord}`);

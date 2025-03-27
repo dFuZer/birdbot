@@ -1,32 +1,23 @@
-export enum RecordsEnum {
-    WORDS = "words",
-    TIME = "time",
-    MULTI_SYLLABLE = "multi_syllable",
-    PREVIOUS_SYLLABLE = "previous_syllable",
-    FLIPS = "flips",
-    DEPLETED_SYLLABLES = "depleted_syllables",
-    NO_DEATH = "no_death",
-    ALPHA = "alpha",
-    HYPHEN = "hyphen",
-    MORE_THAN_20_LETTERS = "more_than_20_letters",
-}
+import { z } from "zod";
 
-export enum GameModesEnum {
-    REGULAR = "regular",
-    BLITZ = "blitz",
-    EASY = "easy",
-    SUB500 = "sub500",
-    SUB50 = "sub50",
-    FREEPLAY = "freeplay",
-}
+export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
+export const modesEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
+export const recordsEnumSchema = z.enum([
+    "word",
+    "time",
+    "multi_syllable",
+    "previous_syllable",
+    "flips",
+    "depleted_syllables",
+    "no_death",
+    "alpha",
+    "hyphen",
+    "more_than_20_letters",
+]);
 
-export enum LanguagesEnum {
-    ENGLISH = "en",
-    FRENCH = "fr",
-    GERMAN = "de",
-    BRPT = "brpt",
-    SPANISH = "es",
-}
+export type LanguageEnum = z.infer<typeof languageEnumSchema>;
+export type ModesEnum = z.infer<typeof modesEnumSchema>;
+export type RecordsEnum = z.infer<typeof recordsEnumSchema>;
 
 interface IRecordData {
     displayName: string;
@@ -43,7 +34,7 @@ interface IGameModeData {
 
 export const RECORDS_DATA: { [key in RecordsEnum]: IRecordData } = {
     time: { displayName: "Time" },
-    words: { displayName: "Words" },
+    word: { displayName: "Words" },
     multi_syllable: { displayName: "Multi-syllable" },
     previous_syllable: { displayName: "Previous syllable" },
     flips: { displayName: "Flips" },
@@ -54,7 +45,7 @@ export const RECORDS_DATA: { [key in RecordsEnum]: IRecordData } = {
     more_than_20_letters: { displayName: "More than 20 letters" },
 };
 
-export const GAME_MODES_DATA: { [key in GameModesEnum]: IGameModeData } = {
+export const GAME_MODES_DATA: { [key in ModesEnum]: IGameModeData } = {
     regular: { displayName: "Regular" },
     blitz: { displayName: "Blitz" },
     easy: { displayName: "Easy" },
@@ -63,7 +54,7 @@ export const GAME_MODES_DATA: { [key in GameModesEnum]: IGameModeData } = {
     freeplay: { displayName: "Freeplay" },
 };
 
-export const LANGUAGES_DATA: { [key in LanguagesEnum]: ILanguageData } = {
+export const LANGUAGES_DATA: { [key in LanguageEnum]: ILanguageData } = {
     en: { displayName: "English", shortDisplayName: "EN" },
     fr: { displayName: "French", shortDisplayName: "FR" },
     de: { displayName: "German", shortDisplayName: "DE" },

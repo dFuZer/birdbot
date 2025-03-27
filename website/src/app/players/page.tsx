@@ -1,5 +1,6 @@
 import PlayersPage, { IPlayerCardDataExperience, IPlayerCardDataRecords } from "@/components/pages/PlayersPage/PlayersPage";
-import { isValidPlayersPageSortParam, PlayersPageSortModeEnum, TSearchParams } from "@/lib/params";
+import { TSearchParams } from "@/lib/params";
+import { isValidPlayersPageSortParam, sortModeEnumSchema } from "@/lib/validation";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ const samplePlayersDataExperience: IPlayerCardDataExperience[] = Array.from({ le
     rank: i + 1,
 }));
 const samplePageDataExperience = {
-    sortMode: PlayersPageSortModeEnum.Experience as PlayersPageSortModeEnum.Experience,
+    sortMode: sortModeEnumSchema.Values.experience,
     data: samplePlayersDataExperience,
 };
 
@@ -38,7 +39,7 @@ const samplePlayersDataRecords: IPlayerCardDataRecords[] = Array.from({ length: 
     rank: i + 1,
 }));
 const samplePageDataRecords = {
-    sortMode: PlayersPageSortModeEnum.Records as PlayersPageSortModeEnum.Records,
+    sortMode: sortModeEnumSchema.Values.records,
     data: samplePlayersDataRecords,
 };
 
@@ -46,9 +47,9 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
     const sortSearchParamValue = (await searchParams).sort;
     const sortMode = isValidPlayersPageSortParam(sortSearchParamValue)
         ? sortSearchParamValue
-        : PlayersPageSortModeEnum.Experience;
+        : sortModeEnumSchema.Values.experience;
 
-    const pageData = sortMode === PlayersPageSortModeEnum.Experience ? samplePageDataExperience : samplePageDataRecords;
+    const pageData = sortMode === sortModeEnumSchema.Values.experience ? samplePageDataExperience : samplePageDataRecords;
 
     return <PlayersPage pageData={pageData} />;
 }

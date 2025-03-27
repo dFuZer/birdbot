@@ -1,4 +1,4 @@
-import { RecordsEnum } from "@/lib/records";
+import { RecordsEnum, recordsEnumSchema } from "@/lib/records";
 
 function getTimeDisplayFromMilliseconds(milliseconds: number) {
     let seconds = Math.floor(milliseconds / 1000);
@@ -25,30 +25,30 @@ type ScoreDisplayProps = {
 };
 
 export default function ScoreDisplayComponent({ score, recordType }: ScoreDisplayProps) {
-    if (recordType === RecordsEnum.TIME) {
+    if (recordType === recordsEnumSchema.Values.time) {
         return <div>{getTimeDisplayFromMilliseconds(score)}</div>;
     }
     if (
         [
-            RecordsEnum.WORDS,
-            RecordsEnum.HYPHEN,
-            RecordsEnum.MORE_THAN_20_LETTERS,
-            RecordsEnum.PREVIOUS_SYLLABLE,
-            RecordsEnum.NO_DEATH,
+            recordsEnumSchema.Values.word as string,
+            recordsEnumSchema.Values.hyphen,
+            recordsEnumSchema.Values.more_than_20_letters,
+            recordsEnumSchema.Values.previous_syllable,
+            recordsEnumSchema.Values.no_death,
         ].includes(recordType)
     ) {
         return <div>{score} words</div>;
     }
-    if ([RecordsEnum.DEPLETED_SYLLABLES].includes(recordType)) {
+    if ([recordsEnumSchema.Values.depleted_syllables as string].includes(recordType)) {
         return <div>{score} syllables</div>;
     }
-    if ([RecordsEnum.HYPHEN, RecordsEnum.MORE_THAN_20_LETTERS].includes(recordType)) {
+    if ([recordsEnumSchema.Values.hyphen as string, recordsEnumSchema.Values.more_than_20_letters].includes(recordType)) {
         return <div>{score} letters</div>;
     }
-    if (RecordsEnum.ALPHA === recordType) {
+    if (recordsEnumSchema.Values.alpha === recordType) {
         return <div>{getAlphaDisplay(score)}</div>;
     }
-    if (RecordsEnum.FLIPS === recordType) {
+    if (recordsEnumSchema.Values.flips === recordType) {
         return <div>{score} flips</div>;
     }
     return <div>{score} points</div>;

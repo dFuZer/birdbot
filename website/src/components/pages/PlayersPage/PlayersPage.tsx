@@ -1,4 +1,4 @@
-import { PlayersPageSortModeEnum } from "@/lib/params";
+import { sortModeEnumSchema } from "@/lib/validation";
 import PlayerCard from "../common/PlayerCard";
 import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";
@@ -23,11 +23,11 @@ export interface IPlayerCardDataRecords {
 
 export type PlayersPageData =
     | {
-          sortMode: PlayersPageSortModeEnum.Experience;
+          sortMode: "experience";
           data: IPlayerCardDataExperience[];
       }
     | {
-          sortMode: PlayersPageSortModeEnum.Records;
+          sortMode: "records";
           data: IPlayerCardDataRecords[];
       };
 
@@ -35,7 +35,7 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
     const firstThreeScores = pageData.data.slice(0, 3);
     const otherScores = pageData.data.slice(3);
 
-    if (pageData.sortMode === PlayersPageSortModeEnum.Experience) {
+    if (pageData.sortMode === sortModeEnumSchema.Values.experience) {
         const rows = otherScores.map((player, i) => {
             const p = player as IPlayerCardDataExperience;
             return (

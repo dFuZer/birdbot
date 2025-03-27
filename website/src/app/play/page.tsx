@@ -1,5 +1,5 @@
 import PlayPage, { IPlayPageData, IRoom } from "@/components/pages/PlayPage/PlayPage";
-import { LanguagesEnum } from "@/lib/records";
+import { languageEnumSchema } from "@/lib/records";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ const sampleRoom: IRoom = {
     playerCount: 2,
     currentGameDuration: 10,
     roomCode: "123456",
-    language: LanguagesEnum.ENGLISH,
+    language: languageEnumSchema.Values.en,
 };
 
 const sampleRooms: IRoom[] = Array.from({ length: 10 }, (_, i) => ({

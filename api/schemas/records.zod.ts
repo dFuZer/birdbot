@@ -1,20 +1,20 @@
 import { z } from "zod";
 import { numericString } from "./common.zod";
 
-let languages = z.enum(["FR", "EN", "DE", "ES", "BRPT"]);
-let modes = z.enum(["REGULAR", "EASY", "BLITZ", "SUB500", "SUB50", "FREEPLAY"]);
-let records = z.enum(["WORD", "TIME", "MULTI_SYLLABLE", "PREVIOUS_SYLLABLE", "FLIPS", "DEPLETED_SYLLABLES", "NO_DEATH", "ALPHA", "HYPHEN", "MORE_THAN_20_LETTERS"]);
+const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
+const modesEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
+const recordsEnumSchema = z.enum(["word", "time", "multi_syllable", "previous_syllable", "flips", "depleted_syllables", "no_death", "alpha", "hyphen", "more_than_20_letters"]);
 
-type TLanguage = z.infer<typeof languages>;
-type TMode = z.infer<typeof modes>;
-type TRecord = z.infer<typeof records>;
+type TLanguage = z.infer<typeof languageEnumSchema>;
+type TMode = z.infer<typeof modesEnumSchema>;
+type TRecord = z.infer<typeof recordsEnumSchema>;
 
 let getRecords = z.object({
-    lang: languages,
-    mode: modes,
-    record: records,
+    lang: languageEnumSchema,
+    mode: modesEnumSchema,
+    record: recordsEnumSchema,
     page: numericString,
     perPage: numericString,
 });
 
-export { getRecords, languages, modes, records, type TLanguage, type TMode, type TRecord };
+export { getRecords, languageEnumSchema, modesEnumSchema, recordsEnumSchema, type TLanguage, type TMode, type TRecord };

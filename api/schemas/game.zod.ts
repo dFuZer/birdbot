@@ -1,11 +1,11 @@
 import { z } from "zod";
 import { playerSchema } from "./player.zod";
-import { languages, modes } from "./records.zod";
+import { languageEnumSchema, modesEnumSchema } from "./records.zod";
 
 let gameSchema = z.object({
     id: z.string().max(50),
-    lang: languages,
-    mode: modes,
+    lang: languageEnumSchema,
+    mode: modesEnumSchema,
 });
 
 let gameRecap = z.object({
