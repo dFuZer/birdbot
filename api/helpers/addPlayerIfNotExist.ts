@@ -36,6 +36,10 @@ export default async function addPlayerIfNotExist(player: z.infer<typeof playerS
             INSERT INTO player (id, auth_nickname, auth_provider, auth_id)
             VALUES (${newId}::UUID, ${player.authNickname}, ${player.authProvider}, ${player.authId})
         `;
+        await prisma.$executeRaw`
+        INSERT INTO player_username (id, player_id, username)
+            VALUES (gen_random_uuid(), ${newId}::UUID, ${player.nickname})
+        `;
         playerAdded = true;
         playerId = newId;
     }

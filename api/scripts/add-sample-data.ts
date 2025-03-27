@@ -51,6 +51,15 @@ async function seed() {
         }),
     });
 
+    let fixedPlayersUsernames = await prisma.playerUsername.createMany({
+        data: players.map((player) => {
+            return {
+                player_id: player.id,
+                username: player.auth_nickname + " " + Math.floor(Math.random() * 1000),
+            };
+        }),
+    });
+
     const randomNewUsernames = Array.from({ length: 40 }, () => {
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
         const randomUsername = randomPlayer.auth_nickname + " " + Math.floor(Math.random() * 1000);
