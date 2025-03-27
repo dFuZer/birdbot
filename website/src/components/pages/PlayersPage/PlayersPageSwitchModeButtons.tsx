@@ -24,7 +24,7 @@ export default function PlayersPageSwitchModeButtons() {
     }
 
     return (
-        <div className="grid grid-cols-1 gap-3 sm:flex">
+        <div className="grid grid-cols-2 gap-3 sm:flex">
             <Button
                 className={`!px-8 transition-colors duration-250 ${currentSortMode === sortModeEnumSchema.Values.experience ? "" : "bg-neutral-50"}`}
                 variant={currentSortMode === sortModeEnumSchema.Values.experience ? "primary" : "ghost"}

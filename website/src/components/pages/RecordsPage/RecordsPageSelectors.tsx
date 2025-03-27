@@ -44,7 +44,7 @@ export default function RecordsPageSelectors({ language, mode, record }: Records
             <div>
                 <p className="mb-1 text-sm font-medium">Language</p>
                 <Select value={language} onValueChange={onChangeLanguage}>
-                    <SelectTrigger className="w-full md:w-[12rem]">
+                    <SelectTrigger className="w-full bg-white md:w-[12rem]">
                         <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
@@ -59,7 +59,7 @@ export default function RecordsPageSelectors({ language, mode, record }: Records
             <div>
                 <p className="mb-1 text-sm font-medium">Mode</p>
                 <Select value={mode} onValueChange={onChangeMode}>
-                    <SelectTrigger className="w-full md:w-[12rem]">
+                    <SelectTrigger className="w-full bg-white md:w-[12rem]">
                         <SelectValue placeholder="Select mode" />
                     </SelectTrigger>
                     <SelectContent>
@@ -74,7 +74,7 @@ export default function RecordsPageSelectors({ language, mode, record }: Records
             <div>
                 <p className="mb-1 text-sm font-medium">Record</p>
                 <Select value={record} onValueChange={onChangeRecord}>
-                    <SelectTrigger className="w-full md:w-[12rem]">
+                    <SelectTrigger className="w-full bg-white md:w-[12rem]">
                         <SelectValue placeholder="Select record" />
                     </SelectTrigger>
                     <SelectContent>
