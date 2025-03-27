@@ -3,6 +3,7 @@ import type { ZodError } from "zod";
 type Log = {
     message: string;
     path: string;
+    json?: Record<string, unknown>;
 };
 
 type ErrorLog = Log & ErrorFields;
@@ -56,6 +57,10 @@ export default class Logger {
             } else {
                 console.error(logData.error);
             }
+        }
+
+        if (logData.json) {
+            console.log(JSON.stringify(logData.json, null, 2));
         }
     }
 }

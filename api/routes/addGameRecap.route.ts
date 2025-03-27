@@ -13,11 +13,11 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
         Logger.error({ message: "Input rejected by Zod", path: "addGameRecap.route.ts", errorType: "zod", error: parsed.error });
         return res.status(400).send({ message: "Invalid input!" });
     }
-
+    Logger.log({ message: `Trying to add game recap`, path: "addGameRecap.route.ts", json: { parsed: parsed.data } });
     try {
         const gameRecapData = parsed.data;
         const [game, player] = await Promise.all([addGameIfNotExist(gameRecapData.game), addPlayerIfNotExist(gameRecapData.player)]);
-        Logger.log({ message: `Inserting game recap: ${game.id}, ${player.id}`, path: "addGameRecap.route.ts" });
+        Logger.log({ message: `Inserting game recap`, path: "addGameRecap.route.ts" });
         await prisma.$executeRaw`
             INSERT INTO game_recap (id,
             game_id,

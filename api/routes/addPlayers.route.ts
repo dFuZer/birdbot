@@ -19,6 +19,7 @@ export let addPlayersRouteHandler: RouteHandlerMethod = async function (req, res
         return res.status(400).send({ message: "Invalid input!" });
     }
 
+    Logger.log({ message: `Trying to add players`, path: "addPlayer.route.ts", json: { parsed: parsed.data } });
     try {
         const players = parsed.data;
         let addedPlayersCount = 0;
@@ -28,7 +29,7 @@ export let addPlayersRouteHandler: RouteHandlerMethod = async function (req, res
             if (existingPlayer.playerAdded) addedPlayersCount++;
             else if (existingPlayer.usernameAdded) addedUsernamesCount++;
         }
-        Logger.log({ message: `Players added successfully: ${addedPlayersCount} players, ${addedUsernamesCount} usernames`, path: "addPlayer.route.ts" });
+        Logger.log({ message: `Players added successfully`, path: "addPlayer.route.ts" });
         return res.status(200).send({ message: "Players added successfully" });
     } catch (e) {
         Logger.error({ message: `Failed to add players`, path: "addPlayer.route.ts", errorType: "unknown", error: e });

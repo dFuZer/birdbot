@@ -21,7 +21,7 @@ export default async function addPlayerIfNotExist(player: z.infer<typeof playerS
     if (existingPlayer !== undefined) {
         const usernames: { id: string }[] = await prisma.$queryRaw`SELECT id FROM player_username WHERE username = ${player.nickname}`;
         if (usernames[0] === undefined) {
-            Logger.log({ message: `Inserting username ${player.nickname} to DB`, path: "addPlayerIfNotExist.ts" });
+            Logger.log({ message: `Inserting username`, path: "addPlayerIfNotExist.ts" });
             await prisma.$executeRaw`
                 INSERT INTO player_username (id, player_id, username)
                 VALUES (gen_random_uuid(), ${existingPlayer.id}::UUID, ${player.nickname})
@@ -30,7 +30,7 @@ export default async function addPlayerIfNotExist(player: z.infer<typeof playerS
         }
         playerId = existingPlayer.id;
     } else {
-        Logger.log({ message: `Inserting a new player:  ${player.authNickname}, ${player.authProvider}, ${player.authId}`, path: "addPlayerIfNotExist.ts" });
+        Logger.log({ message: `Inserting a new player`, path: "addPlayerIfNotExist.ts" });
         const newId = randomUUIDv7();
         await prisma.$executeRaw`  
             INSERT INTO player (id, auth_nickname, auth_provider, auth_id)
