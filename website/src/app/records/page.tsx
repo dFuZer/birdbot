@@ -1,5 +1,5 @@
 import RecordsPage, { IScoreData } from "@/components/pages/RecordsPage/RecordsPage";
-import { getApi } from "@/lib/fetching";
+import { getFromApi } from "@/lib/fetching";
 import { TSearchParams } from "@/lib/params";
 import { languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "@/lib/records";
 import { isValidGameModeParam, isValidLanguageParam, isValidRecordParam } from "@/lib/validation";
@@ -26,13 +26,11 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
     const recordParamValue = params.r;
     const selectedRecord = isValidRecordParam(recordParamValue) ? recordParamValue : recordsEnumSchema.Values.word;
 
-    const data = await getApi(
+    const data = await getFromApi(
         `/get-records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=1&perPage=10`
     );
 
     const json: IApiResponse = await data.json();
-
-    console.log(json);
 
     const finalData: IScoreData[] = json.bestScores.map((record) => {
         return {
