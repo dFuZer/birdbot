@@ -3,45 +3,34 @@ services:
         build: ./website
         ports:
             - "3000:3000"
+        environment:
+            API_URL: ${API_URL}
+            API_KEY: ${API_KEY}
         depends_on:
             - api
-        networks:
-            - app-network
-
     bot:
         build: ./bot
         depends_on:
             - api
-        networks:
-            - app-network
 
     api:
         build: ./api
-        ports:
-            - "4000:4000"
         depends_on:
             - db
-        networks:
-            - app-network
+        ports:
+            - "4000:4000"
         environment:
-            DATABASE_URL: ${DB_URL}
+            DB_URL: ${DB_URL}
             API_KEY: ${API_KEY}
 
     db:
         image: postgres:13.18-alpine3.20
         volumes:
             - db_data:/var/lib/postgresql/data
-        ports:
-            - "5432:5432"
         environment:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
             POSTGRES_DB: ${POSTGRES_DB}
-        networks:
-            - app-network
 
 volumes:
     db_data:
-
-networks:
-    app-network:
