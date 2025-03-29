@@ -23,7 +23,7 @@ app.post("/add-game-recap", addGameRecapRouteHandler);
 app.get("/get-records", getBestScoresForCategoryRouteHandler);
 
 // Start the API
-app.listen({ port: PORT }, (err) => {
+app.listen({ port: PORT, host: "0.0.0.0" }, (err, address) => {
     if (err) throw err;
-    Logger.log({ message: `API running on http://localhost:${PORT}`, path: "index.ts" });
+    Logger.log({ message: `API now running on ${address}`, path: "index.ts" });
 });
