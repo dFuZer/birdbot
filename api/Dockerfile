@@ -1,16 +1,25 @@
-FROM oven/bun:1.2.2-alpine AS builder
+FROM node:23.7-alpine AS base
 
 WORKDIR /app
 
-COPY bun.lock package.json ./
+RUN apk --no-cache add curl
 
-RUN bun install --frozen-lockfile
+COPY package.json package-lock.json ./
+
+RUN npm ci
 
 COPY . .
 
-RUN bunx prisma generate
+RUN npm run build
+
+# Development stage
+FROM base AS dev
 
 EXPOSE 4000
+CMD ["npm", "run", "dev"]
 
-# Set default command
-CMD ["bun", "run", "start"]
+# Production stage
+FROM base AS production
+
+EXPOSE 4000
+CMD ["npm", "run", "start"]

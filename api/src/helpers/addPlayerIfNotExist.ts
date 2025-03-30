@@ -1,8 +1,8 @@
-import { randomUUIDv7 } from "bun";
 import type { z } from "zod";
 import Logger from "../lib/logger";
-import prisma from "../prisma/client";
+import prisma from "../prisma";
 import type { playerSchema } from "../schemas/player.zod";
+import { randomUUID } from "./uuid";
 
 export default async function addPlayerIfNotExist(player: z.infer<typeof playerSchema>): Promise<{
     id: string;
@@ -31,7 +31,7 @@ export default async function addPlayerIfNotExist(player: z.infer<typeof playerS
         playerId = existingPlayer.id;
     } else {
         Logger.log({ message: `Inserting a new player`, path: "addPlayerIfNotExist.ts" });
-        const newId = randomUUIDv7();
+        const newId = randomUUID();
         await prisma.$executeRaw`  
             INSERT INTO player (id, auth_nickname, auth_provider, auth_id)
             VALUES (${newId}::UUID, ${player.authNickname}, ${player.authProvider}, ${player.authId})

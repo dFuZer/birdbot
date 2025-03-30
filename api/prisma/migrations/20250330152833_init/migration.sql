@@ -69,6 +69,16 @@ CREATE TABLE "word" (
     CONSTRAINT "word_pkey" PRIMARY KEY ("id")
 );
 
+CREATE OR REPLACE VIEW "player_latest_username" AS
+	(WITH un AS (
+		SELECT p.id AS player_id, pu.username AS player_username, row_number() OVER (PARTITION BY pu.player_id ORDER BY pu.created_at DESC) AS recency_rank
+		FROM player_username pu
+		INNER JOIN player p
+		ON pu.player_id = p.id
+	)
+	SELECT player_id, player_username AS username FROM un WHERE recency_rank = 1
+);
+
 -- AddForeignKey
 ALTER TABLE "player_username" ADD CONSTRAINT "player_username_player_id_fkey" FOREIGN KEY ("player_id") REFERENCES "player"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 

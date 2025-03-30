@@ -2,41 +2,50 @@ services:
     website:
         build:
             context: ./website
-            target: production
+            target: dev
         ports:
             - "3000:3000"
         environment:
             API_URL: ${API_URL}
             API_KEY: ${API_KEY}
+        volumes:
+            - ./website/src:/app/src
+            - ./website/.next:/app/.next
         depends_on:
             api:
                 condition: service_healthy
+
+    api:
+        build:
+            context: ./api
+            target: dev
+        environment:
+            DB_URL: ${DB_URL}
+            API_KEY: ${API_KEY}
+        volumes:
+            - ./api/src:/app/src
+            - ./api/dist:/app/dist
+        depends_on:
+            db:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:4000/health"]
+            interval: 5s
+            timeout: 2s
+            retries: 20
+
     bot:
         build: ./bot
         depends_on:
             api:
                 condition: service_healthy
-    api:
-        build:
-            context: ./api
-        ports:
-            - "4000:4000"
-        depends_on:
-            db:
-                condition: service_healthy
-        healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
-            interval: 5s
-            timeout: 2s
-            retries: 20
-        environment:
-            DB_URL: ${DB_URL}
-            API_KEY: ${API_KEY}
 
     db:
         image: postgres:13.18-alpine3.20
         volumes:
             - db_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
             interval: 5s

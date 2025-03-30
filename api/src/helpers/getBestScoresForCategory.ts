@@ -1,6 +1,6 @@
 import { z } from "zod";
 import Logger from "../lib/logger";
-import prisma from "../prisma/client";
+import prisma from "../prisma";
 import { getRecords, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "../schemas/records.zod";
 import { languageEnumToDatabaseEnumMap, modeEnumToDatabaseEnumMap, recordEnumToDatabaseFieldMap, type TOrderByField } from "./maps";
 

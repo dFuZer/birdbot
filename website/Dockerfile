@@ -1,16 +1,26 @@
-FROM node:23.7-alpine AS builder
+FROM node:23.7-alpine AS base
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./ 
+COPY package.json package-lock.json ./
 
 RUN npm ci
 
 COPY . .
 
+# Development stage
+FROM base AS dev
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]
+
+# Production stage
+FROM base AS builder
+
 RUN npm run build
 
-FROM node:23.7-alpine
+FROM node:23.7-alpine AS production
 
 WORKDIR /app
 

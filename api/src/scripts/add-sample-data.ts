@@ -1,5 +1,5 @@
 import { GameMode, Language, PrismaClient } from "@prisma/client";
-import { randomUUIDv7 } from "bun";
+import { randomUUID } from "../helpers/uuid";
 
 const exampleWords: string[] = [
     "apple",
@@ -29,7 +29,7 @@ const exampleWords: string[] = [
 let languageArray = Object.values(Language);
 let modeArray = Object.values(GameMode);
 
-async function add_sample() {
+(async () => {
     let prisma = new PrismaClient();
     await prisma.$connect();
 
@@ -44,7 +44,7 @@ async function add_sample() {
     let players = await prisma.player.createManyAndReturn({
         data: Array.from({ length: 10 }, () => {
             return {
-                auth_id: randomUUIDv7(),
+                auth_id: randomUUID(),
                 auth_provider: "discord",
                 auth_nickname: "John" + " " + Math.floor(Math.random() * 1000),
             };
@@ -117,6 +117,4 @@ async function add_sample() {
     const gameRecaps = await prisma.gameRecap.createManyAndReturn({
         data: newGameRecaps,
     });
-}
-
-await add_sample();
+})();

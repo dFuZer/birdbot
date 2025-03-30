@@ -2,7 +2,7 @@ import type { RouteHandlerMethod } from "fastify";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
 import Logger from "../lib/logger";
-import prisma from "../prisma/client";
+import prisma from "../prisma";
 import { addWordSchema } from "../schemas/word.zod";
 
 export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {

@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import Logger from "../lib/logger";
-import prisma from "../prisma/client";
+import prisma from "../prisma";
 import type { gameSchema } from "../schemas/game.zod";
 
 export default async function addGameIfNotExist(game: z.infer<typeof gameSchema>) {
