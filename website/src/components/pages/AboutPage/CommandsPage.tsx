@@ -12,6 +12,7 @@ interface Command {
 }
 
 const commands: Command[] = [
+    /*
     {
         trigger: "/createroom",
         explanation: "Use this command to create a room with BirdBot.",
@@ -31,7 +32,8 @@ const commands: Command[] = [
         id: "3",
         condition: "room-owner",
         shorthand: "/cm",
-    },
+    }
+    */
 ];
 type Condition = "logged-in" | "room-owner";
 
@@ -87,9 +89,13 @@ export default function CommandsPage() {
                     </p>
                 </div>
             </div>
-            <Accordion type="single" className="space-y-2" collapsible>
-                {items}
-            </Accordion>
+            {items.length ? (
+                <Accordion type="single" className="space-y-2" collapsible>
+                    {items}
+                </Accordion>
+            ) : (
+                <p className="mt-10 text-center text-sm text-neutral-500">No commands available yet</p>
+            )}
         </div>
     );
 }
