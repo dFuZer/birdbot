@@ -1,6 +1,6 @@
-export const DISCORD_SERVER_LINK = "/";
-export const GITHUB_REPO_LINK = "/";
-export const PAYPAL_DONATE_LINK = "/";
+export const DISCORD_SERVER_LINK = "https://discord.gg/SqGEM64bCF";
+export const GITHUB_REPO_LINK = "https://github.com/dFuZer/birdbot";
+export const PAYPAL_DONATE_LINK = "https://www.paypal.com/paypalme/enzotomassi";
 
 interface ILink {
     href: string;
