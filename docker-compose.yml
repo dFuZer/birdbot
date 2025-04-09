@@ -8,6 +8,9 @@ services:
         environment:
             API_URL: ${API_URL}
             API_KEY: ${API_KEY}
+            NEXT_PUBLIC_DISCORD_REDIRECT_URI: ${NEXT_PUBLIC_DISCORD_REDIRECT_URI}
+            NEXT_PUBLIC_DISCORD_CLIENT_ID: ${NEXT_PUBLIC_DISCORD_CLIENT_ID}
+            DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
         depends_on:
             api:
                 condition: service_healthy

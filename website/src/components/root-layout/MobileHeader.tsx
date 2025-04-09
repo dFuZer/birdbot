@@ -1,8 +1,7 @@
 "use client";
 
-import { katibehFont } from "@/app/fonts";
 import { Button } from "@/components/ui/button";
-import { LINKS } from "@/lib/links";
+import { LINKS, DISCORD_LOGIN_LINK } from "@/lib/links";
 import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { atom, useAtom } from "jotai";
 import Link from "next/link";
@@ -69,13 +68,13 @@ export default function MobileHeader() {
                     <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                 </Button>
             </div>
-            <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4 flex items-center gap-2">
+            <Link href={DISCORD_LOGIN_LINK}>
+                <Button variant={"ghost"}>
+                    <span>Log in</span>
+                </Button>
+            </Link>
+            <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4">
                 <BirdBotLogo className="size-8 min-h-max min-w-max" />
-                <span
-                    className={`${katibehFont.className} text-primary-700 hidden h-8 align-middle text-[2.5rem] leading-4 tracking-tight lowercase sm:inline`}
-                >
-                    BirdBot
-                </span>
             </Link>
         </div>
     );
