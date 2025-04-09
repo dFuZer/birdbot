@@ -6,8 +6,8 @@ export default function AboutPage() {
             <h1 className="text-2xl font-semibold">What is BirdBot?</h1>
             <p className="mt-1 text-sm text-neutral-600">
                 <QuestionMarkCircleIcon className="mr-0.5 inline size-4 -translate-y-[0.1rem]" />
-                JKLM.fun is an web game platform. BombParty is a game on the JKLM platform where players must, turn by turn, place
-                a word that contains a given syllable.
+                Croco.games is an web game platform. BombParty is a game on the Croco.games platform where players must, turn by
+                turn, place a word that contains a given syllable.
             </p>
             <p className="mt-4">
                 <strong>BirdBot is an automated player that plays BombParty.</strong>
