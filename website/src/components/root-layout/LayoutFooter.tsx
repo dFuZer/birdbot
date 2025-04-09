@@ -1,5 +1,5 @@
 import { katibehFont } from "@/app/fonts";
-import { ABOUT_LINKS, DISCORD_SERVER_LINK, LINKS } from "@/lib/links";
+import { ABOUT_LINKS, DISCORD_SERVER_LINK, LINKS, PAYPAL_DONATE_LINK } from "@/lib/links";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import FooterBlob from "~/public/footerBlob.svg";
@@ -32,7 +32,9 @@ export default function LayoutFooter() {
                             <Link target="_blank" href={DISCORD_SERVER_LINK}>
                                 Join our Discord Server
                             </Link>
-                            <Link href="/about/support">Support us on PayPal</Link>
+                            <Link target="_blank" href={PAYPAL_DONATE_LINK}>
+                                Support us on PayPal
+                            </Link>
                         </div>
                     </div>
                 </div>
