@@ -29,7 +29,9 @@ export default function LayoutFooter() {
                     <div className="w-[12rem] sm:w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>Support us</h3>
                         <div className="flex flex-col">
-                            <Link href={DISCORD_SERVER_LINK}>Join our Discord Server</Link>
+                            <Link target="_blank" href={DISCORD_SERVER_LINK}>
+                                Join our Discord Server
+                            </Link>
                             <Link href="/about/support">Support us on PayPal</Link>
                         </div>
                     </div>

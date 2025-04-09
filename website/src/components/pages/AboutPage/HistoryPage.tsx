@@ -20,7 +20,11 @@ export default function HistoryPage() {
                 I hope you enjoy using BirdBot as much as I enjoyed creating it.
                 <br />
                 If you have any feedback, you can contact me through the official{" "}
-                <Link className="text-primary-800 font-semibold underline underline-offset-2" href={DISCORD_SERVER_LINK}>
+                <Link
+                    target="_blank"
+                    className="text-primary-800 font-semibold underline underline-offset-2"
+                    href={DISCORD_SERVER_LINK}
+                >
                     Discord server
                 </Link>
                 .
