@@ -30,7 +30,11 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
         `/get-records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=1&perPage=10`
     );
 
+    console.log(data);
+
     const json: IApiResponse = await data.json();
+
+    console.log(json);
 
     const finalData: IScoreData[] = json.bestScores.map((record) => {
         return {

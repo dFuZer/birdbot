@@ -30,7 +30,7 @@ services:
         environment:
             DB_URL: ${DB_URL}
             API_KEY: ${API_KEY}
-
+            ENVIRONMENT: production
     db:
         image: postgres:13.18-alpine3.20
         volumes:

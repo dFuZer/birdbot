@@ -12,12 +12,6 @@ COPY . .
 
 RUN npm run build
 
-# Development stage
-FROM base AS dev
-
-EXPOSE 4000
-CMD ["npm", "run", "dev"]
-
 # Production stage
 FROM base AS production
 

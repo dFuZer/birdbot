@@ -22,7 +22,7 @@ app.get("/get-records", { preHandler: authMiddleware }, getBestScoresForCategory
 app.get("/health", healthRouteHandler);
 
 // Start the API
-app.listen({ port: PORT, host: "0.0.0.0" }, (err, address) => {
+app.listen({ port: PORT, host: process.env.ENVIRONMENT === "development" ? undefined : "0.0.0.0" }, (err, address) => {
     if (err) throw err;
     Logger.log({ message: `API now running on ${address}`, path: "index.ts" });
 });
