@@ -8,7 +8,7 @@ export const metadata: Metadata = {
         default: "BirdBot",
     },
     description:
-        "BirdBot is a JKLM.fun BombParty bot. It tracks the players records, provides tools to improve at the game, and extends the BombParty experience.",
+        "BirdBot is a Croco.games BombParty bot. It tracks the players records, provides tools to improve at the game, and extends the BombParty experience.",
 };
 
 export default function RootLayout({

@@ -8,19 +8,15 @@ interface Question {
     id: string;
 }
 
-const exampleQuestion: Question = {
-    trigger: "How can I create a room with BirdBot ?",
-    answer: "Use /b in a room where BirdBot is present to create a room with BirdBot.",
-    id: "1",
-};
-
-const questions: Question[] = Array.from({ length: 10 }).map((question, index) => {
-    return {
-        ...exampleQuestion,
-        id: (index + 1).toString(),
-    };
-});
-
+const questions: Question[] = [
+    /*
+    {
+        trigger: "How can I create a room with BirdBot ?",
+        answer: "Use /b in a room where BirdBot is present to create a room with BirdBot.",
+        id: "1",
+    }
+    */
+];
 export default function FaqPage() {
     const items = questions.map((question) => (
         <AccordionItem value={question.id} className="rounded-xl bg-neutral-50 shadow-sm" key={question.id}>
@@ -42,9 +38,13 @@ export default function FaqPage() {
     return (
         <div className="flex flex-col gap-4">
             <h1 className="text-2xl font-bold">Frequently Asked Questions</h1>
-            <Accordion type="single" className="space-y-2" collapsible>
-                {items}
-            </Accordion>
+            {items.length ? (
+                <Accordion type="single" className="space-y-2" collapsible>
+                    {items}
+                </Accordion>
+            ) : (
+                <p className="mt-10 text-center text-sm text-neutral-500">No questions available yet</p>
+            )}
         </div>
     );
 }

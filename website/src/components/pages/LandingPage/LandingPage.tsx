@@ -25,7 +25,7 @@ export default function LandingPage() {
                         <Link href="/play">
                             <Button>Play with BirdBot</Button>
                         </Link>
-                        <Link href={DISCORD_SERVER_LINK}>
+                        <Link target="_blank" href={DISCORD_SERVER_LINK}>
                             <Button variant="primary-outline">
                                 <SiDiscord className="fill-primary-700" />
                                 <span>Join us on Discord</span>
@@ -47,7 +47,7 @@ export default function LandingPage() {
                     <Link href="/play">
                         <Button>Play with BirdBot</Button>
                     </Link>
-                    <Link href={DISCORD_SERVER_LINK}>
+                    <Link target="_blank" href={DISCORD_SERVER_LINK}>
                         <Button variant="primary-outline">
                             <SiDiscord className="fill-primary-700" />
                             <span>Join us on Discord</span>
