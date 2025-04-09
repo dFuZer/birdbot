@@ -28,7 +28,7 @@ export default function LayoutHeader() {
                 <div className="flex items-center gap-4 font-medium">
                     {/* <SunIcon className="h-5 w-5 text-neutral-700" /> */}
                     <Button className="flex min-w-48 items-center justify-between" variant={"outline"}>
-                        <span className="font-light text-neutral-400">Rechercher</span>
+                        <span className="w-2/3 truncate text-left font-light text-neutral-400">Search on the website</span>
                         <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                     </Button>
                 </div>

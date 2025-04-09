@@ -65,7 +65,7 @@ export default function MobileHeader() {
             </div>
             <div className="flex-1 px-8">
                 <Button className="flex w-full items-center justify-between gap-4" variant={"outline"}>
-                    <span className="font-light text-neutral-400">Rechercher</span>
+                    <span className="w-2/3 truncate text-left font-light text-neutral-400">Search on the website</span>
                     <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                 </Button>
             </div>
