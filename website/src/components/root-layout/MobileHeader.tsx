@@ -1,7 +1,6 @@
 "use client";
 
 import { katibehFont } from "@/app/fonts";
-import ChangeLanguageButton from "@/components/root-layout/ChangeLanguageButton";
 import { Button } from "@/components/ui/button";
 import { LINKS } from "@/lib/links";
 import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
@@ -70,7 +69,6 @@ export default function MobileHeader() {
                     <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                 </Button>
             </div>
-            <ChangeLanguageButton />
             <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4 flex items-center gap-2">
                 <BirdBotLogo className="size-8 min-h-max min-w-max" />
                 <span
