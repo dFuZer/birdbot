@@ -6,6 +6,7 @@ import type { GameData, Player } from "../types/gameTypes";
 import type { BotEventHandler, BotEventPreviousHandlersCtx, EventCtx } from "../types/libEventTypes";
 import type Bot from "./Bot.class";
 import type { Command, CommandHandlerCtx } from "./CommandUtils.class";
+import Logger from "./Logger.class";
 import type Room from "./Room.class";
 
 export default class Utilitary {
@@ -129,7 +130,12 @@ export default class Utilitary {
         try {
             fn();
         } catch (error) {
-            console.error(`Error executing event handler ${eventName}:`, error);
+            Logger.error({
+                message: `Error executing event handler ${eventName}:`,
+                path: "Utilitary.class.ts",
+                errorType: "unknown",
+                error,
+            });
         }
     }
 
@@ -162,18 +168,26 @@ export default class Utilitary {
                 return;
             }
 
-            Utilitary.tryExecuteEventHandlers("open", () =>
-                Utilitary.executeEventHandlers(bot.handlers.open!, getEventCtx(new Buffer("")))
-            );
+            Utilitary.tryExecuteEventHandlers("open", () => {
+                Logger.log({
+                    message: "Executing open handler",
+                    path: "Utilitary.class.ts",
+                });
+                Utilitary.executeEventHandlers(bot.handlers.open!, getEventCtx(new Buffer("")));
+            });
         });
         room.ws!.on("close", () => {
             if (!bot.handlers.close) {
                 console.error("No close handler");
                 return;
             }
-            Utilitary.tryExecuteEventHandlers("close", () =>
-                Utilitary.executeEventHandlers(bot.handlers.close!, getEventCtx(new Buffer("")))
-            );
+            Utilitary.tryExecuteEventHandlers("close", () => {
+                Logger.log({
+                    message: "Executing close handler",
+                    path: "Utilitary.class.ts",
+                });
+                Utilitary.executeEventHandlers(bot.handlers.close!, getEventCtx(new Buffer("")));
+            });
         });
         room.ws!.on("message", (message: Buffer) => {
             const baseMessageData = bot.networkAdapter.readNodeMessageBaseData(message);
@@ -185,18 +199,26 @@ export default class Utilitary {
                     console.error(`No handler for event type ${sessionEventType}`);
                     return;
                 }
-                Utilitary.tryExecuteEventHandlers(`session-${sessionEventType}`, () =>
-                    Utilitary.executeEventHandlers(handler, getEventCtx(message))
-                );
+                Utilitary.tryExecuteEventHandlers(`session-${sessionEventType}`, () => {
+                    Logger.log({
+                        message: `Executing session event handler ${sessionEventType}`,
+                        path: "Utilitary.class.ts",
+                    });
+                    Utilitary.executeEventHandlers(handler, getEventCtx(message));
+                });
             } else {
                 const handler = bot.handlers.message[baseMessageData.eventType];
                 if (!handler) {
                     console.error(`No handler for event type ${baseMessageData.eventType}`);
                     return;
                 }
-                Utilitary.tryExecuteEventHandlers(`node-${baseMessageData.eventType}`, () =>
-                    Utilitary.executeEventHandlers(handler, getEventCtx(message))
-                );
+                Utilitary.tryExecuteEventHandlers(`node-${baseMessageData.eventType}`, () => {
+                    Logger.log({
+                        message: `Executing node event handler ${baseMessageData.eventType}`,
+                        path: "Utilitary.class.ts",
+                    });
+                    Utilitary.executeEventHandlers(handler, getEventCtx(message));
+                });
             }
         });
     }
@@ -237,6 +259,10 @@ export default class Utilitary {
             const commandArgs = args.slice(1).filter((arg) => !arg.startsWith("-"));
             const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
+            Logger.log({
+                message: `Attempting to handle command ${command.id} from message ${rawMessage}`,
+                path: "Utilitary.class.ts",
+            });
             const commandHandlerCtx: CommandHandlerCtx = {
                 bot: ctx.bot,
                 room: ctx.room,

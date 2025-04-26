@@ -2,6 +2,7 @@ import WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
 import type { DictionaryId, GameMode } from "../types/gameTypes";
 import type { BotEventHandlers } from "../types/libEventTypes";
+import Logger from "./Logger.class";
 import ResourceManager from "./ResourceManager.class";
 import Room, { type RoomTargetConfig } from "./Room.class";
 import { Session } from "./Session.class";
@@ -27,6 +28,10 @@ export default class Bot {
     }
 
     public async init() {
+        Logger.log({
+            message: "Initializing bot",
+            path: "Bot.class.ts",
+        });
         const session = new Session();
         await session.init();
         this.botData = { session };
@@ -39,6 +44,10 @@ export default class Bot {
         roomCode: string;
         targetConfig?: RoomTargetConfig;
     }): Promise<string> {
+        Logger.log({
+            message: `Joining room ${roomCode}`,
+            path: "Bot.class.ts",
+        });
         const randomUUID = Utilitary.randomUUID();
         const room = new Room({ roomCode, id: randomUUID, targetConfig });
         await room.init({ sessionSecret: this.botData!.session.session!.secret });
