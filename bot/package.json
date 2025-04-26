@@ -1,0 +1,21 @@
+{
+    "name": "croco-birdbot",
+    "module": "index.ts",
+    "private": true,
+    "scripts": {
+        "build": "tsc",
+        "start": "node --env-file=.env dist/index.js",
+        "u": "tsc && node --env-file=.env dist/index.unstable.js"
+    },
+    "peerDependencies": {
+        "typescript": "^5.8.3"
+    },
+    "dependencies": {
+        "ws": "^8.18.1",
+        "zod": "^3.24.3"
+    },
+    "devDependencies": {
+        "@types/node": "^22.15.2",
+        "@types/ws": "^8.18.1"
+    }
+}

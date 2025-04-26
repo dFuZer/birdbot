@@ -1,0 +1,232 @@
+import Utilitary from "../../lib/class/Utilitary.class";
+import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventHandlers.class";
+import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
+import type { BombPartyRuleKey } from "../../lib/types/gameTypes";
+import type { BotEventHandlers } from "../../lib/types/libEventTypes";
+import { birdbotCommands } from "./BirdBotCommands";
+import { defaultBirdBotBombPartyRules } from "./BirdBotConstants";
+import type { BirdBotRoomMetadata } from "./BirdBotResources";
+import BirdBotUtils from "./BirdBotUtils.class";
+
+const birdbotEventHandlers: BotEventHandlers = {
+    open: CommonEH.open,
+    close: CommonEH.close,
+    message: {
+        "hello": CommonEH.hello,
+        "getGamerModerationInfo": CommonEH.getGamerModerationInfo,
+        "bye": CommonEH.bye,
+        "hello.ok": [
+            CommonTEH.helloOk,
+            (ctx) => {
+                const data = ctx.bot.networkAdapter.readHelloOkMessageData(ctx.message);
+                const { myGamerId, roomData, gameData } = data;
+
+                const myPlayer = roomData.gamers.find((gamer) => gamer.id === myGamerId);
+                BirdBotUtils.setupRoomMetadata(ctx);
+                if (myPlayer && myPlayer.role === "host" && ctx.room.constantRoomData.targetConfig) {
+                    const roomTargetConfig = ctx.room.constantRoomData.targetConfig;
+                    const setupMessage = ctx.bot.networkAdapter.getInitialSetupMessage({
+                        dictionaryId: roomTargetConfig.dictionaryId,
+                        gameMode: roomTargetConfig.gameMode,
+                    });
+                    ctx.room.ws!.send(setupMessage);
+                } else {
+                    console.error("My player is not the host");
+                }
+            },
+        ],
+        "setRoomAccessMode": CommonTEH.setRoomAccessMode,
+        "setRole": CommonTEH.setRole,
+        "addGamer": CommonTEH.addGamer,
+        "setGamerOnline": CommonTEH.setGamerOnline,
+        "chat": (ctx) => {
+            const data = ctx.bot.networkAdapter.readChatData(ctx.message);
+            const { gamerId, rawMessage } = data;
+
+            if (ctx.room.roomState.myGamerId === gamerId) return;
+
+            const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, birdbotCommands);
+            if (handleCommandResult === "command-handled") return;
+            if (handleCommandResult === "command-not-found") {
+                ctx.utils.sendChatMessage(`Command not found: ${rawMessage}`);
+                return;
+            }
+            if (handleCommandResult === "invalid-arguments") {
+                ctx.utils.sendChatMessage(`Invalid arguments: ${rawMessage}`);
+                return;
+            }
+        },
+        "chatRateLimited": CommonEH.chatRateLimited,
+        "getGamerModerationInfo.result": CommonEH.getGamerModerationInfoResult,
+        "announce": CommonEH.announce,
+        "announceRestart": CommonEH.announceRestart,
+        "session": {
+            "debug": CommonEH.debug,
+            "start": CommonEH.start,
+            "abort": CommonEH.abort,
+            "setup": [
+                CommonTEH.setup,
+                (ctx, previousHandlersCtx) => {
+                    const isInitialSetup = previousHandlersCtx.initialSetup as true | undefined;
+                    if (isInitialSetup) {
+                        for (const rule of Object.keys(defaultBirdBotBombPartyRules)) {
+                            const ruleMessage = ctx.bot.networkAdapter.getSetupMessage(
+                                rule as BombPartyRuleKey,
+                                defaultBirdBotBombPartyRules[rule as BombPartyRuleKey]
+                            );
+                            ctx.room.ws!.send(ruleMessage);
+                        }
+                        const joinMessage = ctx.bot.networkAdapter.getJoinMessage();
+                        ctx.room.ws!.send(joinMessage);
+                    }
+                },
+            ],
+            "toggleCountdown": CommonTEH.toggleCountdown,
+            "addPlayer": CommonTEH.addPlayer,
+            "removePlayer": CommonTEH.removePlayer,
+            "1v1Announcement": CommonTEH.oneVOneAnnouncement,
+            "roundIntro": CommonTEH.roundIntro,
+            "round": [
+                CommonTEH.round,
+                (ctx) => {
+                    const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+                    const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
+                    const currentDictionarySyllablesCount = currentDictionaryResource.metadata.syllablesCount;
+                    const clonedSyllablesCount = Object.assign({}, currentDictionarySyllablesCount);
+                    roomMetadata.remainingSyllables = clonedSyllablesCount;
+                },
+                BirdBotUtils.handleMyTurn,
+            ],
+            "roundOver": CommonTEH.roundOver,
+            "gameOver": [
+                CommonTEH.gameOver,
+                (ctx) => {
+                    const joinMessage = ctx.bot.networkAdapter.getJoinMessage();
+                    ctx.room.ws!.send(joinMessage);
+                    BirdBotUtils.resetRoomMetadata(ctx);
+                },
+            ],
+            "updatePlaylistRatings": CommonEH.updatePlaylistRatings,
+            "explodeBomb": CommonTEH.explodeBomb,
+            "nextTurn": [
+                CommonTEH.nextTurn,
+                BirdBotUtils.handleMyTurn,
+                (ctx, previousHandlersCtx) => {
+                    const previousGamerId = previousHandlersCtx.previousGamerId as number;
+                    const previousPrompt = previousHandlersCtx.previousPrompt as string;
+
+                    const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+                    roomMetadata.scoresByGamerId[previousGamerId];
+                },
+            ],
+            "submit": [
+                CommonTEH.submit,
+                (ctx, previousHandlersCtx) => {
+                    const data = ctx.bot.networkAdapter.readSubmitData(ctx.message);
+                    const { result, points } = data;
+
+                    const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
+                    if (!currentPlayer) {
+                        throw new Error("Current player is not set");
+                    }
+                    const word = currentPlayer.text;
+                    const currentPrompt = ctx.room.roomState.gameData!.round.prompt;
+
+                    const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+                    const allPlayerScores = roomMetadata.scoresByGamerId;
+                    if (allPlayerScores === undefined) {
+                        roomMetadata.scoresByGamerId = {};
+                    }
+                    if (allPlayerScores[currentPlayer.gamerId] === undefined) {
+                        BirdBotUtils.initializeScoresForPlayerId(roomMetadata, currentPlayer.gamerId);
+                    }
+                    const playerScores = allPlayerScores[currentPlayer.gamerId]!;
+                    if (result === "success") {
+                        const turnComments = [];
+                        // Flips score
+                        const isLifeGain = previousHandlersCtx.isLifeGain as boolean | undefined;
+                        if (isLifeGain) {
+                            playerScores.flips++;
+                            turnComments.push(`+1 life`);
+                        }
+                        // Words score
+                        playerScores.words++;
+                        turnComments.push(`+1 word`);
+                        // Words without death score
+                        playerScores.currentWordsWithoutDeath++;
+                        if (playerScores.currentWordsWithoutDeath > playerScores.maxWordsWithoutDeath) {
+                            playerScores.maxWordsWithoutDeath = playerScores.currentWordsWithoutDeath;
+                            turnComments.push(`+1 words without death`);
+                        }
+                        // More than 20 letters score
+                        if (word.length > 20) {
+                            playerScores.moreThan20LettersWords++;
+                            turnComments.push(`+1 more than 20 letters word`);
+                        }
+                        // Hyphens score
+                        if (word.includes("-")) {
+                            playerScores.hyphenWords++;
+                            turnComments.push(`+1 hyphen word`);
+                        }
+                        // Alpha score
+                        const currentPlayerAlphaScore = playerScores.alpha;
+                        const currentPlayerAlphaLetter = String.fromCharCode(
+                            65 + (currentPlayerAlphaScore % 26)
+                        ).toLowerCase();
+                        if (word[0] === currentPlayerAlphaLetter) {
+                            playerScores.alpha++;
+                            turnComments.push(`+1 alpha`);
+                        }
+                        // Previous syllables score
+                        if (playerScores.previousSyllable) {
+                            const previousSyllable = playerScores.previousSyllable;
+                            const currentWordIncludesPreviousSyllable = word.includes(previousSyllable);
+                            if (currentWordIncludesPreviousSyllable) {
+                                playerScores.previousSyllableScore += points;
+                                turnComments.push(`+1 previous syllable`);
+                            }
+                        }
+                        // Multi syllables score
+                        const multiSyllableGainedPoints = word.split(currentPrompt).length - 2;
+                        if (multiSyllableGainedPoints > 0) {
+                            playerScores.multiSyllables += multiSyllableGainedPoints;
+                            turnComments.push(`+${multiSyllableGainedPoints} multi syllables`);
+                        }
+                        // Depleted syllables score
+                        const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
+                        const depletedSyllables = [];
+                        if (currentDictionaryResource.resource.includes(word)) {
+                            const splitWord = BirdBotUtils.splitWordIntoSyllables(word);
+                            for (const syllable of splitWord) {
+                                if (roomMetadata.remainingSyllables[syllable] !== undefined) {
+                                    if (roomMetadata.remainingSyllables[syllable] > 0) {
+                                        roomMetadata.remainingSyllables[syllable]--;
+                                        if (roomMetadata.remainingSyllables[syllable] === 0) {
+                                            depletedSyllables.push(syllable);
+                                        }
+                                    } else {
+                                        console.error(`Syllable ${syllable} is depleted. This should never happen.`);
+                                    }
+                                } else {
+                                    console.error(
+                                        `Syllable ${syllable} not found in remaining syllables. This should never happen.`
+                                    );
+                                }
+                            }
+                        }
+                        if (depletedSyllables.length > 0) {
+                            playerScores.depletedSyllables += depletedSyllables.length;
+                            turnComments.push(`+${depletedSyllables.length} depleted syllables`);
+                        }
+                        if (turnComments.length > 0 && ctx.room.roomState.myGamerId !== currentPlayer.gamerId) {
+                            // ctx.utils.sendChatMessage(turnComments.join(", "));
+                        }
+                    }
+                },
+            ],
+            "type": CommonTEH.type,
+        },
+    },
+};
+
+export default birdbotEventHandlers;

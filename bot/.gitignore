@@ -1,1 +1,21 @@
-/target
+# Dependencies
+node_modules
+
+# Environment variables
+.env
+
+# Private classes, like the working network adapter
+src/lib/class/private/
+
+# Unstable scripts that change very often
+src/index.unstable.ts
+
+# Build files
+dist/
+
+# Data folder
+.data/
+
+# Resources
+resources/*.dictionary.txt
+!resources/*.example.txt
