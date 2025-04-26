@@ -53,6 +53,9 @@ export default class BogusNetworkAdapter implements NetworkAdapter {
     public getJoinMessage(): Uint8Array {
         return 0 as any;
     }
+    public getStartGameMessage(): Uint8Array {
+        return 0 as any;
+    }
     public getSetupMessage(rule: BombPartyRuleKey, value: any): Uint8Array {
         return 0 as any;
     }

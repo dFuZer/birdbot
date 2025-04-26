@@ -206,6 +206,8 @@ export default abstract class NetworkAdapter {
 
     public abstract getTypeMessage({ word }: { word: string }): Uint8Array;
 
+    public abstract getStartGameMessage(): Uint8Array;
+
     public abstract getSetupMessage(rule: BombPartyRuleKey, value: any): Uint8Array;
 
     public abstract getJoinMessage(): Uint8Array;

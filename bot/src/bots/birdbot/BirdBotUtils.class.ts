@@ -378,6 +378,9 @@ export default class BirdBotUtils {
     public static resetRoomMetadata = (ctx: EventCtx) => {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         roomMetadata.scoresByGamerId = {};
+        for (const player of ctx.room.roomState.gameData!.players) {
+            this.initializeScoresForPlayerId(roomMetadata, player.gamerId);
+        }
         const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
         roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);
     };

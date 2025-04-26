@@ -98,7 +98,7 @@ export interface GameRules {
 }
 
 export interface GameStep {
-    value: string;
+    value: "pregame" | "initialSetup" | "1v1Announcement" | "round" | "matchOver" | "roundIntro" | "roundOver";
     timestamp: number;
 }
 

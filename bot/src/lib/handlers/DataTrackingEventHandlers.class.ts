@@ -252,7 +252,6 @@ export default class CommonPlayerDataTrackingEventHandlers {
         previousHandlersCtx.previousGamerId = gameData.players[gameData.round.turnIndex]!.gamerId;
         previousHandlersCtx.previousPrompt = gameData.round.prompt;
 
-        // advance the turn
         do {
             gameData.round.turnIndex = (gameData.round.turnIndex + 1) % gameData.players.length;
             currentPlayer = gameData.players[gameData.round.turnIndex]!;

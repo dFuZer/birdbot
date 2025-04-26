@@ -98,6 +98,12 @@ export default class Utilitary {
 
     public static getCurrentPlayer(gameData: GameData) {
         if (gameData.step.value !== "round") {
+            Logger.error({
+                message: `Trying to get current player while step is not round.`,
+                path: "Utilitary.class.ts",
+                errorType: "unknown",
+                error: new Error(`Trying to access current player while step is ${gameData.step.value}`),
+            });
             return null;
         }
         const { round } = gameData;
@@ -124,19 +130,6 @@ export default class Utilitary {
         player.lastPrompt = "";
         player.lastSubmit = null;
         player.text = "";
-    }
-
-    public static tryExecuteEventHandlers(eventName: string, fn: () => void) {
-        try {
-            fn();
-        } catch (error) {
-            Logger.error({
-                message: `Error executing event handler ${eventName}:`,
-                path: "Utilitary.class.ts",
-                errorType: "unknown",
-                error,
-            });
-        }
     }
 
     public static initializeRoomSocket(bot: Bot, room: Room) {
@@ -167,13 +160,11 @@ export default class Utilitary {
                 console.error("No open handler");
                 return;
             }
-
-            Utilitary.tryExecuteEventHandlers("open", () => {
-                Logger.log({
-                    message: "Executing open handler",
-                    path: "Utilitary.class.ts",
-                });
-                Utilitary.executeEventHandlers(bot.handlers.open!, getEventCtx(new Buffer("")));
+            const eventName = "open";
+            bot.enqueueHandler({
+                handler: bot.handlers.open,
+                ctx: getEventCtx(new Buffer("")),
+                eventName: eventName,
             });
         });
         room.ws!.on("close", () => {
@@ -181,45 +172,37 @@ export default class Utilitary {
                 console.error("No close handler");
                 return;
             }
-            Utilitary.tryExecuteEventHandlers("close", () => {
-                Logger.log({
-                    message: "Executing close handler",
-                    path: "Utilitary.class.ts",
-                });
-                Utilitary.executeEventHandlers(bot.handlers.close!, getEventCtx(new Buffer("")));
+            const eventName = "close";
+            bot.enqueueHandler({
+                handler: bot.handlers.close,
+                ctx: getEventCtx(new Buffer("")),
+                eventName: eventName,
             });
         });
         room.ws!.on("message", (message: Buffer) => {
             const baseMessageData = bot.networkAdapter.readNodeMessageBaseData(message);
+            let handler: BotEventHandler | undefined;
+            let eventName: string;
 
             if (baseMessageData.eventType === "session") {
                 const sessionEventType = baseMessageData.sessionEventType;
-                const handler = bot.handlers.message.session[sessionEventType];
-                if (!handler) {
-                    console.error(`No handler for event type ${sessionEventType}`);
-                    return;
-                }
-                Utilitary.tryExecuteEventHandlers(`session-${sessionEventType}`, () => {
-                    Logger.log({
-                        message: `Executing session event handler ${sessionEventType}`,
-                        path: "Utilitary.class.ts",
-                    });
-                    Utilitary.executeEventHandlers(handler, getEventCtx(message));
-                });
+                handler = bot.handlers.message.session[sessionEventType];
+                eventName = `session-${sessionEventType}`;
             } else {
-                const handler = bot.handlers.message[baseMessageData.eventType];
-                if (!handler) {
-                    console.error(`No handler for event type ${baseMessageData.eventType}`);
-                    return;
-                }
-                Utilitary.tryExecuteEventHandlers(`node-${baseMessageData.eventType}`, () => {
-                    Logger.log({
-                        message: `Executing node event handler ${baseMessageData.eventType}`,
-                        path: "Utilitary.class.ts",
-                    });
-                    Utilitary.executeEventHandlers(handler, getEventCtx(message));
-                });
+                handler = bot.handlers.message[baseMessageData.eventType];
+                eventName = `node-${baseMessageData.eventType}`;
             }
+
+            if (!handler) {
+                console.error(`No handler for event type ${eventName}`);
+                return;
+            }
+
+            bot.enqueueHandler({
+                handler: handler,
+                ctx: getEventCtx(message),
+                eventName: eventName,
+            });
         });
     }
 

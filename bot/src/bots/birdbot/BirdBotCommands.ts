@@ -156,4 +156,26 @@ const currentGameScoresCommand: Command = c({
     },
 });
 
-export const birdbotCommands: Command[] = [helpCommand, recordsCommand, currentGameScoresCommand];
+const startGameCommand: Command = c({
+    id: "startGame",
+    aliases: ["startnow", "sn"],
+    desc: "Starts the game.",
+    usageDesc: "/sn",
+    exampleUsage: "/startnow",
+    handler: (ctx) => {
+        if (ctx.room.roomState.gameData!.step.value !== "pregame") {
+            ctx.utils.sendChatMessage("Error: Not in pregame.");
+            return "handled";
+        }
+        if (ctx.room.roomState.gameData!.players.length < 2) {
+            ctx.utils.sendChatMessage("Error: Not enough players to start the game.");
+            return "handled";
+        }
+        const startGameMessage = ctx.bot.networkAdapter.getStartGameMessage();
+        ctx.room.ws!.send(startGameMessage);
+        ctx.utils.sendChatMessage("Starting game...");
+        return "handled";
+    },
+});
+
+export const birdbotCommands: Command[] = [helpCommand, recordsCommand, currentGameScoresCommand, startGameCommand];
