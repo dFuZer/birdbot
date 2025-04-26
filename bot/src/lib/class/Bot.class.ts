@@ -71,8 +71,6 @@ export default class Bot {
                 Logger.error({
                     message: `Error executing handlers for event ${task.eventName}:`,
                     path: "Bot.class.ts",
-                    errorType: "unknown",
-                    error,
                 });
             } finally {
                 this.isProcessingQueue = false;

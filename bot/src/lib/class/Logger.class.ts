@@ -1,21 +1,12 @@
-import type { ZodError } from "zod";
-
 type Log = {
     message: string;
     path: string;
     json?: Record<string, unknown>;
 };
 
-type ErrorLog = Log & ErrorFields;
-type ErrorFields =
-    | {
-          errorType: "unknown";
-          error: unknown;
-      }
-    | {
-          errorType: "zod";
-          error: ZodError;
-      };
+type ErrorLog = Log & {
+    error?: unknown;
+};
 
 type LogType = "log" | "error" | "warn";
 
@@ -51,16 +42,8 @@ export default class Logger {
         const text = type === "log" ? Logger.LOG_TEXT : type === "error" ? Logger.ERROR_TEXT : Logger.WARN_TEXT;
         console.info(`${color}${text} (${logData.path}) ${logData.message}\x1b[0m`);
 
-        if (type === "error" && "error" in logData) {
-            if (logData.errorType === "zod") {
-                console.error(
-                    logData.error.errors
-                        .map((error) => `(${error.code}) (${error.path.join(".")}): ${error.message}`)
-                        .join(", ")
-                );
-            } else {
-                console.error(logData.error);
-            }
+        if ("error" in logData && type === "error") {
+            console.error(logData.error);
         }
 
         if (logData.json) {

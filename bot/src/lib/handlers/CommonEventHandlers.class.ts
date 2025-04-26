@@ -1,3 +1,4 @@
+import Logger from "../class/Logger.class";
 import type { BotEventHandlerFn } from "../types/libEventTypes";
 
 export class CommonEventHandlers {
@@ -11,54 +12,90 @@ export class CommonEventHandlers {
     };
 
     public static close: BotEventHandlerFn = (ctx) => {
-        console.log(`Room ${ctx.room.constantRoomData.roomCode} socket closed.`);
+        Logger.log({
+            message: `Room ${ctx.room.constantRoomData.roomCode} socket closed.`,
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static hello: BotEventHandlerFn = (ctx) => {
-        console.error("Message of type hello is send only, I should not receive it.");
+        Logger.error({
+            message: "Message of type hello is send only, I should not receive it.",
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static getGamerModerationInfo: BotEventHandlerFn = (ctx) => {
-        console.error("Message of type getGamerModerationInfo is send only, I should not receive it.");
+        Logger.error({
+            message: "Message of type getGamerModerationInfo is send only, I should not receive it.",
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static bye: BotEventHandlerFn = (ctx) => {
         const { reason } = ctx.bot.networkAdapter.readByeMessageData(ctx.message);
-        console.info(`Room ${ctx.room.constantRoomData.roomCode} was forcefully disconnected by the server: ${reason}`);
+        Logger.log({
+            message: `Room ${ctx.room.constantRoomData.roomCode} was forcefully disconnected by the server: ${reason}`,
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static chatRateLimited: BotEventHandlerFn = () => {
-        console.log("I got rate limited");
+        Logger.log({
+            message: "I got rate limited",
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static getGamerModerationInfoResult: BotEventHandlerFn = (ctx) => {
         const { gamerId, ipAddress } = ctx.bot.networkAdapter.readGetGamerModerationInfoResultData(ctx.message);
-        console.log(`Event getGamerModerationInfoResult received for gamerId ${gamerId} with IP address ${ipAddress}`);
+        Logger.log({
+            message: `Event getGamerModerationInfoResult received for gamerId ${gamerId} with IP address ${ipAddress}`,
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static announce: BotEventHandlerFn = (ctx) => {
         const { message } = ctx.bot.networkAdapter.readAnnounceData(ctx.message);
-        console.log(`Server announcement: ${message}`);
+        Logger.log({
+            message: `Server announcement: ${message}`,
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static announceRestart: BotEventHandlerFn = (ctx) => {
         const { timeLeft } = ctx.bot.networkAdapter.readAnnounceRestartData(ctx.message);
-        console.log(`Server announcement: Time left before restart: ${timeLeft}`);
+        Logger.log({
+            message: `Server announcement: Time left before restart: ${timeLeft}`,
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static debug: BotEventHandlerFn = () => {
-        console.error("Session message of type debug is send only, I should not receive it.");
+        Logger.error({
+            message: "Session message of type debug is send only, I should not receive it.",
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static start: BotEventHandlerFn = () => {
-        console.error("Session message of type start is send only, I should not receive it.");
+        Logger.error({
+            message: "Session message of type start is send only, I should not receive it.",
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static abort: BotEventHandlerFn = () => {
-        console.error("Session message of type abort is send only, I should not receive it.");
+        Logger.error({
+            message: "Session message of type abort is send only, I should not receive it.",
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 
     public static updatePlaylistRatings: BotEventHandlerFn = (ctx) => {
-        console.log(`Update playlist ratings received. We don't need to do anything with it yet.`);
+        Logger.log({
+            message: "Update playlist ratings received. We don't need to do anything with it yet.",
+            path: "CommonEventHandlers.class.ts",
+        });
     };
 }

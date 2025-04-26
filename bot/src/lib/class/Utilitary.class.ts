@@ -99,10 +99,8 @@ export default class Utilitary {
     public static getCurrentPlayer(gameData: GameData) {
         if (gameData.step.value !== "round") {
             Logger.error({
-                message: `Trying to get current player while step is not round.`,
+                message: `Trying to get current player while step is ${gameData.step.value} instead of round.`,
                 path: "Utilitary.class.ts",
-                errorType: "unknown",
-                error: new Error(`Trying to access current player while step is ${gameData.step.value}`),
             });
             return null;
         }
@@ -157,7 +155,10 @@ export default class Utilitary {
 
         room.ws!.on("open", () => {
             if (!bot.handlers.open) {
-                console.error("No open handler");
+                Logger.error({
+                    message: "No open handler",
+                    path: "Utilitary.class.ts",
+                });
                 return;
             }
             const eventName = "open";
@@ -169,7 +170,10 @@ export default class Utilitary {
         });
         room.ws!.on("close", () => {
             if (!bot.handlers.close) {
-                console.error("No close handler");
+                Logger.error({
+                    message: "No close handler",
+                    path: "Utilitary.class.ts",
+                });
                 return;
             }
             const eventName = "close";
@@ -194,7 +198,10 @@ export default class Utilitary {
             }
 
             if (!handler) {
-                console.error(`No handler for event type ${eventName}`);
+                Logger.error({
+                    message: `No handler for event type ${eventName}`,
+                    path: "Utilitary.class.ts",
+                });
                 return;
             }
 

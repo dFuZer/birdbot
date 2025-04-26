@@ -1,4 +1,5 @@
 import { readFileSync } from "fs";
+import Logger from "./Logger.class";
 
 export type Resource<ResourceType extends any, ResourceMetadataType extends any> = {
     resource: ResourceType;
@@ -30,7 +31,11 @@ export default class ResourceManager {
         const fileText = readFileSync(path, "utf-8");
         const words = fileText.split(/\r?\n/);
         const endTime = performance.now();
-        console.log(`Time taken to set resource array from file ${path}: ${endTime - startTime} milliseconds`);
+
+        Logger.log({
+            message: `Time taken to set resource array from file ${path}: ${endTime - startTime} milliseconds`,
+            path: "ResourceManager.class.ts",
+        });
         return words;
     }
 

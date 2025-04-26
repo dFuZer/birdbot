@@ -1,3 +1,4 @@
+import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventHandlers.class";
 import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
@@ -31,7 +32,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                     });
                     ctx.room.ws!.send(setupMessage);
                 } else {
-                    console.error("My player is not the host");
+                    Logger.log({
+                        message: "My player is not the host.",
+                        path: "BirdBotEventHandlers.ts",
+                    });
                 }
             },
         ],
@@ -205,12 +209,16 @@ const birdbotEventHandlers: BotEventHandlers = {
                                             depletedSyllables.push(syllable);
                                         }
                                     } else {
-                                        console.error(`Syllable ${syllable} is depleted. This should never happen.`);
+                                        Logger.error({
+                                            message: `Syllable ${syllable} is depleted. This should never happen.`,
+                                            path: "BirdBotEventHandlers.ts",
+                                        });
                                     }
                                 } else {
-                                    console.error(
-                                        `Syllable ${syllable} not found in remaining syllables. This should never happen.`
-                                    );
+                                    Logger.error({
+                                        message: `Syllable ${syllable} not found in remaining syllables. This should never happen.`,
+                                        path: "BirdBotEventHandlers.ts",
+                                    });
                                 }
                             }
                         }

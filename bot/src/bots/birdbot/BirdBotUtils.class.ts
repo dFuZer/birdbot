@@ -1,6 +1,7 @@
 import type WebSocket from "ws";
 import type z from "zod";
 import type NetworkAdapter from "../../lib/abstract/NetworkAdapter.abstract.class";
+import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
 import type { DictionaryId, Gamer } from "../../lib/types/gameTypes";
@@ -87,12 +88,19 @@ export default class BirdBotUtils {
                 },
             });
             if (!res.ok) {
-                console.error(res);
+                Logger.error({
+                    message: `Failed to fetch ${url}`,
+                    path: "BirdBotUtils.class.ts",
+                });
                 return null;
             }
             return (await res.json()) as T;
         } catch (error) {
-            console.error(error);
+            Logger.error({
+                message: `Failed to fetch ${url}`,
+                path: "BirdBotUtils.class.ts",
+                error,
+            });
             return null;
         }
     };
