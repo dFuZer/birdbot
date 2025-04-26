@@ -45,13 +45,12 @@ model Player {
     id         String   @id @default(uuid()) @db.Uuid
     created_at DateTime @default(now())
 
-    auth_nickname String @db.VarChar(50)
-    auth_provider String @db.VarChar(50)
-    auth_id       String @db.VarChar(50)
+    platform_id String
 
-    words      Word[]
-    usernames  PlayerUsername[]
-    gameRecaps GameRecap[]
+    words             Word[]
+    usernames         PlayerUsername[]
+    gameRecaps        GameRecap[]
+    OAuthLinkToPlayer OAuthLinkToPlayer?
 
     @@map("player")
 }
@@ -108,4 +107,20 @@ model Word {
     game   Game   @relation(fields: [game_id], references: [id])
 
     @@map("word")
+}
+
+model Session {
+    session_key      String @id
+    oauth_identifier String
+
+    @@map("session")
+}
+
+model OAuthLinkToPlayer {
+    oauth_identifier String @id @unique
+    player_id        String @unique @db.Uuid
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@map("oauth_link_to_player")
 }

@@ -8,9 +8,8 @@ services:
         environment:
             API_URL: ${API_URL}
             API_KEY: ${API_KEY}
-            NEXT_PUBLIC_DISCORD_REDIRECT_URI: ${NEXT_PUBLIC_DISCORD_REDIRECT_URI}
-            NEXT_PUBLIC_DISCORD_CLIENT_ID: ${NEXT_PUBLIC_DISCORD_CLIENT_ID}
-            DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+            NEXT_PUBLIC_DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+            NEXT_PUBLIC_DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
         depends_on:
             api:
                 condition: service_healthy
@@ -34,6 +33,9 @@ services:
             DB_URL: ${DB_URL}
             API_KEY: ${API_KEY}
             ENVIRONMENT: production
+            DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+            DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+            DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
     db:
         image: postgres:13.18-alpine3.20
         volumes:

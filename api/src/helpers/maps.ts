@@ -1,9 +1,7 @@
 import { Prisma, GameMode as PrismaGameMode, Language as PrismaLanguage } from "@prisma/client";
 import { type TLanguage, type TMode, type TRecord } from "../schemas/records.zod";
 
-export type TOrderByField = Exclude<TRecord, "time">;
-
-export const recordEnumToDatabaseFieldMap: { [key in TOrderByField]: Prisma.GameRecapScalarFieldEnum } = {
+export const recordEnumToDatabaseFieldMap: { [key in TRecord]: Prisma.GameRecapScalarFieldEnum | "time" } = {
     alpha: Prisma.GameRecapScalarFieldEnum.alpha_count,
     depleted_syllables: Prisma.GameRecapScalarFieldEnum.depleted_syllables_count,
     word: Prisma.GameRecapScalarFieldEnum.words_count,
@@ -13,6 +11,26 @@ export const recordEnumToDatabaseFieldMap: { [key in TOrderByField]: Prisma.Game
     hyphen: Prisma.GameRecapScalarFieldEnum.hyphen_words_count,
     no_death: Prisma.GameRecapScalarFieldEnum.words_without_death_count,
     more_than_20_letters: Prisma.GameRecapScalarFieldEnum.more_than_20_letters_words_count,
+    time: "time", // TODO: Add time
+};
+
+export type GameRecapRecordField =
+    | Exclude<Prisma.GameRecapScalarFieldEnum, "id" | "game_id" | "player_id" | "died_at">
+    | "time";
+
+export const databaseFieldToRecordEnumMap: {
+    [key in GameRecapRecordField]: TRecord;
+} = {
+    alpha_count: "alpha",
+    depleted_syllables_count: "depleted_syllables",
+    words_count: "word",
+    multi_syllables_count: "multi_syllable",
+    previous_syllables_count: "previous_syllable",
+    flips_count: "flips",
+    hyphen_words_count: "hyphen",
+    words_without_death_count: "no_death",
+    more_than_20_letters_words_count: "more_than_20_letters",
+    time: "time",
 };
 
 export const languageEnumToDatabaseEnumMap: { [key in TLanguage]: PrismaLanguage } = {

@@ -8,3 +8,14 @@ export function getFromApi(url: string) {
         },
     });
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function postJsonToApi(url: string, body: any) {
+    return fetch(`${API_URL}${url}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+    });
+}

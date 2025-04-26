@@ -5,7 +5,6 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import BirdBotLogo from "~/public/icon.svg";
 import MobileHeader from "./MobileHeader";
-import { SiDiscord } from "@icons-pack/react-simple-icons";
 
 export default function LayoutHeader() {
     return (

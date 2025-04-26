@@ -1,6 +1,118 @@
 import { GameMode, Language, PrismaClient } from "@prisma/client";
 import { randomUUID } from "../helpers/uuid";
 
+const firstNames: string[] = [
+    "James",
+    "Mary",
+    "Robert",
+    "Patricia",
+    "John",
+    "Jennifer",
+    "Michael",
+    "Linda",
+    "David",
+    "Elizabeth",
+    "William",
+    "Barbara",
+    "Richard",
+    "Susan",
+    "Joseph",
+    "Jessica",
+    "Thomas",
+    "Sarah",
+    "Charles",
+    "Karen",
+    "Christopher",
+    "Lisa",
+    "Daniel",
+    "Nancy",
+    "Matthew",
+    "Betty",
+    "Anthony",
+    "Margaret",
+    "Donald",
+    "Sandra",
+    "Steven",
+    "Ashley",
+    "Paul",
+    "Kimberly",
+    "Andrew",
+    "Emily",
+    "Joshua",
+    "Donna",
+    "Kenneth",
+    "Michelle",
+    "George",
+    "Carol",
+    "Kevin",
+    "Amanda",
+    "Brian",
+    "Dorothy",
+    "Edward",
+    "Melissa",
+    "Ronald",
+    "Deborah",
+];
+
+const lastNames: string[] = [
+    "Smith",
+    "Johnson",
+    "Williams",
+    "Brown",
+    "Jones",
+    "Garcia",
+    "Miller",
+    "Davis",
+    "Rodriguez",
+    "Martinez",
+    "Hernandez",
+    "Lopez",
+    "Gonzalez",
+    "Wilson",
+    "Anderson",
+    "Thomas",
+    "Taylor",
+    "Moore",
+    "Jackson",
+    "Martin",
+    "Lee",
+    "Perez",
+    "Thompson",
+    "White",
+    "Hall",
+    "Green",
+    "Adams",
+    "Baker",
+    "Hill",
+    "Rivera",
+    "Campbell",
+    "Mitchell",
+    "Roberts",
+    "Carter",
+    "Phillips",
+    "Evans",
+    "Turner",
+    "Parker",
+    "Collins",
+    "Edwards",
+    "Stewart",
+    "Flores",
+    "Morris",
+    "Murphy",
+    "Cook",
+    "Rogers",
+    "Morgan",
+    "Peterson",
+    "Cooper",
+    "Reed",
+];
+
+function getRandomName() {
+    return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${
+        lastNames[Math.floor(Math.random() * lastNames.length)]
+    }`;
+}
+
 const exampleWords: string[] = [
     "apple",
     "banana",
@@ -34,9 +146,11 @@ let modeArray = Object.values(GameMode);
     await prisma.$connect();
 
     let games = await prisma.game.createManyAndReturn({
-        data: Array.from({ length: 400 }, () => {
+        data: Array.from({ length: 100 }, () => {
             const randomLanguage = languageArray[Math.floor(Math.random() * languageArray.length)];
             const randomMode = modeArray[Math.floor(Math.random() * modeArray.length)];
+            // const randomLanguage = Language.FR;
+            // const randomMode = GameMode.REGULAR;
             return { language: randomLanguage, mode: randomMode };
         }),
     });
@@ -44,9 +158,7 @@ let modeArray = Object.values(GameMode);
     let players = await prisma.player.createManyAndReturn({
         data: Array.from({ length: 10 }, () => {
             return {
-                auth_id: randomUUID(),
-                auth_provider: "discord",
-                auth_nickname: "John" + " " + Math.floor(Math.random() * 1000),
+                platform_id: randomUUID(),
             };
         }),
     });
@@ -55,14 +167,14 @@ let modeArray = Object.values(GameMode);
         data: players.map((player) => {
             return {
                 player_id: player.id,
-                username: player.auth_nickname + " " + Math.floor(Math.random() * 1000),
+                username: getRandomName(),
             };
         }),
     });
 
-    const randomNewUsernames = Array.from({ length: 50 }, () => {
+    const randomNewUsernames = Array.from({ length: 20 }, () => {
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
-        const randomUsername = randomPlayer.auth_nickname + " " + Math.floor(Math.random() * 1000);
+        const randomUsername = getRandomName();
 
         return {
             player_id: randomPlayer.id,
@@ -74,7 +186,7 @@ let modeArray = Object.values(GameMode);
         data: randomNewUsernames,
     });
 
-    const newWords = Array.from({ length: 500 }, () => {
+    const newWords = Array.from({ length: 1000 }, () => {
         const randomGame = games[Math.floor(Math.random() * games.length)];
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
         const randomWord = exampleWords[Math.floor(Math.random() * exampleWords.length)];
@@ -92,7 +204,7 @@ let modeArray = Object.values(GameMode);
         data: newWords,
     });
 
-    const newGameRecaps = Array.from({ length: 400 })
+    const newGameRecaps = Array.from({ length: 200 })
         .map((x, i) => {
             const player = players[Math.floor(Math.random() * players.length)];
             const game = games[i];
