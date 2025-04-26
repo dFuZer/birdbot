@@ -4,13 +4,14 @@
     "private": true,
     "scripts": {
         "build": "tsc",
-        "start": "node --env-file=.env dist/index.js",
-        "u": "tsc && node --env-file=.env dist/index.unstable.js"
+        "start": "node dist/index.js",
+        "u": "tsc && node dist/index.unstable.js"
     },
     "peerDependencies": {
         "typescript": "^5.8.3"
     },
     "dependencies": {
+        "dotenv": "^16.5.0",
         "ws": "^8.18.1",
         "zod": "^3.24.3"
     },

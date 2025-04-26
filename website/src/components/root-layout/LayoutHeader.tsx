@@ -1,9 +1,10 @@
 import { katibehFont } from "@/app/fonts";
 import { Button } from "@/components/ui/button";
-import { DISCORD_LOGIN_LINK, LINKS } from "@/lib/links";
+import { LINKS } from "@/lib/links";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import BirdBotLogo from "~/public/icon.svg";
+import DiscordLoginLink from "./DiscordLoginLink";
 import MobileHeader from "./MobileHeader";
 
 export default function LayoutHeader() {
@@ -31,11 +32,7 @@ export default function LayoutHeader() {
                         <span className="w-2/3 truncate text-left font-light text-neutral-400">Search on the website</span>
                         <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                     </Button>
-                    <Link href={DISCORD_LOGIN_LINK}>
-                        <Button variant={"ghost"}>
-                            <span>Log in</span>
-                        </Button>
-                    </Link>
+                    <DiscordLoginLink />
                 </div>
             </div>
             <MobileHeader />

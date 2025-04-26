@@ -8,16 +8,23 @@ services:
         environment:
             API_URL: ${API_URL}
             API_KEY: ${API_KEY}
-            NEXT_PUBLIC_DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
-            NEXT_PUBLIC_DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+            DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
+            DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
         depends_on:
             api:
                 condition: service_healthy
     bot:
-        build: ./bot
+        build:
+            context: ./bot
+            target: production
         depends_on:
             api:
                 condition: service_healthy
+        environment:
+            API_URL: ${API_URL}
+            API_KEY: ${API_KEY}
+            USERNAME: ${CROCO_USERNAME}
+            PASSWORD: ${CROCO_PASSWORD}
     api:
         build:
             context: ./api
@@ -30,9 +37,9 @@ services:
             timeout: 2s
             retries: 20
         environment:
+            ENVIRONMENT: production
             DB_URL: ${DB_URL}
             API_KEY: ${API_KEY}
-            ENVIRONMENT: production
             DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
             DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
             DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}

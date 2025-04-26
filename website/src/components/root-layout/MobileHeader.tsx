@@ -1,13 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { LINKS, DISCORD_LOGIN_LINK } from "@/lib/links";
+import { LINKS } from "@/lib/links";
 import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { atom, useAtom } from "jotai";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createRef, useEffect } from "react";
 import BirdBotLogo from "~/public/icon.svg";
+import DiscordLoginLink from "./DiscordLoginLink";
 
 export const mobileHeaderOpenAtom = atom(false);
 
@@ -68,11 +69,7 @@ export default function MobileHeader() {
                     <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                 </Button>
             </div>
-            <Link href={DISCORD_LOGIN_LINK}>
-                <Button variant={"ghost"}>
-                    <span>Log in</span>
-                </Button>
-            </Link>
+            <DiscordLoginLink />
             <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4">
                 <BirdBotLogo className="size-8 min-h-max min-w-max" />
             </Link>
