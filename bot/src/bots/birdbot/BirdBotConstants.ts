@@ -73,12 +73,12 @@ export const birdbotModeRules: Record<BirdBotGameMode, DictionaryLessGameRules> 
     freeplay: birdbotFreeplayModeRules,
 };
 
-export const languageConversionMap: Partial<Record<DictionaryId, BirdBotLanguage>> = {
-    "fr": "fr",
-    "en": "en",
-    "de": "de",
-    "es": "es",
-    "pt-BR": "brpt",
+export const languageConversionMap: Record<BirdBotLanguage, DictionaryId> = {
+    fr: "fr",
+    en: "en",
+    de: "de",
+    es: "es",
+    brpt: "pt-BR",
 };
 
 export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
@@ -117,10 +117,10 @@ export const languageDisplayStrings: Record<BirdBotLanguage, string> = {
 
 export const languageAliases: Record<BirdBotLanguage, string[]> = {
     fr: ["french", "fr", "francais", "français"],
-    en: ["english", "en", "anglais", "anglais"],
-    de: ["german", "de", "deutsch", "deutsch"],
-    es: ["spanish", "es", "español", "español"],
-    brpt: ["brazilian portuguese", "brpt", "portuguese", "portugais"],
+    en: ["english", "en", "anglais", "anglais", "eng"],
+    de: ["german", "de", "deutsch", "deutsch", "allemand", "ger"],
+    es: ["spanish", "es", "español", "español", "espagnol", "esp"],
+    brpt: ["brasileiro", "brpt", "portuguese", "portugais", "br", "pt"],
 };
 
 export const modeDisplayStrings: Record<BirdBotGameMode, string> = {

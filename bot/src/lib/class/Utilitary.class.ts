@@ -261,8 +261,11 @@ export default class Utilitary {
             const params = args
                 .slice(1)
                 .filter((arg) => arg.startsWith("-"))
-                .map((arg) => arg.slice(1));
-            const commandArgs = args.slice(1).filter((arg) => !arg.startsWith("-"));
+                .map((arg) => arg.slice(1).toLowerCase());
+            const commandArgs = args
+                .slice(1)
+                .filter((arg) => !arg.startsWith("-"))
+                .map((arg) => arg.toLowerCase());
             const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
             if (

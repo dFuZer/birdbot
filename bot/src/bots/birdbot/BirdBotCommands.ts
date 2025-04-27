@@ -5,6 +5,8 @@ import {
     birdbotModeRules,
     defaultLanguage,
     defaultMode,
+    languageAliases,
+    languageConversionMap,
     languageDisplayStrings,
     languageEnumSchema,
     languageFlagMap,
@@ -13,7 +15,7 @@ import {
     recordsEnumSchema,
     recordsUtils,
 } from "./BirdBotConstants";
-import type { BirdBotRoomMetadata } from "./BirdBotTypes";
+import type { BirdBotLanguage, BirdBotRoomMetadata } from "./BirdBotTypes";
 import BirdBotUtils, {
     type ApiResponseAllRecords,
     type ApiResponseBestScoresSpecificRecord,
@@ -216,14 +218,26 @@ const setRoomLanguageCommand: Command = c({
     exampleUsage: "/language fr",
     roomCreatorRequired: true,
     handler: (ctx) => {
-        const targetLanguage = BirdBotUtils.findTargetItemInZodEnum(ctx.args, languageEnumSchema);
+        let targetLanguage: BirdBotLanguage | null = null;
+        for (const arg of ctx.args) {
+            for (const language in languageAliases) {
+                for (const alias of languageAliases[language as BirdBotLanguage]) {
+                    if (arg === alias) {
+                        targetLanguage = language as BirdBotLanguage;
+                        break;
+                    }
+                }
+                if (targetLanguage) break;
+            }
+            if (targetLanguage) break;
+        }
         if (targetLanguage) {
             if (ctx.room.roomState.gameData!.rules.dictionaryId === targetLanguage) {
                 ctx.utils.sendChatMessage(`Error: Language is already ${languageDisplayStrings[targetLanguage]}.`);
                 return "handled";
             }
             ctx.utils.sendChatMessage(`Setting language to ${languageDisplayStrings[targetLanguage]}.`);
-            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", targetLanguage);
+            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", languageConversionMap[targetLanguage]);
             return "handled";
         } else {
             ctx.utils.sendChatMessage("Error: Invalid language.");
