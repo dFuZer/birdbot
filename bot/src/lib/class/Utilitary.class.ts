@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import fs from "fs";
+import fs, { readFileSync } from "fs";
 import type WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
 import type { GameData, Player } from "../types/gameTypes";
@@ -143,6 +143,9 @@ export default class Utilitary {
                     sendChatMessage: (m: string) => {
                         Utilitary.sendChatMessage(room.ws!, m, bot.networkAdapter);
                     },
+                    userIsAdmin: (username: string) => {
+                        return bot.botData!.adminAccountUsernames.includes(username);
+                    },
                 },
                 room: {
                     roomState: room.roomState,
@@ -231,11 +234,24 @@ export default class Utilitary {
         return messages;
     }
 
+    public static readArrayFromFile(path: string) {
+        const fileText = readFileSync(path, "utf-8");
+        const words = fileText.split(/\r?\n/);
+        return words.map((word) => word.trim()).filter((word) => word.length > 0);
+    }
+
     public static handleCommandIfExists(
         ctx: EventCtx,
         rawMessage: string,
+        gamerAccountName: string | null,
         commands: Command[]
-    ): "no-command-given" | "command-not-found" | "command-handled" | "no-command-attempted" | "invalid-arguments" {
+    ):
+        | "no-command-given"
+        | "command-not-found"
+        | "command-handled"
+        | "no-command-attempted"
+        | "invalid-arguments"
+        | "not-room-creator" {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
         const commandPrefixes = ["!", "/", "."];
         if (commandPrefixes.some((prefix) => normalizedMessage.startsWith(prefix))) {
@@ -249,6 +265,16 @@ export default class Utilitary {
             const commandArgs = args.slice(1).filter((arg) => !arg.startsWith("-"));
             const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
+            if (
+                !(
+                    (command.roomCreatorRequired &&
+                        ctx.room.constantRoomData.roomCreatorUsername === gamerAccountName) ||
+                    ctx.utils.userIsAdmin(gamerAccountName)
+                )
+            ) {
+                ctx.utils.sendChatMessage("This command is only available for the room creator.");
+                return "not-room-creator";
+            }
             Logger.log({
                 message: `Attempting to handle command ${command.id} from message ${rawMessage}`,
                 path: "Utilitary.class.ts",
@@ -256,12 +282,12 @@ export default class Utilitary {
             const commandHandlerCtx: CommandHandlerCtx = {
                 bot: ctx.bot,
                 room: ctx.room,
+                utils: ctx.utils,
                 rawMessage,
                 params,
                 args: commandArgs,
                 normalizedMessage,
                 usedAlias: requestedCommand,
-                utils: ctx.utils,
             };
             const commandStatus = command.handler(commandHandlerCtx);
             if (commandStatus === "handled") return "command-handled";

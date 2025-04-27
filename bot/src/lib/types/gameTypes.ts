@@ -43,7 +43,7 @@ export interface GameStats {
 }
 
 export interface Identity {
-    name: string;
+    name: string | null;
     nickname: string;
     signUpTimestamp: number;
     awards: string[];
@@ -96,6 +96,8 @@ export interface GameRules {
     startingLives: number;
     maxLives: number;
 }
+
+export type DictionaryLessGameRules = Omit<GameRules, "dictionaryId">;
 
 export interface GameStep {
     value: "pregame" | "initialSetup" | "1v1Announcement" | "round" | "matchOver" | "roundIntro" | "roundOver";

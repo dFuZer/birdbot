@@ -2,8 +2,10 @@ import type { Command } from "../../lib/class/CommandUtils.class";
 import CommandUtils from "../../lib/class/CommandUtils.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import {
+    birdbotModeRules,
     defaultLanguage,
     defaultMode,
+    languageDisplayStrings,
     languageEnumSchema,
     languageFlagMap,
     modeDisplayStrings,
@@ -11,7 +13,7 @@ import {
     recordsEnumSchema,
     recordsUtils,
 } from "./BirdBotConstants";
-import type { BirdBotRoomMetadata } from "./BirdBotResources";
+import type { BirdBotRoomMetadata } from "./BirdBotTypes";
 import BirdBotUtils, {
     type ApiResponseAllRecords,
     type ApiResponseBestScoresSpecificRecord,
@@ -161,7 +163,7 @@ const startGameCommand: Command = c({
     aliases: ["startnow", "sn"],
     desc: "Starts the game.",
     usageDesc: "/sn",
-    exampleUsage: "/startnow",
+    exampleUsage: "/sn",
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
             ctx.utils.sendChatMessage("Error: Not in pregame.");
@@ -178,4 +180,63 @@ const startGameCommand: Command = c({
     },
 });
 
-export const birdbotCommands: Command[] = [helpCommand, recordsCommand, currentGameScoresCommand, startGameCommand];
+const setGameModeCommand: Command = c({
+    id: "setGameMode",
+    aliases: ["mode", "m"],
+    desc: "Sets the game mode.",
+    usageDesc: "/mode [gameMode]",
+    exampleUsage: "/mode survival",
+    roomCreatorRequired: true,
+    handler: (ctx) => {
+        const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(ctx.args, modesEnumSchema);
+        if (targetGameMode) {
+            const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+            if (roomMetadata.gameMode === targetGameMode) {
+                ctx.utils.sendChatMessage(`Game mode is already ${modeDisplayStrings[targetGameMode]}.`);
+                return "handled";
+            }
+            ctx.utils.sendChatMessage(`Setting mode to ${modeDisplayStrings[targetGameMode]}...`);
+            const targetGameModeRules = birdbotModeRules[targetGameMode];
+
+            BirdBotUtils.setRoomGameMode(ctx, targetGameModeRules);
+
+            return "handled";
+        } else {
+            ctx.utils.sendChatMessage("Error: Invalid game mode.");
+            return "handled";
+        }
+    },
+});
+
+const setRoomLanguageCommand: Command = c({
+    id: "setRoomLanguage",
+    aliases: ["language", "lang", "l"],
+    desc: "Sets the language of the room.",
+    usageDesc: "/language [language]",
+    exampleUsage: "/language fr",
+    roomCreatorRequired: true,
+    handler: (ctx) => {
+        const targetLanguage = BirdBotUtils.findTargetItemInZodEnum(ctx.args, languageEnumSchema);
+        if (targetLanguage) {
+            if (ctx.room.roomState.gameData!.rules.dictionaryId === targetLanguage) {
+                ctx.utils.sendChatMessage(`Error: Language is already ${languageDisplayStrings[targetLanguage]}.`);
+                return "handled";
+            }
+            ctx.utils.sendChatMessage(`Setting language to ${languageDisplayStrings[targetLanguage]}.`);
+            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", targetLanguage);
+            return "handled";
+        } else {
+            ctx.utils.sendChatMessage("Error: Invalid language.");
+            return "handled";
+        }
+    },
+});
+
+export const birdbotCommands: Command[] = [
+    helpCommand,
+    recordsCommand,
+    currentGameScoresCommand,
+    startGameCommand,
+    setGameModeCommand,
+    setRoomLanguageCommand,
+];

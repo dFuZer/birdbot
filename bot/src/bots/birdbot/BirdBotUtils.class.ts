@@ -1,12 +1,13 @@
 import type WebSocket from "ws";
 import type z from "zod";
 import type NetworkAdapter from "../../lib/abstract/NetworkAdapter.abstract.class";
+import { CommandOrEventCtx } from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
-import type { DictionaryId, Gamer } from "../../lib/types/gameTypes";
+import type { DictionaryId, DictionaryLessGameRules, Gamer, GameRules } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
-import { recordsUtils } from "./BirdBotConstants";
+import { birdbotModeRules, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
 import type {
     BirdBotGameMode,
@@ -15,7 +16,7 @@ import type {
     BirdBotRoomMetadata,
     DictionaryResource,
     PlayerGameScores,
-} from "./BirdBotResources";
+} from "./BirdBotTypes";
 
 export type ApiResponseAllRecords = {
     message: string;
@@ -40,7 +41,7 @@ export default class BirdBotUtils {
         }
         if (currentPlayer.gamerId !== ctx.room.roomState.myGamerId) return;
         const myPlayer = currentPlayer;
-        const dictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
+        const dictionaryResource = this.getCurrentDictionaryResource(ctx);
         const history = ctx.room.roomState.wordHistory;
         const prompt = ctx.room.roomState.gameData!.round.prompt;
         const ws = ctx.room.ws!;
@@ -70,6 +71,69 @@ export default class BirdBotUtils {
         } else if (mode === "random") {
             const foundWord = this.getRandomValidWord({ dictionary: dictionaryResource.resource, isWordValid });
             this.submitWord({ word: foundWord ?? "💥", ws, adapter: ctx.bot.networkAdapter });
+        }
+    };
+
+    public static setRoomGameMode = (ctx: CommandOrEventCtx, mode: DictionaryLessGameRules) => {
+        for (const rule of Object.keys(mode)) {
+            this.setRoomGameRuleIfDifferent(
+                ctx,
+                rule as keyof DictionaryLessGameRules,
+                mode[rule as keyof DictionaryLessGameRules]
+            );
+        }
+    };
+
+    public static setRoomGameRuleIfDifferent = (ctx: CommandOrEventCtx, rule: keyof GameRules, value: any) => {
+        if (ctx.room.roomState.gameData!.rules[rule] !== value) {
+            Logger.log({
+                message: `Setting rule ${rule} to value ${value}`,
+                path: "BirdBotEventHandlers.ts",
+            });
+            ctx.room.ws!.send(ctx.bot.networkAdapter.getSetupMessage(rule, value));
+        } else {
+            Logger.log({
+                message: `Rule ${rule} is already set to the correct value. Skipping.`,
+                path: "BirdBotEventHandlers.ts",
+            });
+        }
+    };
+
+    public static detectRoomGameMode = (ctx: EventCtx) => {
+        let foundCorrespondingGameMode = false;
+        for (const gameModeKey in birdbotModeRules) {
+            const gameMode = birdbotModeRules[gameModeKey as BirdBotGameMode];
+            let isGameModeMatching = true;
+            for (const ruleKey in gameMode) {
+                type Rule = keyof typeof gameMode;
+                const ruleValue = gameMode[ruleKey as Rule];
+                if (ctx.room.roomState.gameData!.rules[ruleKey as Rule] !== ruleValue) {
+                    isGameModeMatching = false;
+                    break;
+                }
+            }
+            if (isGameModeMatching) {
+                Logger.log({
+                    message: `Game mode ${gameModeKey} is matching.`,
+                    path: "BirdBotEventHandlers.ts",
+                });
+                const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+                const isGameModeAlreadySet = roomMetadata.gameMode === (gameModeKey as BirdBotGameMode);
+                if (!isGameModeAlreadySet) {
+                    roomMetadata.gameMode = gameModeKey as BirdBotGameMode;
+                    ctx.utils.sendChatMessage(`Game mode set to ${gameModeKey}.`);
+                }
+                foundCorrespondingGameMode = true;
+                break;
+            }
+        }
+        if (!foundCorrespondingGameMode) {
+            Logger.log({
+                message: "No corresponding game mode found. Setting game mode to custom.",
+                path: "BirdBotEventHandlers.ts",
+            });
+            const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+            roomMetadata.gameMode = "custom";
         }
     };
 
@@ -329,7 +393,7 @@ export default class BirdBotUtils {
 
     public static setupRoomMetadata = (ctx: EventCtx) => {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-        roomMetadata.gameMode = "custom";
+        this.detectRoomGameMode(ctx);
         roomMetadata.scoresByGamerId = {};
         for (const player of ctx.room.roomState.gameData!.players) {
             this.initializeScoresForPlayerId(roomMetadata, player.gamerId);

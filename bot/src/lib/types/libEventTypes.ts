@@ -36,6 +36,7 @@ export type RoomEventCtx = {
 
 export type EventCtxUtils = {
     sendChatMessage: (message: string) => void;
+    userIsAdmin: (username: any) => boolean;
 };
 
 export type EventCtx = {

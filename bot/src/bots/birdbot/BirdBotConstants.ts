@@ -1,17 +1,76 @@
 import { z } from "zod";
 import Utilitary from "../../lib/class/Utilitary.class";
-import type { BombPartyRules, DictionaryId } from "../../lib/types/gameTypes";
-import type { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType } from "./BirdBotResources";
+import { DictionaryId, DictionaryLessGameRules } from "../../lib/types/gameTypes";
+import type { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType } from "./BirdBotTypes";
 
-export const defaultBirdBotBombPartyRules: Partial<BombPartyRules> = {
+const birdbotRulesBase: Omit<
+    DictionaryLessGameRules,
+    "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives"
+> = {
+    roundsToWin: 1,
+    scoreGoal: 100,
+    gameMode: "survival",
+    minWordLengthOption: "0",
     promptDifficulty: "custom",
+};
+
+const birdbotRegularModeRules: DictionaryLessGameRules = {
+    ...birdbotRulesBase,
     bombDuration: 5,
     customPromptDifficulty: 1,
-    roundsToWin: 1,
-    minWordLengthOption: "0",
     maxLives: 3,
     startingLives: 2,
-    scoreGoal: 100,
+};
+
+const birdbotEasyModeRules: DictionaryLessGameRules = {
+    ...birdbotRulesBase,
+    bombDuration: 7,
+    customPromptDifficulty: 400,
+    maxLives: 3,
+    startingLives: 3,
+};
+
+const birdbotBlitzModeRules: DictionaryLessGameRules = {
+    ...birdbotRulesBase,
+    bombDuration: 3,
+    customPromptDifficulty: 1,
+    maxLives: 2,
+    startingLives: 3,
+};
+
+const birdbotSub500ModeRules: DictionaryLessGameRules = {
+    ...birdbotRulesBase,
+    bombDuration: 5,
+    customPromptDifficulty: -500,
+    maxLives: 3,
+    startingLives: 2,
+};
+
+const birdbotSub50ModeRules: DictionaryLessGameRules = {
+    ...birdbotRulesBase,
+    bombDuration: 5,
+    customPromptDifficulty: -50,
+    maxLives: 3,
+    startingLives: 2,
+};
+
+const birdbotFreeplayModeRules: DictionaryLessGameRules = {
+    ...birdbotRulesBase,
+    bombDuration: 10,
+    customPromptDifficulty: 1,
+    maxLives: 10,
+    startingLives: 10,
+};
+
+export const defaultBirdBotBombPartyRules: DictionaryLessGameRules = birdbotRegularModeRules;
+
+export const birdbotModeRules: Record<BirdBotGameMode, DictionaryLessGameRules> = {
+    regular: birdbotRegularModeRules,
+    easy: birdbotEasyModeRules,
+    blitz: birdbotBlitzModeRules,
+    sub500: birdbotSub500ModeRules,
+    sub50: birdbotSub50ModeRules,
+    freeplay: birdbotFreeplayModeRules,
 };
 
 export const languageConversionMap: Partial<Record<DictionaryId, BirdBotLanguage>> = {
@@ -46,6 +105,22 @@ export const languageFlagMap: Record<BirdBotLanguage, string> = {
     de: "🇩🇪",
     es: "🇪🇸",
     brpt: "🇧🇷",
+};
+
+export const languageDisplayStrings: Record<BirdBotLanguage, string> = {
+    fr: "French",
+    en: "English",
+    de: "German",
+    es: "Spanish",
+    brpt: "Brazilian Portuguese",
+};
+
+export const languageAliases: Record<BirdBotLanguage, string[]> = {
+    fr: ["french", "fr", "francais", "français"],
+    en: ["english", "en", "anglais", "anglais"],
+    de: ["german", "de", "deutsch", "deutsch"],
+    es: ["spanish", "es", "español", "español"],
+    brpt: ["brazilian portuguese", "brpt", "portuguese", "portugais"],
 };
 
 export const modeDisplayStrings: Record<BirdBotGameMode, string> = {

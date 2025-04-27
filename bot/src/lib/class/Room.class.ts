@@ -16,6 +16,7 @@ export type RoomState = {
 export type ConstantRoomData = {
     roomCode: string;
     targetConfig: RoomTargetConfig | null;
+    roomCreatorUsername: string | null;
 };
 
 export type RoomTargetConfig = {
@@ -30,13 +31,24 @@ export default class Room {
     public nodeHost: string | null;
     public id: string;
 
-    constructor({ roomCode, id, targetConfig }: { roomCode: string; id: string; targetConfig?: RoomTargetConfig }) {
+    constructor({
+        roomCode,
+        id,
+        targetConfig,
+        roomCreatorUsername,
+    }: {
+        roomCode: string;
+        id: string;
+        targetConfig?: RoomTargetConfig;
+        roomCreatorUsername: string | null;
+    }) {
         this.ws = null;
         this.nodeHost = null;
         this.id = id;
         this.constantRoomData = {
             roomCode: roomCode,
             targetConfig: targetConfig ?? null,
+            roomCreatorUsername: roomCreatorUsername,
         };
         this.roomState = {
             gameData: null,

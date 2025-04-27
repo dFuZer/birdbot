@@ -1,4 +1,4 @@
-import type { BotEventCtx, EventCtxUtils, RoomEventCtx } from "../types/libEventTypes";
+import type { BotEventCtx, EventCtx, EventCtxUtils, RoomEventCtx } from "../types/libEventTypes";
 
 export type CommandHandlerCtx = {
     rawMessage: string;
@@ -10,6 +10,8 @@ export type CommandHandlerCtx = {
     room: RoomEventCtx;
     utils: EventCtxUtils;
 };
+
+export type CommandOrEventCtx = CommandHandlerCtx | EventCtx;
 
 export type CommandStatus = "handled" | "invalid-arguments";
 export type CommandHandler = (commandCtx: CommandHandlerCtx) => CommandStatus | Promise<CommandStatus>;

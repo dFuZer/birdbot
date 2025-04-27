@@ -2,11 +2,10 @@ import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventHandlers.class";
 import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
-import type { BombPartyRuleKey } from "../../lib/types/gameTypes";
 import type { BotEventHandlers } from "../../lib/types/libEventTypes";
 import { birdbotCommands } from "./BirdBotCommands";
 import { defaultBirdBotBombPartyRules } from "./BirdBotConstants";
-import type { BirdBotRoomMetadata } from "./BirdBotResources";
+import type { BirdBotRoomMetadata } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 
 const birdbotEventHandlers: BotEventHandlers = {
@@ -33,7 +32,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                     ctx.room.ws!.send(setupMessage);
                 } else {
                     Logger.log({
-                        message: "My player is not the host.",
+                        message: "My player is not the host or the target config is not set.",
                         path: "BirdBotEventHandlers.ts",
                     });
                 }
@@ -46,10 +45,23 @@ const birdbotEventHandlers: BotEventHandlers = {
         "chat": (ctx) => {
             const data = ctx.bot.networkAdapter.readChatData(ctx.message);
             const { gamerId, rawMessage } = data;
-
             if (ctx.room.roomState.myGamerId === gamerId) return;
 
-            const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, birdbotCommands);
+            const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === gamerId);
+            if (!gamer) {
+                Logger.error({
+                    message: `Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}.`,
+                    path: "BirdBotEventHandlers.ts",
+                });
+                throw new Error(`Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}.`);
+            }
+            const gamerAccountName = gamer.identity.name;
+            const handleCommandResult = Utilitary.handleCommandIfExists(
+                ctx,
+                rawMessage,
+                gamerAccountName,
+                birdbotCommands
+            );
             if (handleCommandResult === "command-handled") return;
             if (handleCommandResult === "command-not-found") {
                 ctx.utils.sendChatMessage(`Command not found: ${rawMessage}`);
@@ -57,6 +69,12 @@ const birdbotEventHandlers: BotEventHandlers = {
             }
             if (handleCommandResult === "invalid-arguments") {
                 ctx.utils.sendChatMessage(`Invalid arguments: ${rawMessage}`);
+                return;
+            }
+            if (handleCommandResult === "not-room-creator") {
+                ctx.utils.sendChatMessage(
+                    `You cannot use this command if you are not the room creator. Use /b to create your room.`
+                );
                 return;
             }
         },
@@ -73,15 +91,27 @@ const birdbotEventHandlers: BotEventHandlers = {
                 (ctx, previousHandlersCtx) => {
                     const isInitialSetup = previousHandlersCtx.initialSetup as true | undefined;
                     if (isInitialSetup) {
-                        for (const rule of Object.keys(defaultBirdBotBombPartyRules)) {
-                            const ruleMessage = ctx.bot.networkAdapter.getSetupMessage(
-                                rule as BombPartyRuleKey,
-                                defaultBirdBotBombPartyRules[rule as BombPartyRuleKey]
+                        Logger.log({
+                            message: "This is the initial setup, setting rules to default values.",
+                            path: "BirdBotEventHandlers.ts",
+                        });
+                        BirdBotUtils.setRoomGameMode(ctx, defaultBirdBotBombPartyRules);
+                        if (ctx.room.constantRoomData.targetConfig !== null) {
+                            BirdBotUtils.setRoomGameRuleIfDifferent(
+                                ctx,
+                                "dictionaryId",
+                                ctx.room.constantRoomData.targetConfig.dictionaryId
                             );
-                            ctx.room.ws!.send(ruleMessage);
                         }
                         const joinMessage = ctx.bot.networkAdapter.getJoinMessage();
                         ctx.room.ws!.send(joinMessage);
+                    } else {
+                        Logger.log({
+                            message:
+                                "This is not the initial setup. I should check the game mode corresponding to the rules.",
+                            path: "BirdBotEventHandlers.ts",
+                        });
+                        BirdBotUtils.detectRoomGameMode(ctx);
                     }
                 },
             ],

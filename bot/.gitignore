@@ -19,3 +19,7 @@ dist/
 # Resources
 resources/*.dictionary.txt
 !resources/*.example.txt
+
+# Admins
+admins.txt
+!admins.example.txt

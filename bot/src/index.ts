@@ -1,6 +1,7 @@
 import BirdBot from "./bots/birdbot/BirdBot.class";
 import Logger from "./lib/class/Logger.class";
 import WorkingNetworkAdapter from "./lib/class/private/WorkingNetworkAdapter.class";
+import Utilitary from "./lib/class/Utilitary.class";
 
 async function start() {
     Logger.log({
@@ -8,13 +9,13 @@ async function start() {
         path: "index.ts",
     });
     const bot = new BirdBot({ networkAdapter: new WorkingNetworkAdapter() });
-    await bot.init();
+    await bot.init({ adminAccountUsernames: Utilitary.readArrayFromFile("./admins.txt") });
     await bot.loadDictionaryResourceFromFile({
         key: "dictionary-en",
         path: "./resources/en.dictionary.txt",
         dictionaryId: "en",
     });
-    await bot.createRoom({ dictionaryId: "en", gameMode: "survival" });
+    await bot.createRoom({ dictionaryId: "en", gameMode: "survival", roomCreatorUsername: null });
 }
 
 start();

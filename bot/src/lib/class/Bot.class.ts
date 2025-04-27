@@ -10,6 +10,7 @@ import Utilitary from "./Utilitary.class";
 
 type BotData = {
     session: Session;
+    adminAccountUsernames: string[];
 };
 
 type HandlerTask = {
@@ -37,14 +38,14 @@ export default class Bot {
         this.isProcessingQueue = false;
     }
 
-    public async init() {
+    public async init({ adminAccountUsernames }: { adminAccountUsernames: string[] }) {
         Logger.log({
             message: "Initializing bot",
             path: "Bot.class.ts",
         });
         const session = new Session();
         await session.init();
-        this.botData = { session };
+        this.botData = { session, adminAccountUsernames };
     }
 
     public enqueueHandler(task: HandlerTask) {
@@ -71,6 +72,7 @@ export default class Bot {
                 Logger.error({
                     message: `Error executing handlers for event ${task.eventName}:`,
                     path: "Bot.class.ts",
+                    error,
                 });
             } finally {
                 this.isProcessingQueue = false;
@@ -84,25 +86,42 @@ export default class Bot {
     public async joinRoom({
         roomCode,
         targetConfig,
+        roomCreatorUsername,
     }: {
         roomCode: string;
         targetConfig?: RoomTargetConfig;
-    }): Promise<string> {
-        Logger.log({
-            message: `Joining room ${roomCode}`,
-            path: "Bot.class.ts",
-        });
-        const randomUUID = Utilitary.randomUUID();
-        const room = new Room({ roomCode, id: randomUUID, targetConfig });
-        await room.init({ sessionSecret: this.botData!.session.session!.secret });
+        roomCreatorUsername: string | null;
+    }) {
+        try {
+            Logger.log({
+                message: `Joining room ${roomCode}`,
+                path: "Bot.class.ts",
+            });
+            const randomUUID = Utilitary.randomUUID();
+            const room = new Room({ roomCode, id: randomUUID, targetConfig, roomCreatorUsername });
+            await room.init({ sessionSecret: this.botData!.session.session!.secret });
 
-        Utilitary.initializeRoomSocket(this, room);
+            Utilitary.initializeRoomSocket(this, room);
 
-        this.rooms[randomUUID] = room;
-        return randomUUID;
+            this.rooms[randomUUID] = room;
+        } catch (error) {
+            Logger.error({
+                message: `Error joining room ${roomCode}:`,
+                path: "Bot.class.ts",
+                error,
+            });
+        }
     }
 
-    public async createRoom({ dictionaryId, gameMode }: { dictionaryId: DictionaryId; gameMode: GameMode }) {
+    public async createRoom({
+        dictionaryId,
+        gameMode,
+        roomCreatorUsername,
+    }: {
+        dictionaryId: DictionaryId;
+        gameMode: GameMode;
+        roomCreatorUsername: string | null;
+    }) {
         const ws = new WebSocket(`wss://croco.games/api/websocket`, {
             perMessageDeflate: false,
         });
@@ -118,7 +137,11 @@ export default class Bot {
         const onMessage = (message: Buffer) => {
             const data = this.networkAdapter.readCentralMessageBaseData(message);
             if (data.eventType === "roomReady") {
-                this.joinRoom({ roomCode: data.roomCode, targetConfig: { dictionaryId, gameMode } });
+                this.joinRoom({
+                    roomCode: data.roomCode,
+                    targetConfig: { dictionaryId, gameMode },
+                    roomCreatorUsername: roomCreatorUsername,
+                });
                 ws.close();
             }
         };

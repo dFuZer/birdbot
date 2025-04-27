@@ -3,7 +3,7 @@ import Bot from "../../lib/class/Bot.class";
 import Logger from "../../lib/class/Logger.class";
 import type { DictionaryId } from "../../lib/types/gameTypes";
 import birdbotEventHandlers from "./BirdBotEventHandlers";
-import type { DictionaryResource } from "./BirdBotResources";
+import type { DictionaryResource } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 
 export default class BirdBot extends Bot {
@@ -24,7 +24,7 @@ export default class BirdBot extends Bot {
             message: `Loading dictionary resource ${key} from file ${path} with dictionaryId ${dictionaryId}`,
             path: "BirdBot.class.ts",
         });
-        const words = await this.resourceManager.loadArrayFromFile(path);
+        const words = await this.resourceManager.loadArrayResourceFromFile(path);
         this.resourceManager.set<DictionaryResource>(key, {
             resource: words,
             metadata: {

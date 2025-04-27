@@ -1,6 +1,6 @@
-import { readFileSync } from "fs";
 import Logger from "./Logger.class";
 
+import Utilitary from "./Utilitary.class";
 export type Resource<ResourceType extends any, ResourceMetadataType extends any> = {
     resource: ResourceType;
     metadata: ResourceMetadataType;
@@ -26,17 +26,16 @@ export default class ResourceManager {
         this.resources[key] = value;
     }
 
-    public async loadArrayFromFile(path: string) {
+    public async loadArrayResourceFromFile(path: string) {
         const startTime = performance.now();
-        const fileText = readFileSync(path, "utf-8");
-        const words = fileText.split(/\r?\n/);
+        const stringArray = Utilitary.readArrayFromFile(path);
         const endTime = performance.now();
 
         Logger.log({
             message: `Time taken to set resource array from file ${path}: ${endTime - startTime} milliseconds`,
             path: "ResourceManager.class.ts",
         });
-        return words;
+        return stringArray;
     }
 
     public delete(key: string) {
