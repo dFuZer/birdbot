@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Resource } from "../../lib/class/ResourceManager.class";
+import { SubmitResultType } from "../../lib/types/gameTypes";
 import type {
     birdbotSupportedDictionaryIds,
     languageEnumSchema,
@@ -44,4 +45,18 @@ export type BirdBotGameData = {
     id: string;
     lang: BirdBotLanguage;
     mode: BirdBotGameMode;
+};
+
+export type BirdBotPlayerData = {
+    accountName: string;
+    nickname: string;
+};
+
+export type BirdBotWordData = {
+    game: BirdBotGameData;
+    player: BirdBotPlayerData;
+    word: string;
+    submitResult: SubmitResultType;
+    prompt: string;
+    flip: boolean;
 };

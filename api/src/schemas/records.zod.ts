@@ -19,7 +19,6 @@ const recordsEnumSchema = z.enum([
 type TLanguage = z.infer<typeof languageEnumSchema>;
 type TMode = z.infer<typeof modesEnumSchema>;
 type TRecord = z.infer<typeof recordsEnumSchema>;
-
 let getRecords = z
     .object({
         lang: languageEnumSchema,

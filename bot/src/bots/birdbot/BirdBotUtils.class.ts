@@ -13,9 +13,11 @@ import {
     BirdBotGameData,
     BirdBotGameMode,
     BirdBotLanguage,
+    BirdBotPlayerData,
     BirdBotRecordType,
     BirdBotRoomMetadata,
     BirdBotSupportedDictionaryId,
+    BirdBotWordData,
     DictionaryResource,
     PlayerGameScores,
 } from "./BirdBotTypes";
@@ -76,12 +78,24 @@ export default class BirdBotUtils {
         }
     };
 
+    public static getApiPlayerData = (player: Gamer) => {
+        return {
+            accountName: player.identity.name,
+            nickname: player.identity.nickname,
+        } as BirdBotPlayerData;
+    };
+
+    public static registerWord = async (wordData: BirdBotWordData) => {
+        const res = await this.postJsonToApi("/add-word", wordData);
+        return res;
+    };
+
     public static registerGame = async (gameData: BirdBotGameData) => {
         const res = await this.postJsonToApi("/add-game", gameData);
         return res;
     };
 
-    public static getGameData = (ctx: EventCtx) => {
+    public static getApiGameData = (ctx: EventCtx) => {
         const gameData = ctx.room.roomState.gameData!;
         const language = dictionaryIdToBirdbotLanguage[gameData.rules.dictionaryId as BirdBotSupportedDictionaryId];
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;

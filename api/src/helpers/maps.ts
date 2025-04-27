@@ -1,5 +1,11 @@
-import { Prisma, GameMode as PrismaGameMode, Language as PrismaLanguage } from "@prisma/client";
+import {
+    Prisma,
+    GameMode as PrismaGameMode,
+    Language as PrismaLanguage,
+    SubmitResultType as PrismaSubmitResultType,
+} from "@prisma/client";
 import { type TLanguage, type TMode, type TRecord } from "../schemas/records.zod";
+import { TSubmitResult } from "../schemas/word.zod";
 
 export const recordEnumToDatabaseFieldMap: { [key in TRecord]: Prisma.GameRecapScalarFieldEnum | "time" } = {
     alpha: Prisma.GameRecapScalarFieldEnum.alpha_count,
@@ -48,4 +54,13 @@ export const modeEnumToDatabaseEnumMap: { [key in TMode]: PrismaGameMode } = {
     sub500: PrismaGameMode.SUB500,
     sub50: PrismaGameMode.SUB50,
     freeplay: PrismaGameMode.FREEPLAY,
+};
+
+export const submitResultEnumToDatabaseEnumMap: { [key in TSubmitResult]: PrismaSubmitResultType } = {
+    success: PrismaSubmitResultType.SUCCESS,
+    failsPrompt: PrismaSubmitResultType.FAILS_PROMPT,
+    invalidWord: PrismaSubmitResultType.INVALID_WORD,
+    noText: PrismaSubmitResultType.NO_TEXT,
+    alreadyUsed: PrismaSubmitResultType.ALREADY_USED,
+    bombExploded: PrismaSubmitResultType.BOMB_EXPLODED,
 };

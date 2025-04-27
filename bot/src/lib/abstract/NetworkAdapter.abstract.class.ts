@@ -13,6 +13,7 @@ import type {
     Player,
     PromptDifficulty,
     RoomData,
+    SubmitResultType,
 } from "../types/gameTypes";
 
 type CommonMessageData = {
@@ -134,7 +135,7 @@ export type ReadNextTurnData = CommonMessageData & {
 };
 
 export type ReadSubmitData = CommonMessageData & {
-    result: string;
+    result: SubmitResultType;
     points: number;
 };
 

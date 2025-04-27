@@ -1,5 +1,4 @@
-import { GameMode, Language, PrismaClient } from "@prisma/client";
-import { randomUUID } from "../helpers/uuid";
+import { GameMode, Language, PrismaClient, SubmitResultType } from "@prisma/client";
 
 const firstNames: string[] = [
     "James",
@@ -158,7 +157,7 @@ let modeArray = Object.values(GameMode);
     let players = await prisma.player.createManyAndReturn({
         data: Array.from({ length: 10 }, () => {
             return {
-                platform_id: randomUUID(),
+                account_name: getRandomName(),
             };
         }),
     });
@@ -193,7 +192,7 @@ let modeArray = Object.values(GameMode);
         return {
             word: randomWord,
             flip: true,
-            correct: true,
+            submit_result: SubmitResultType.SUCCESS,
             prompt: "TEST",
             player_id: randomPlayer.id,
             game_id: randomGame.id,

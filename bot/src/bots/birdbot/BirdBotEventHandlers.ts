@@ -132,7 +132,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                     if (
                         birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)
                     ) {
-                        const gameData = BirdBotUtils.getGameData(ctx);
+                        const gameData = BirdBotUtils.getApiGameData(ctx);
                         Logger.log({
                             message: `Registering game ${gameData.id}`,
                             path: "BirdBotEventHandlers.ts",
@@ -174,6 +174,12 @@ const birdbotEventHandlers: BotEventHandlers = {
                     if (!currentPlayer) {
                         throw new Error("Current player is not set");
                     }
+                    const currentGamer = ctx.room.roomState.roomData!.gamers.find(
+                        (gamer) => gamer.id === currentPlayer.gamerId
+                    );
+                    if (!currentGamer) {
+                        throw new Error("Current gamer is not set");
+                    }
                     const word = currentPlayer.text;
                     const currentPrompt = ctx.room.roomState.gameData!.round.prompt;
 
@@ -186,33 +192,38 @@ const birdbotEventHandlers: BotEventHandlers = {
                         BirdBotUtils.initializeScoresForPlayerId(roomMetadata, currentPlayer.gamerId);
                     }
                     const playerScores = allPlayerScores[currentPlayer.gamerId]!;
+                    const isLifeGain = previousHandlersCtx.isLifeGain as boolean | undefined;
                     if (result === "success") {
                         const turnComments = [];
+
                         // Flips score
-                        const isLifeGain = previousHandlersCtx.isLifeGain as boolean | undefined;
                         if (isLifeGain) {
                             playerScores.flips++;
-                            turnComments.push(`+1 life`);
+                            // turnComments.push(`+1 life`);
                         }
+
                         // Words score
                         playerScores.words++;
-                        turnComments.push(`+1 word`);
+                        // turnComments.push(`+1 word`);
+
                         // Words without death score
                         playerScores.currentWordsWithoutDeath++;
                         if (playerScores.currentWordsWithoutDeath > playerScores.maxWordsWithoutDeath) {
                             playerScores.maxWordsWithoutDeath = playerScores.currentWordsWithoutDeath;
-                            turnComments.push(`+1 words without death`);
                         }
+
                         // More than 20 letters score
                         if (word.length > 20) {
                             playerScores.moreThan20LettersWords++;
-                            turnComments.push(`+1 more than 20 letters word`);
+                            // turnComments.push(`+1 more than 20 letters word`);
                         }
+
                         // Hyphens score
                         if (word.includes("-")) {
                             playerScores.hyphenWords++;
-                            turnComments.push(`+1 hyphen word`);
+                            // turnComments.push(`+1 hyphen word`);
                         }
+
                         // Alpha score
                         const currentPlayerAlphaScore = playerScores.alpha;
                         const currentPlayerAlphaLetter = String.fromCharCode(
@@ -220,23 +231,26 @@ const birdbotEventHandlers: BotEventHandlers = {
                         ).toLowerCase();
                         if (word[0] === currentPlayerAlphaLetter) {
                             playerScores.alpha++;
-                            turnComments.push(`+1 alpha`);
+                            // turnComments.push(`+1 alpha`);
                         }
+
                         // Previous syllables score
                         if (playerScores.previousSyllable) {
                             const previousSyllable = playerScores.previousSyllable;
                             const currentWordIncludesPreviousSyllable = word.includes(previousSyllable);
                             if (currentWordIncludesPreviousSyllable) {
                                 playerScores.previousSyllableScore += points;
-                                turnComments.push(`+1 previous syllable`);
+                                // turnComments.push(`+1 previous syllable`);
                             }
                         }
+
                         // Multi syllables score
                         const multiSyllableGainedPoints = word.split(currentPrompt).length - 2;
                         if (multiSyllableGainedPoints > 0) {
                             playerScores.multiSyllables += multiSyllableGainedPoints;
-                            turnComments.push(`+${multiSyllableGainedPoints} multi syllables`);
+                            // turnComments.push(`+${multiSyllableGainedPoints} multi syllables`);
                         }
+
                         // Depleted syllables score
                         const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
                         const depletedSyllables = [];
@@ -265,11 +279,21 @@ const birdbotEventHandlers: BotEventHandlers = {
                         }
                         if (depletedSyllables.length > 0) {
                             playerScores.depletedSyllables += depletedSyllables.length;
-                            turnComments.push(`+${depletedSyllables.length} depleted syllables`);
+                            // turnComments.push(`+${depletedSyllables.length} depleted syllables`);
                         }
                         if (turnComments.length > 0 && ctx.room.roomState.myGamerId !== currentPlayer.gamerId) {
                             // ctx.utils.sendChatMessage(turnComments.join(", "));
                         }
+                    }
+                    if (currentGamer.identity.name) {
+                        BirdBotUtils.registerWord({
+                            flip: isLifeGain ?? false,
+                            word,
+                            submitResult: result,
+                            prompt: currentPrompt,
+                            game: BirdBotUtils.getApiGameData(ctx),
+                            player: BirdBotUtils.getApiPlayerData(currentGamer),
+                        });
                     }
                 },
             ],

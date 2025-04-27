@@ -28,6 +28,17 @@ enum GameMode {
     @@map("game_mode")
 }
 
+enum SubmitResultType {
+    SUCCESS
+    FAILS_PROMPT
+    INVALID_WORD
+    NO_TEXT
+    ALREADY_USED
+    BOMB_EXPLODED
+
+    @@map("submit_result_type")
+}
+
 model PlayerUsername {
     id String @id @default(uuid()) @db.Uuid
 
@@ -45,7 +56,7 @@ model Player {
     id         String   @id @default(uuid()) @db.Uuid
     created_at DateTime @default(now())
 
-    platform_id String
+    account_name String
 
     words             Word[]
     usernames         PlayerUsername[]
@@ -98,10 +109,10 @@ model Word {
     player_id String @db.Uuid
     game_id   String @db.Uuid
 
-    word    String  @db.VarChar(50)
-    flip    Boolean
-    correct Boolean
-    prompt  String  @db.VarChar(10)
+    word          String           @db.VarChar(50)
+    flip          Boolean
+    submit_result SubmitResultType
+    prompt        String           @db.VarChar(10)
 
     player Player @relation(fields: [player_id], references: [id])
     game   Game   @relation(fields: [game_id], references: [id])
