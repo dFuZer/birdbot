@@ -190,6 +190,10 @@ const setGameModeCommand: Command = c({
     exampleUsage: "/mode survival",
     roomCreatorRequired: true,
     handler: (ctx) => {
+        if (ctx.room.roomState.gameData!.step.value !== "pregame") {
+            ctx.utils.sendChatMessage("Error: Cannot set mode outside of pregame.");
+            return "handled";
+        }
         const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(ctx.args, modesEnumSchema);
         if (targetGameMode) {
             const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
@@ -218,6 +222,10 @@ const setRoomLanguageCommand: Command = c({
     exampleUsage: "/language fr",
     roomCreatorRequired: true,
     handler: (ctx) => {
+        if (ctx.room.roomState.gameData!.step.value !== "pregame") {
+            ctx.utils.sendChatMessage("Error: Cannot set language outside of pregame.");
+            return "handled";
+        }
         let targetLanguage: BirdBotLanguage | null = null;
         for (const arg of ctx.args) {
             for (const language in languageAliases) {
