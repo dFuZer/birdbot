@@ -31,7 +31,7 @@ const helpCommand: Command = c({
         if (ctx.args.length === 0) {
             const commandFirstAliases = birdbotCommands.map((c) => `/${c.aliases[0]}`).join(" - ");
             ctx.utils.sendChatMessage(
-                `${commandFirstAliases} —— For more information about a command, use /help [command]`
+                `${commandFirstAliases} — For more information about a command, use /help [command]`
             );
             return "handled";
         }
@@ -42,7 +42,7 @@ const helpCommand: Command = c({
             return "handled";
         }
         ctx.utils.sendChatMessage(
-            `/${command.aliases[0]}: ${command.desc} —— Usage: ${command.usageDesc} —— Example usage: ${command.exampleUsage}`
+            `/${command.aliases[0]}: ${command.desc} — Use: ${command.usageDesc} — Ex. ${command.exampleUsage}`
         );
         return "handled";
     },
