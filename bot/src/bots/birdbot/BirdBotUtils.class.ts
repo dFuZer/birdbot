@@ -7,13 +7,15 @@ import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
 import type { DictionaryId, DictionaryLessGameRules, Gamer, GameRules } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
-import { birdbotModeRules, recordsUtils } from "./BirdBotConstants";
+import { birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
-import type {
+import {
+    BirdBotGameData,
     BirdBotGameMode,
     BirdBotLanguage,
     BirdBotRecordType,
     BirdBotRoomMetadata,
+    BirdBotSupportedDictionaryId,
     DictionaryResource,
     PlayerGameScores,
 } from "./BirdBotTypes";
@@ -72,6 +74,29 @@ export default class BirdBotUtils {
             const foundWord = this.getRandomValidWord({ dictionary: dictionaryResource.resource, isWordValid });
             this.submitWord({ word: foundWord ?? "💥", ws, adapter: ctx.bot.networkAdapter });
         }
+    };
+
+    public static registerGame = async (gameData: BirdBotGameData) => {
+        const res = await this.postJsonToApi("/add-game", gameData);
+        return res;
+    };
+
+    public static getGameData = (ctx: EventCtx) => {
+        const gameData = ctx.room.roomState.gameData!;
+        const language = dictionaryIdToBirdbotLanguage[gameData.rules.dictionaryId as BirdBotSupportedDictionaryId];
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        if (!language) {
+            Logger.error({
+                message: `Language ${gameData.rules.dictionaryId} not supported. This should never happen.`,
+                path: "BirdBotUtils.class.ts",
+            });
+            throw new Error(`Language ${gameData.rules.dictionaryId} not supported. This should never happen.`);
+        }
+        return {
+            id: Utilitary.valueToUUID(gameData.round.startTimestamp.toString()),
+            lang: language,
+            mode: roomMetadata.gameMode,
+        } as BirdBotGameData;
     };
 
     public static setRoomGameMode = (ctx: CommandOrEventCtx, mode: DictionaryLessGameRules) => {
@@ -143,6 +168,13 @@ export default class BirdBotUtils {
     };
 
     public static getJsonFromApi = async <T>(url: string): Promise<T | null> => {
+        const logError = (error: any) => {
+            Logger.error({
+                message: `Failed to fetch ${url}`,
+                path: "BirdBotUtils.class.ts",
+                error,
+            });
+        };
         try {
             const res = await fetch(`${API_URL}${url}`, {
                 method: "GET",
@@ -152,19 +184,41 @@ export default class BirdBotUtils {
                 },
             });
             if (!res.ok) {
-                Logger.error({
-                    message: `Failed to fetch ${url}`,
-                    path: "BirdBotUtils.class.ts",
-                });
+                logError(res);
                 return null;
             }
             return (await res.json()) as T;
         } catch (error) {
+            logError(error);
+            return null;
+        }
+    };
+
+    public static postJsonToApi = async <T>(url: string, body: any): Promise<T | null> => {
+        const logError = (error: any) => {
             Logger.error({
-                message: `Failed to fetch ${url}`,
+                message: `Failed to post to ${url}`,
                 path: "BirdBotUtils.class.ts",
                 error,
+                json: body,
             });
+        };
+        try {
+            const res = await fetch(`${API_URL}${url}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${API_KEY}`,
+                },
+                body: JSON.stringify(body),
+            });
+            if (!res.ok) {
+                logError(res);
+                return null;
+            }
+            return (await res.json()) as T;
+        } catch (error) {
+            logError(error);
             return null;
         }
     };

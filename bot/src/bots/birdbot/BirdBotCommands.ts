@@ -2,11 +2,11 @@ import type { Command } from "../../lib/class/CommandUtils.class";
 import CommandUtils from "../../lib/class/CommandUtils.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import {
+    birdbotLanguageToDictionaryId,
     birdbotModeRules,
     defaultLanguage,
     defaultMode,
     languageAliases,
-    languageConversionMap,
     languageDisplayStrings,
     languageEnumSchema,
     languageFlagMap,
@@ -31,7 +31,10 @@ const helpCommand: Command = c({
     exampleUsage: "/help - /help records",
     handler: (ctx) => {
         if (ctx.args.length === 0) {
-            const commandFirstAliases = birdbotCommands.map((c) => `/${c.aliases[0]}`).join(" - ");
+            const commandFirstAliases = birdbotCommands
+                .filter((command) => !command.adminRequired)
+                .map((c) => `/${c.aliases[0]}`)
+                .join(" - ");
             ctx.utils.sendChatMessage(
                 `${commandFirstAliases} — For more information about a command, use /help [command]`
             );
@@ -245,12 +248,24 @@ const setRoomLanguageCommand: Command = c({
                 return "handled";
             }
             ctx.utils.sendChatMessage(`Setting language to ${languageDisplayStrings[targetLanguage]}.`);
-            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", languageConversionMap[targetLanguage]);
+            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", birdbotLanguageToDictionaryId[targetLanguage]);
             return "handled";
         } else {
             ctx.utils.sendChatMessage("Error: Invalid language.");
             return "handled";
         }
+    },
+});
+
+const testCommand: Command = c({
+    id: "test",
+    aliases: ["test"],
+    desc: "Test command",
+    usageDesc: "/test",
+    exampleUsage: "/test",
+    handler: (ctx) => {
+        console.log(JSON.stringify(ctx.room.roomState.gameData, null, 2));
+        return "handled";
     },
 });
 
@@ -261,4 +276,5 @@ export const birdbotCommands: Command[] = [
     startGameCommand,
     setGameModeCommand,
     setRoomLanguageCommand,
+    testCommand,
 ];

@@ -25,6 +25,7 @@ services:
             API_KEY: ${API_KEY}
             USERNAME: ${CROCO_USERNAME}
             PASSWORD: ${CROCO_PASSWORD}
+            NAMESPACE_UUID: ${NAMESPACE_UUID}
     api:
         build:
             context: ./api

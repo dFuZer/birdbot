@@ -1,7 +1,9 @@
 import { randomUUID } from "crypto";
 import fs, { readFileSync } from "fs";
+import { v5 as uuidv5 } from "uuid";
 import type WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
+import { NAMESPACE_UUID } from "../env";
 import type { GameData, Player } from "../types/gameTypes";
 import type { BotEventHandler, BotEventPreviousHandlersCtx, EventCtx } from "../types/libEventTypes";
 import type Bot from "./Bot.class";
@@ -74,6 +76,10 @@ export default class Utilitary {
 
     public static randomUUID() {
         return randomUUID();
+    }
+
+    public static valueToUUID(value: string) {
+        return uuidv5(value, NAMESPACE_UUID);
     }
 
     public static async getJson<T>(path: string): Promise<T> {

@@ -19,7 +19,8 @@ export default async function addPlayerIfNotExist(player: z.infer<typeof playerS
     const existingPlayer = existingPlayers[0];
 
     if (existingPlayer !== undefined) {
-        const usernames: { id: string }[] = await prisma.$queryRaw`SELECT id FROM player_username WHERE username = ${player.nickname}`;
+        const usernames: { id: string }[] =
+            await prisma.$queryRaw`SELECT id FROM player_username WHERE username = ${player.nickname}`;
         if (usernames[0] === undefined) {
             Logger.log({ message: `Inserting username`, path: "addPlayerIfNotExist.ts" });
             await prisma.$executeRaw`

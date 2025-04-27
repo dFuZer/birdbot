@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import { authMiddleware } from "./middleware/auth";
+import { addGameRouteHandler } from "./routes/addGame.route";
 import { addGameRecapRouteHandler } from "./routes/addGameRecap.route";
 import { addPlayersRouteHandler } from "./routes/addPlayers.route";
 import { addWordRouteHandler } from "./routes/addWord.route";
@@ -14,6 +15,7 @@ const app = Fastify();
 // POST
 app.post("/add-word", { preHandler: authMiddleware }, addWordRouteHandler);
 app.post("/add-player", { preHandler: authMiddleware }, addPlayersRouteHandler);
+app.post("/add-game", { preHandler: authMiddleware }, addGameRouteHandler);
 app.post("/add-game-recap", { preHandler: authMiddleware }, addGameRecapRouteHandler);
 app.post("/get-session-cookie-discord", { preHandler: authMiddleware }, getDiscordUserIdRouteHandler);
 

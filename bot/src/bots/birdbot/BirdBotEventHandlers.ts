@@ -4,7 +4,7 @@ import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventH
 import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
 import type { BotEventHandlers } from "../../lib/types/libEventTypes";
 import { birdbotCommands } from "./BirdBotCommands";
-import { defaultBirdBotBombPartyRules } from "./BirdBotConstants";
+import { birdbotSupportedDictionaryIds, defaultBirdBotBombPartyRules } from "./BirdBotConstants";
 import type { BirdBotRoomMetadata } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 
@@ -73,7 +73,7 @@ const birdbotEventHandlers: BotEventHandlers = {
             }
             if (handleCommandResult === "not-room-creator") {
                 ctx.utils.sendChatMessage(
-                    `You cannot use this command if you are not the room creator. Use /b to create your room.`
+                    `You cannot use this command if you are not the room creator. /b to create your room will be available soon.`
                 );
                 return;
             }
@@ -122,12 +122,23 @@ const birdbotEventHandlers: BotEventHandlers = {
             "roundIntro": CommonTEH.roundIntro,
             "round": [
                 CommonTEH.round,
-                (ctx) => {
+                async (ctx) => {
                     const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
                     const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
                     const currentDictionarySyllablesCount = currentDictionaryResource.metadata.syllablesCount;
                     const clonedSyllablesCount = Object.assign({}, currentDictionarySyllablesCount);
                     roomMetadata.remainingSyllables = clonedSyllablesCount;
+
+                    if (
+                        birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)
+                    ) {
+                        const gameData = BirdBotUtils.getGameData(ctx);
+                        Logger.log({
+                            message: `Registering game ${gameData.id}`,
+                            path: "BirdBotEventHandlers.ts",
+                        });
+                        await BirdBotUtils.registerGame(gameData);
+                    }
                 },
                 BirdBotUtils.handleMyTurn,
             ],
