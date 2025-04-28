@@ -6,6 +6,7 @@ import Link from "next/link";
 import BirdBotLogo from "~/public/icon.svg";
 import DiscordLoginLink from "./DiscordLoginLink";
 import MobileHeader from "./MobileHeader";
+import { EXPERIMENTAL_FEATURES_ENABLED } from "@/lib/env";
 
 export default function LayoutHeader() {
     return (
@@ -32,7 +33,7 @@ export default function LayoutHeader() {
                         <span className="w-2/3 truncate text-left font-light text-neutral-400">Search on the website</span>
                         <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                     </Button>
-                    <DiscordLoginLink />
+                    {EXPERIMENTAL_FEATURES_ENABLED && <DiscordLoginLink />}
                 </div>
             </div>
             <MobileHeader />

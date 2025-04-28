@@ -10,6 +10,7 @@ services:
             API_KEY: ${API_KEY}
             DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI}
             DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+            EXPERIMENTAL_FEATURES_ENABLED: ${WEBSITE_EXPERIMENTAL_FEATURES_ENABLED}
         depends_on:
             api:
                 condition: service_healthy

@@ -5,11 +5,13 @@ import { createContext, useEffect, useState } from "react";
 type PublicEnvironmentVariables = {
     DISCORD_REDIRECT_URI: string;
     DISCORD_CLIENT_ID: string;
+    EXPERIMENTAL_FEATURES_ENABLED: boolean;
 };
 
 export const PublicEnvironmentVariablesContext = createContext<PublicEnvironmentVariables>({
     DISCORD_REDIRECT_URI: "",
     DISCORD_CLIENT_ID: "",
+    EXPERIMENTAL_FEATURES_ENABLED: false,
 });
 
 export default function PublicEnvironmentVariablesProvider({
@@ -20,6 +22,7 @@ export default function PublicEnvironmentVariablesProvider({
     const [env, setEnv] = useState<PublicEnvironmentVariables>({
         DISCORD_REDIRECT_URI: "",
         DISCORD_CLIENT_ID: "",
+        EXPERIMENTAL_FEATURES_ENABLED: false,
     });
 
     useEffect(() => {

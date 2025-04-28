@@ -6,9 +6,10 @@ import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/o
 import { atom, useAtom } from "jotai";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createRef, useEffect } from "react";
+import { createRef, useContext, useEffect } from "react";
 import BirdBotLogo from "~/public/icon.svg";
 import DiscordLoginLink from "./DiscordLoginLink";
+import { PublicEnvironmentVariablesContext } from "../providers/PublicEnvironmentVariablesProvider";
 
 export const mobileHeaderOpenAtom = atom(false);
 
@@ -16,6 +17,7 @@ export default function MobileHeader() {
     const [open, setOpen] = useAtom(mobileHeaderOpenAtom);
     const location = usePathname();
     const firstLinkRef = createRef<HTMLAnchorElement>();
+    const { EXPERIMENTAL_FEATURES_ENABLED } = useContext(PublicEnvironmentVariablesContext);
 
     function invertOpen() {
         setOpen((prev) => !prev);
@@ -69,7 +71,7 @@ export default function MobileHeader() {
                     <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
                 </Button>
             </div>
-            <DiscordLoginLink />
+            {EXPERIMENTAL_FEATURES_ENABLED && <DiscordLoginLink />}
             <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4">
                 <BirdBotLogo className="size-8 min-h-max min-w-max" />
             </Link>
