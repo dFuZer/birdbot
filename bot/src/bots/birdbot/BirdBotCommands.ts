@@ -4,18 +4,19 @@ import Utilitary from "../../lib/class/Utilitary.class";
 import {
     birdbotLanguageToDictionaryId,
     birdbotModeRules,
+    birdbotSupportedDictionaryIds,
     defaultLanguage,
     defaultMode,
+    dictionaryIdToBirdbotLanguage,
     languageAliases,
     languageDisplayStrings,
-    languageEnumSchema,
     languageFlagMap,
     modeDisplayStrings,
     modesEnumSchema,
-    recordsEnumSchema,
+    recordAliases,
     recordsUtils,
 } from "./BirdBotConstants";
-import type { BirdBotLanguage, BirdBotRoomMetadata } from "./BirdBotTypes";
+import { BirdBotLanguage, BirdBotRoomMetadata, BirdBotSupportedDictionaryId, DictionaryResource } from "./BirdBotTypes";
 import BirdBotUtils, {
     type ApiResponseAllRecords,
     type ApiResponseBestScoresSpecificRecord,
@@ -61,9 +62,9 @@ const recordsCommand: Command = c({
     exampleUsage: "/records - /records words",
     handler: async (ctx) => {
         const allArguments = ctx.params.concat(ctx.args);
-        const targetLanguage = BirdBotUtils.findTargetItemInZodEnum(allArguments, languageEnumSchema);
+        const targetLanguage = BirdBotUtils.findValueInAliasesObject(allArguments, languageAliases);
         const targetMode = BirdBotUtils.findTargetItemInZodEnum(allArguments, modesEnumSchema);
-        const targetRecordType = BirdBotUtils.findTargetItemInZodEnum(allArguments, recordsEnumSchema);
+        const targetRecordType = BirdBotUtils.findValueInAliasesObject(allArguments, recordAliases);
         const targetPage = BirdBotUtils.findNumberInArgs(allArguments);
 
         const language = targetLanguage ?? defaultLanguage;
@@ -110,7 +111,7 @@ const recordsCommand: Command = c({
 
 const currentGameScoresCommand: Command = c({
     id: "currentGameScore",
-    aliases: ["score", "s", "sc"],
+    aliases: ["score", "s", "sc", "j", "joueur"],
     desc: "Shows the current game scores for a given player. If no player is provided, it will show the scores for the current player.",
     usageDesc: "/score (player)",
     exampleUsage: "/score - /score dfuzer",
@@ -229,19 +230,9 @@ const setRoomLanguageCommand: Command = c({
             ctx.utils.sendChatMessage("Error: Cannot set language outside of pregame.");
             return "handled";
         }
-        let targetLanguage: BirdBotLanguage | null = null;
-        for (const arg of ctx.args) {
-            for (const language in languageAliases) {
-                for (const alias of languageAliases[language as BirdBotLanguage]) {
-                    if (arg === alias) {
-                        targetLanguage = language as BirdBotLanguage;
-                        break;
-                    }
-                }
-                if (targetLanguage) break;
-            }
-            if (targetLanguage) break;
-        }
+
+        const targetLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
+
         if (targetLanguage) {
             if (ctx.room.roomState.gameData!.rules.dictionaryId === targetLanguage) {
                 ctx.utils.sendChatMessage(`Error: Language is already ${languageDisplayStrings[targetLanguage]}.`);
@@ -257,14 +248,112 @@ const setRoomLanguageCommand: Command = c({
     },
 });
 
-const testCommand: Command = c({
-    id: "test",
-    aliases: ["test"],
-    desc: "Test command",
-    usageDesc: "/test",
-    exampleUsage: "/test",
+const searchWordsCommand: Command = c({
+    id: "searchWords",
+    aliases: ["c", "searchwords", "words"],
+    desc: "Search for words in the dictionary. The user can provide any number of syllables or regexes to search for.",
+    usageDesc: "/c [syllable|regex] [...]",
+    exampleUsage: "/c hello - /c ^hello$",
     handler: (ctx) => {
-        console.log(JSON.stringify(ctx.room.roomState.gameData, null, 2));
+        const paramLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
+        const paramRecord = BirdBotUtils.findValueInAliasesObject(ctx.params, recordAliases);
+
+        let targetLanguage: BirdBotLanguage | null = null;
+        if (paramLanguage) {
+            targetLanguage = paramLanguage;
+        } else {
+            const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
+            if (!birdbotSupportedDictionaryIds.includes(roomDictionaryId as any)) {
+                ctx.utils.sendChatMessage("Error: This language is not supported.");
+                return "handled";
+            }
+            const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
+            targetLanguage = roomBirdBotLanguage;
+        }
+
+        const dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
+        const dictionary = dictionaryResource.resource;
+
+        const regexes: RegExp[] = [];
+        for (const arg of ctx.args) {
+            try {
+                const reg = new RegExp(arg);
+                regexes.push(reg);
+            } catch (e) {
+                ctx.utils.sendChatMessage(`Error: Invalid regex: ${arg}`);
+                return "handled";
+            }
+        }
+
+        const otherRoomPrompts: string[] = [];
+        const rooms = Object.values(ctx.bot.rooms);
+        for (const room of rooms) {
+            const roomSyllable = room.roomState.gameData?.round.prompt;
+            if (roomSyllable) {
+                otherRoomPrompts.push(roomSyllable);
+            }
+        }
+        function isWordHidden(word: string) {
+            return otherRoomPrompts.some((prompt) => word.includes(prompt));
+        }
+
+        function isWordValid(word: string) {
+            return regexes.every((regex) => regex.test(word));
+        }
+
+        const RESULT_LIMIT = 500;
+        const TOTAL_CHARACTER_LIMIT = 120;
+        let hiddenWordsCount = 0;
+        const foundWords: string[] = [];
+
+        function shouldStopSearchingWords() {
+            return hiddenWordsCount + foundWords.length > RESULT_LIMIT;
+        }
+
+        function searchForWordsInDictionary(startIndex: number, endIndex: number) {
+            for (let i = startIndex; i < endIndex; i++) {
+                const word = dictionary[i];
+                const wordValid = isWordValid(word);
+
+                if (wordValid) {
+                    const wordHidden = isWordHidden(word);
+                    if (wordHidden) {
+                        console.log(word, "hidden");
+                        hiddenWordsCount++;
+                    } else {
+                        foundWords.push(word);
+                    }
+                    if (shouldStopSearchingWords()) {
+                        return;
+                    }
+                }
+            }
+        }
+
+        const randomStartIndex = Math.floor(Math.random() * dictionary.length);
+        searchForWordsInDictionary(randomStartIndex, dictionary.length);
+        const shouldKeepSearching = !shouldStopSearchingWords();
+        if (shouldKeepSearching) {
+            searchForWordsInDictionary(0, randomStartIndex);
+        }
+        const cutResults = [];
+        let nonHiddenWordsCharacterCount = 0;
+        for (const word of foundWords) {
+            cutResults.push(word);
+            nonHiddenWordsCharacterCount += word.length;
+            if (nonHiddenWordsCharacterCount > TOTAL_CHARACTER_LIMIT) {
+                break;
+            }
+        }
+        const totalResultsCount = hiddenWordsCount + foundWords.length;
+        const foundMoreThanLimit = totalResultsCount > RESULT_LIMIT;
+        const moreHiddenThanLimit = hiddenWordsCount > RESULT_LIMIT;
+
+        ctx.utils.sendChatMessage(
+            `[${foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount} (${
+                moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount
+            } hidden)] ${cutResults.length > 0 ? cutResults.join(" ").toUpperCase() : "No results available"}`
+        );
         return "handled";
     },
 });
@@ -276,5 +365,5 @@ export const birdbotCommands: Command[] = [
     startGameCommand,
     setGameModeCommand,
     setRoomLanguageCommand,
-    testCommand,
+    searchWordsCommand,
 ];

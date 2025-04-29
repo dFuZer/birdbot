@@ -2,6 +2,7 @@ import type WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
 import type { ResourceGetter } from "../class/ResourceManager.class";
 import type { ConstantRoomData, RoomState } from "../class/Room.class";
+import Room from "../class/Room.class";
 import type { Session } from "../class/Session.class";
 import type { BombpartySessionMessageKind, NodeMessageKind } from "./gameTypes";
 
@@ -24,6 +25,7 @@ export type MessageEventCtx = Buffer;
 
 export type BotEventCtx = {
     getResource: ResourceGetter;
+    rooms: Readonly<Record<string, Room>>;
     session: Session;
     networkAdapter: NetworkAdapter;
 };

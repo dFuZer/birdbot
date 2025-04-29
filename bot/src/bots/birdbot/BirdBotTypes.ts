@@ -1,7 +1,12 @@
 import { z } from "zod";
 import type { Resource } from "../../lib/class/ResourceManager.class";
 import { SubmitResultType } from "../../lib/types/gameTypes";
-import type { birdbotSupportedDictionaryIds, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "./BirdBotConstants";
+import type {
+    birdbotSupportedDictionaryIds,
+    languageEnumSchema,
+    modesEnumSchema,
+    recordsEnumSchema,
+} from "./BirdBotConstants";
 
 export type DictionaryMetadata = {
     letterRarityScores: Record<string, number>;
@@ -13,6 +18,8 @@ export type DictionaryResource = Resource<string[], DictionaryMetadata>;
 export type BirdBotLanguage = z.infer<typeof languageEnumSchema>;
 export type BirdBotGameMode = z.infer<typeof modesEnumSchema>;
 export type BirdBotRecordType = z.infer<typeof recordsEnumSchema>;
+
+export type BirdBotSupportedDictionaryId = (typeof birdbotSupportedDictionaryIds)[number];
 
 export type PlayerGameScores = {
     words: number;
@@ -27,8 +34,6 @@ export type PlayerGameScores = {
     hyphenWords: number;
     moreThan20LettersWords: number;
 };
-
-export type BirdBotSupportedDictionaryId = (typeof birdbotSupportedDictionaryIds)[number];
 
 export type BirdBotRoomMetadata = {
     gameMode: BirdBotGameMode | "custom";

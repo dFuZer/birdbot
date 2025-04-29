@@ -1,7 +1,7 @@
 import { z } from "zod";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { DictionaryId, DictionaryLessGameRules } from "../../lib/types/gameTypes";
-import type { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType } from "./BirdBotTypes";
+import { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotSupportedDictionaryId } from "./BirdBotTypes";
 
 const birdbotRulesBase: Omit<
     DictionaryLessGameRules,
@@ -81,7 +81,7 @@ export const birdbotLanguageToDictionaryId: Record<BirdBotLanguage, DictionaryId
     brpt: "pt-BR",
 };
 
-export const dictionaryIdToBirdbotLanguage: Record<(typeof birdbotSupportedDictionaryIds)[number], BirdBotLanguage> = {
+export const dictionaryIdToBirdbotLanguage: Record<BirdBotSupportedDictionaryId, BirdBotLanguage> = {
     "fr": "fr",
     "en": "en",
     "de": "de",
@@ -127,10 +127,23 @@ export const languageDisplayStrings: Record<BirdBotLanguage, string> = {
 
 export const languageAliases: Record<BirdBotLanguage, string[]> = {
     fr: ["french", "fr", "francais", "français"],
-    en: ["english", "en", "anglais", "anglais", "eng"],
+    en: ["english", "en", "anglais", "anglais", "eng", "englais" /*  ça arrive plus souvent que ce qu'on croit */],
     de: ["german", "de", "deutsch", "deutsch", "allemand", "ger"],
     es: ["spanish", "es", "español", "español", "espagnol", "esp"],
-    brpt: ["brasileiro", "brpt", "portuguese", "portugais", "br", "pt"],
+    brpt: ["brasileiro", "brpt", "portuguese", "portugais", "br", "pt", "portugais"],
+};
+
+export const recordAliases: Record<BirdBotRecordType, string[]> = {
+    word: ["words", "word", "mots", "mot", "mots", "w", "m"],
+    time: ["time", "temps", "temp", "t"],
+    multi_syllable: ["multi-syllable", "multi-syllables", "ms", "multi"],
+    previous_syllable: ["previous-syllable", "previous-syllables", "previous", "prev", "ps"],
+    flips: ["flips", "flip", "life", "lives", "vie", "vies", "v"],
+    depleted_syllables: ["depleted-syllables", "syllables-depleted", "sn", "depleted", "syll"],
+    no_death: ["no-death", "nd", "sans-mort", "sm"],
+    alpha: ["alpha", "alp"],
+    hyphen: ["hyphen", "hyp", "hyph", "compose", "mot-compose", "mot-composes"],
+    more_than_20_letters: ["more-than-20-letters", "20+", "plus-de-20-lettres", "long", "longs", "20-letters"],
 };
 
 export const modeDisplayStrings: Record<BirdBotGameMode, string> = {

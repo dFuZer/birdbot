@@ -7,7 +7,12 @@ import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
 import type { DictionaryId, DictionaryLessGameRules, Gamer, GameRules } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
-import { birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
+import {
+    birdbotModeRules,
+    dictionaryIdToBirdbotLanguage,
+    languageAliases as itemAliases,
+    recordsUtils,
+} from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
 import {
     BirdBotGameData,
@@ -90,6 +95,26 @@ export default class BirdBotUtils {
         const gameRecap = BirdBotUtils.getApiGameRecap(ctx, gamerId);
         if (gameRecap.wordsCount < 10) return;
         await BirdBotUtils.registerGameRecap(gameRecap);
+    };
+
+    public static findValueInAliasesObject = <T extends string>(
+        values: string[],
+        aliases: Record<T, string[]>
+    ): T | null => {
+        let targetItem: T | null = null;
+        for (const str of values) {
+            for (const item in itemAliases) {
+                for (const alias of itemAliases[item as BirdBotLanguage]) {
+                    if (str === alias) {
+                        targetItem = item as T;
+                        break;
+                    }
+                }
+                if (targetItem) break;
+            }
+            if (targetItem) break;
+        }
+        return targetItem;
     };
 
     public static getApiGameRecap = (ctx: EventCtx, gamerId: number): BirdBotGameRecap => {

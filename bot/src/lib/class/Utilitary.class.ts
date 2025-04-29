@@ -143,6 +143,7 @@ export default class Utilitary {
                     getResource: bot.resourceManager.get.bind(bot.resourceManager),
                     session: bot.botData!.session,
                     networkAdapter: bot.networkAdapter,
+                    rooms: bot.rooms,
                 },
                 message: buffer,
                 utils: {
