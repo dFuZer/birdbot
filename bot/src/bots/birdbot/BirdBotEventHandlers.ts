@@ -277,7 +277,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const currentWordIncludesPreviousSyllable = word.includes(previousSyllable);
                             if (currentWordIncludesPreviousSyllable) {
                                 playerScores.previousSyllableScore += points;
-                                turnComments.push(`placed a previous syllable: ${previousSyllable}`);
+                                turnComments.push(`placed a previous syllable: ${previousSyllable.toUpperCase()}`);
                                 showWord = true;
                             }
                         }
@@ -287,7 +287,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                         if (multiSyllableGainedPoints > 0) {
                             playerScores.multiSyllables += multiSyllableGainedPoints;
                             turnComments.push(
-                                `gained ${multiSyllableGainedPoints} MS (${currentPrompt} x ${
+                                `gained ${multiSyllableGainedPoints} MS (${currentPrompt.toUpperCase()} x ${
                                     multiSyllableGainedPoints + 1
                                 })`
                             );
@@ -323,13 +323,17 @@ const birdbotEventHandlers: BotEventHandlers = {
                         if (depletedSyllables.length > 0) {
                             playerScores.depletedSyllables += depletedSyllables.length;
                             turnComments.push(
-                                `depleted ${depletedSyllables.length} syllables: ${depletedSyllables.join(", ")}`
+                                `depleted ${depletedSyllables.length} syllables: ${depletedSyllables
+                                    .join(", ")
+                                    .toUpperCase()}`
                             );
                         }
                         if (turnComments.length > 0 && ctx.room.roomState.myGamerId !== currentPlayer.gamerId) {
                             if (showWord) {
                                 ctx.utils.sendChatMessage(
-                                    `${currentGamer.identity.nickname} (${word}): ${turnComments.join(" - ")}.`
+                                    `${currentGamer.identity.nickname}: (${word.toUpperCase()}) ${turnComments.join(
+                                        " - "
+                                    )}.`
                                 );
                             } else {
                                 ctx.utils.sendChatMessage(
