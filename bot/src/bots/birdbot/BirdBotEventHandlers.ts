@@ -56,7 +56,12 @@ const birdbotEventHandlers: BotEventHandlers = {
                 throw new Error(`Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}.`);
             }
             const gamerAccountName = gamer.identity.name;
-            const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, gamerAccountName, birdbotCommands);
+            const handleCommandResult = Utilitary.handleCommandIfExists(
+                ctx,
+                rawMessage,
+                gamerAccountName,
+                birdbotCommands
+            );
             if (handleCommandResult === "command-handled") return;
             if (handleCommandResult === "command-not-found") {
                 ctx.utils.sendChatMessage(`Command not found: ${rawMessage}`);
@@ -67,7 +72,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                 return;
             }
             if (handleCommandResult === "not-room-creator") {
-                ctx.utils.sendChatMessage(`You cannot use this command if you are not the room creator. /b to create your room will be available soon.`);
+                ctx.utils.sendChatMessage(
+                    `You cannot use this command if you are not the room creator. /b to create your room will be available soon.`
+                );
                 return;
             }
         },
@@ -90,13 +97,18 @@ const birdbotEventHandlers: BotEventHandlers = {
                         });
                         BirdBotUtils.setRoomGameMode(ctx, defaultBirdBotBombPartyRules);
                         if (ctx.room.constantRoomData.targetConfig !== null) {
-                            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", ctx.room.constantRoomData.targetConfig.dictionaryId);
+                            BirdBotUtils.setRoomGameRuleIfDifferent(
+                                ctx,
+                                "dictionaryId",
+                                ctx.room.constantRoomData.targetConfig.dictionaryId
+                            );
                         }
                         const joinMessage = ctx.bot.networkAdapter.getJoinMessage();
                         ctx.room.ws!.send(joinMessage);
                     } else {
                         Logger.log({
-                            message: "This is not the initial setup. I should check the game mode corresponding to the rules.",
+                            message:
+                                "This is not the initial setup. I should check the game mode corresponding to the rules.",
                             path: "BirdBotEventHandlers.ts",
                         });
                         BirdBotUtils.detectRoomGameMode(ctx);
@@ -117,7 +129,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                     const clonedSyllablesCount = Object.assign({}, currentDictionarySyllablesCount);
                     roomMetadata.remainingSyllables = clonedSyllablesCount;
 
-                    if (birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)) {
+                    if (
+                        birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)
+                    ) {
                         const gameData = BirdBotUtils.getApiGameData(ctx);
                         Logger.log({
                             message: `Registering game ${gameData.id}`,
@@ -128,7 +142,13 @@ const birdbotEventHandlers: BotEventHandlers = {
                 },
                 BirdBotUtils.handleMyTurn,
             ],
-            "roundOver": CommonTEH.roundOver,
+            "roundOver": [
+                CommonTEH.roundOver,
+                (ctx, previousHandlersCtx) => {
+                    const deadPlayerIds = previousHandlersCtx.deadPlayerIds as number[];
+                    console.log("roundover", deadPlayerIds);
+                },
+            ],
             "gameOver": [
                 CommonTEH.gameOver,
                 (ctx) => {
@@ -155,9 +175,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                 (ctx, previousHandlersCtx) => {
                     const previousGamerId = previousHandlersCtx.previousGamerId as number;
                     const previousPrompt = previousHandlersCtx.previousPrompt as string;
+                    const deadPlayerIds = previousHandlersCtx.deadPlayerIds as number[];
 
-                    const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-                    roomMetadata.scoresByGamerId[previousGamerId];
+                    console.log("nextturn", deadPlayerIds);
                 },
             ],
             "submit": [
@@ -170,7 +190,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                     if (!currentPlayer) {
                         throw new Error("Current player is not set");
                     }
-                    const currentGamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === currentPlayer.gamerId);
+                    const currentGamer = ctx.room.roomState.roomData!.gamers.find(
+                        (gamer) => gamer.id === currentPlayer.gamerId
+                    );
                     if (!currentGamer) {
                         throw new Error("Current gamer is not set");
                     }
@@ -211,7 +233,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const oldMaxWordsWithoutDeath = playerScores.maxWordsWithoutDeath;
                             playerScores.maxWordsWithoutDeath = playerScores.currentWordsWithoutDeath;
                             const newMaxWordsWithoutDeath = playerScores.maxWordsWithoutDeath;
-                            const passedMilestone = BirdBotUtils.passedMilestone(oldMaxWordsWithoutDeath, newMaxWordsWithoutDeath, 50);
+                            const passedMilestone = BirdBotUtils.passedMilestone(
+                                oldMaxWordsWithoutDeath,
+                                newMaxWordsWithoutDeath,
+                                50
+                            );
                             if (passedMilestone) {
                                 turnComments.push(`reached ${newMaxWordsWithoutDeath} words without death`);
                             }
@@ -233,14 +259,20 @@ const birdbotEventHandlers: BotEventHandlers = {
 
                         // Alpha score
                         const currentPlayerAlphaScore = playerScores.alpha;
-                        const currentPlayerAlphaLetter = String.fromCharCode(65 + (currentPlayerAlphaScore % 26)).toLowerCase();
+                        const currentPlayerAlphaLetter = String.fromCharCode(
+                            65 + (currentPlayerAlphaScore % 26)
+                        ).toLowerCase();
                         if (word[0] === currentPlayerAlphaLetter) {
                             const oldAlpha = playerScores.alpha;
                             playerScores.alpha++;
                             const newAlpha = playerScores.alpha;
                             const passedMilestone = BirdBotUtils.passedMilestone(oldAlpha, newAlpha, 26);
                             if (passedMilestone) {
-                                turnComments.push(`completed an alpha: ${recordsUtils.alpha.specificScoreDisplayStringGenerator(newAlpha)}`);
+                                turnComments.push(
+                                    `completed an alpha: ${recordsUtils.alpha.specificScoreDisplayStringGenerator(
+                                        newAlpha
+                                    )}`
+                                );
                             }
                         }
 
@@ -259,7 +291,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                         const multiSyllableGainedPoints = word.split(currentPrompt).length - 2;
                         if (multiSyllableGainedPoints > 0) {
                             playerScores.multiSyllables += multiSyllableGainedPoints;
-                            turnComments.push(`gained ${multiSyllableGainedPoints} MS (${currentPrompt} x ${multiSyllableGainedPoints + 1})`);
+                            turnComments.push(
+                                `gained ${multiSyllableGainedPoints} MS (${currentPrompt} x ${
+                                    multiSyllableGainedPoints + 1
+                                })`
+                            );
                             showWord = true;
                         }
 
@@ -291,17 +327,23 @@ const birdbotEventHandlers: BotEventHandlers = {
                         }
                         if (depletedSyllables.length > 0) {
                             playerScores.depletedSyllables += depletedSyllables.length;
-                            turnComments.push(`depleted ${depletedSyllables.length} syllables: ${depletedSyllables.join(", ")}`);
+                            turnComments.push(
+                                `depleted ${depletedSyllables.length} syllables: ${depletedSyllables.join(", ")}`
+                            );
                         }
                         if (turnComments.length > 0 && ctx.room.roomState.myGamerId !== currentPlayer.gamerId) {
                             if (showWord) {
-                                ctx.utils.sendChatMessage(`${currentGamer.identity.nickname} (${word}): ${turnComments.join(" - ")}.`);
+                                ctx.utils.sendChatMessage(
+                                    `${currentGamer.identity.nickname} (${word}): ${turnComments.join(" - ")}.`
+                                );
                             } else {
-                                ctx.utils.sendChatMessage(`${currentGamer.identity.nickname}: ${turnComments.join(" - ")}.`);
+                                ctx.utils.sendChatMessage(
+                                    `${currentGamer.identity.nickname}: ${turnComments.join(" - ")}.`
+                                );
                             }
                         }
                     }
-                    if (currentGamer.identity.name) {
+                    if (currentGamer.identity.name && roomMetadata.gameMode !== "custom") {
                         BirdBotUtils.registerWord({
                             flip: isLifeGain ?? false,
                             word,
