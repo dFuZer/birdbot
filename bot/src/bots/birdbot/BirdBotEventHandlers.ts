@@ -276,7 +276,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const previousSyllable = playerScores.previousSyllable;
                             const currentWordIncludesPreviousSyllable = word.includes(previousSyllable);
                             if (currentWordIncludesPreviousSyllable) {
-                                playerScores.previousSyllableScore += points;
+                                playerScores.previousSyllableScore++;
                                 turnComments.push(`placed a previous syllable: ${previousSyllable.toUpperCase()}`);
                                 showWord = true;
                             }
