@@ -201,15 +201,19 @@ export default class CommonPlayerDataTrackingEventHandlers {
         startPlayer.lastSubmit = null;
     };
 
-    public static roundOver: BotEventHandlerFn = (ctx) => {
+    public static roundOver: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
         const data = ctx.bot.networkAdapter.readRoundOverData(ctx.message);
         const { lastRoundWinnerId, timestamp } = data;
+        previousHandlersCtx.deadPlayerIds = [];
 
         const gameData = ctx.room.roomState.gameData!;
         for (const d of gameData.players)
             if (d.justExploded) {
                 d.lives--;
                 d.justExploded = false;
+                if (d.lives === 0) {
+                    previousHandlersCtx.deadPlayerIds.push(d.gamerId);
+                }
             }
         gameData.step = {
             value: "roundOver",
@@ -249,13 +253,37 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const gameData = ctx.room.roomState.gameData!;
         ctx.room.roomState.currentTurnIndex = gameData.round.turnIndex;
         let currentPlayer;
-        previousHandlersCtx.previousGamerId = gameData.players[gameData.round.turnIndex]!.gamerId;
+
+        let playerIndex = (gameData.round.startPlayerIndex + gameData.round.turnIndex) % gameData.players.length;
+        previousHandlersCtx.previousGamerId = gameData.players[playerIndex]!.gamerId;
         previousHandlersCtx.previousPrompt = gameData.round.prompt;
+        previousHandlersCtx.deadPlayerIds = [] as number[];
 
         do {
-            gameData.round.turnIndex = (gameData.round.turnIndex + 1) % gameData.players.length;
-            currentPlayer = gameData.players[gameData.round.turnIndex]!;
-        } while (currentPlayer.lives <= 0);
+            gameData.round.turnIndex++;
+            if (gameData.round.turnIndex >= 0 && gameData.round.turnIndex % gameData.players.length === 0) {
+                const shouldRemoveLives =
+                    gameData.players.filter(
+                        (player) => player.lives > 1 || (player.lives === 1 && !player.justExploded)
+                    ).length > 0;
+                if (shouldRemoveLives) {
+                    for (const player of gameData.players)
+                        if (player.justExploded) {
+                            player.lives--;
+                            console.log(player.gamerId, "lost a life");
+                            if (player.lives === 0) {
+                                previousHandlersCtx.deadPlayerIds.push(player.gamerId);
+                            }
+                        }
+                }
+                for (const player of gameData.players) {
+                    player.justExploded = false;
+                }
+            }
+            playerIndex = (gameData.round.startPlayerIndex + gameData.round.turnIndex) % gameData.players.length;
+            currentPlayer = gameData.players[playerIndex]!;
+            currentPlayer.text = "";
+        } while (currentPlayer.lives === 0);
 
         ctx.room.roomState.currentTurnIndex = gameData.round.turnIndex;
 
