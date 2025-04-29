@@ -1,12 +1,7 @@
 import { z } from "zod";
 import type { Resource } from "../../lib/class/ResourceManager.class";
 import { SubmitResultType } from "../../lib/types/gameTypes";
-import type {
-    birdbotSupportedDictionaryIds,
-    languageEnumSchema,
-    modesEnumSchema,
-    recordsEnumSchema,
-} from "./BirdBotConstants";
+import type { birdbotSupportedDictionaryIds, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "./BirdBotConstants";
 
 export type DictionaryMetadata = {
     letterRarityScores: Record<string, number>;
@@ -59,4 +54,19 @@ export type BirdBotWordData = {
     submitResult: SubmitResultType;
     prompt: string;
     flip: boolean;
+};
+
+export type BirdBotGameRecap = {
+    game: BirdBotGameData;
+    player: BirdBotPlayerData;
+    diedAt: number;
+    wordsCount: number;
+    flipsCount: number;
+    depletedSyllablesCount: number;
+    alphaCount: number;
+    wordsWithoutDeathCount: number;
+    previousSyllablesCount: number;
+    multiSyllablesCount: number;
+    hyphenWordsCount: number;
+    moreThan20LettersWordsCount: number;
 };

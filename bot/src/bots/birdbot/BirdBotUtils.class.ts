@@ -12,6 +12,7 @@ import { API_KEY, API_URL } from "./BirdBotEnv";
 import {
     BirdBotGameData,
     BirdBotGameMode,
+    BirdBotGameRecap,
     BirdBotLanguage,
     BirdBotPlayerData,
     BirdBotRecordType,
@@ -85,6 +86,39 @@ export default class BirdBotUtils {
         } as BirdBotPlayerData;
     };
 
+    public static getApiGameRecap = (ctx: EventCtx, gamerId: number): BirdBotGameRecap => {
+        const gameData = ctx.room.roomState.gameData!;
+
+        const player = gameData.players.find((player) => player.gamerId === gamerId);
+        if (!player) {
+            throw new Error("Player not found");
+        }
+        const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === player.gamerId);
+        if (!gamer) {
+            throw new Error("Gamer not found");
+        }
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        const playerScores = roomMetadata.scoresByGamerId[gamerId];
+        if (!playerScores) {
+            throw new Error("Player scores not found");
+        }
+        const playerData = this.getApiPlayerData(gamer);
+        return {
+            game: this.getApiGameData(ctx),
+            player: playerData,
+            diedAt: new Date().getTime(),
+            wordsCount: playerScores.words,
+            flipsCount: playerScores.flips,
+            depletedSyllablesCount: playerScores.depletedSyllables,
+            alphaCount: playerScores.alpha,
+            wordsWithoutDeathCount: playerScores.currentWordsWithoutDeath,
+            previousSyllablesCount: playerScores.previousSyllableScore,
+            multiSyllablesCount: playerScores.multiSyllables,
+            hyphenWordsCount: playerScores.hyphenWords,
+            moreThan20LettersWordsCount: playerScores.moreThan20LettersWords,
+        };
+    };
+
     public static passedMilestone = (beforeScore: number, afterScore: number, milestone: number): number | null => {
         const beforeRest = beforeScore % milestone;
         const beforeMilestone = (beforeScore - beforeRest) / milestone;
@@ -94,6 +128,11 @@ export default class BirdBotUtils {
             return afterMilestone * milestone;
         }
         return null;
+    };
+
+    public static registerGameRecap = async (gameRecap: BirdBotGameRecap) => {
+        const res = await this.postJsonToApi("/add-game-recap", gameRecap);
+        return res;
     };
 
     public static registerWord = async (wordData: BirdBotWordData) => {

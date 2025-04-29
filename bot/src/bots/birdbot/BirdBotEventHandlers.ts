@@ -138,7 +138,17 @@ const birdbotEventHandlers: BotEventHandlers = {
                 },
             ],
             "updatePlaylistRatings": CommonEH.updatePlaylistRatings,
-            "explodeBomb": CommonTEH.explodeBomb,
+            "explodeBomb": [
+                CommonTEH.explodeBomb,
+                async (ctx) => {
+                    const lives = 999 as number;
+                    const gamerId = 999 as number;
+                    if (lives === 0) {
+                        const gameRecap = BirdBotUtils.getApiGameRecap(ctx, gamerId);
+                        await BirdBotUtils.registerGameRecap(gameRecap);
+                    }
+                },
+            ],
             "nextTurn": [
                 CommonTEH.nextTurn,
                 BirdBotUtils.handleMyTurn,
