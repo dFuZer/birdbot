@@ -270,7 +270,6 @@ export default class CommonPlayerDataTrackingEventHandlers {
                     for (const player of gameData.players)
                         if (player.justExploded) {
                             player.lives--;
-                            console.log(player.gamerId, "lost a life");
                             if (player.lives === 0) {
                                 previousHandlersCtx.deadPlayerIds.push(player.gamerId);
                             }

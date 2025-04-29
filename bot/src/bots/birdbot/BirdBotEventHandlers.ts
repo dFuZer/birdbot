@@ -23,6 +23,7 @@ const birdbotEventHandlers: BotEventHandlers = {
 
                 const myPlayer = roomData.gamers.find((gamer) => gamer.id === myGamerId);
                 BirdBotUtils.setupRoomMetadata(ctx);
+                BirdBotUtils.initializeScoresForAllPlayers(ctx);
                 if (myPlayer && myPlayer.role === "host" && ctx.room.constantRoomData.targetConfig) {
                     const roomTargetConfig = ctx.room.constantRoomData.targetConfig;
                     const setupMessage = ctx.bot.networkAdapter.getInitialSetupMessage({
@@ -128,6 +129,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                     const currentDictionarySyllablesCount = currentDictionaryResource.metadata.syllablesCount;
                     const clonedSyllablesCount = Object.assign({}, currentDictionarySyllablesCount);
                     roomMetadata.remainingSyllables = clonedSyllablesCount;
+                    BirdBotUtils.initializeScoresForAllPlayers(ctx);
 
                     if (
                         birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)
@@ -146,7 +148,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                 CommonTEH.roundOver,
                 (ctx, previousHandlersCtx) => {
                     const deadPlayerIds = previousHandlersCtx.deadPlayerIds as number[];
-                    console.log("roundover", deadPlayerIds);
+                    for (const deadPlayerId of deadPlayerIds) {
+                        BirdBotUtils.handlePlayerDeath(ctx, deadPlayerId);
+                    }
                 },
             ],
             "gameOver": [
@@ -158,17 +162,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                 },
             ],
             "updatePlaylistRatings": CommonEH.updatePlaylistRatings,
-            "explodeBomb": [
-                CommonTEH.explodeBomb,
-                async (ctx) => {
-                    const lives = 999 as number;
-                    const gamerId = 999 as number;
-                    if (lives === 0) {
-                        const gameRecap = BirdBotUtils.getApiGameRecap(ctx, gamerId);
-                        await BirdBotUtils.registerGameRecap(gameRecap);
-                    }
-                },
-            ],
+            "explodeBomb": [CommonTEH.explodeBomb, async (ctx) => {}],
             "nextTurn": [
                 CommonTEH.nextTurn,
                 BirdBotUtils.handleMyTurn,
@@ -176,8 +170,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                     const previousGamerId = previousHandlersCtx.previousGamerId as number;
                     const previousPrompt = previousHandlersCtx.previousPrompt as string;
                     const deadPlayerIds = previousHandlersCtx.deadPlayerIds as number[];
-
-                    console.log("nextturn", deadPlayerIds);
+                    for (const deadPlayerId of deadPlayerIds) {
+                        BirdBotUtils.handlePlayerDeath(ctx, deadPlayerId);
+                    }
                 },
             ],
             "submit": [
