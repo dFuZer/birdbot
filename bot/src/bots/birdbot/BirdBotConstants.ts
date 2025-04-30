@@ -3,7 +3,10 @@ import Utilitary from "../../lib/class/Utilitary.class";
 import { DictionaryId, DictionaryLessGameRules } from "../../lib/types/gameTypes";
 import { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotSupportedDictionaryId } from "./BirdBotTypes";
 
-const birdbotRulesBase: Omit<DictionaryLessGameRules, "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives"> = {
+const birdbotRulesBase: Omit<
+    DictionaryLessGameRules,
+    "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives"
+> = {
     roundsToWin: 1,
     scoreGoal: 100,
     gameMode: "survival",
@@ -90,7 +93,18 @@ export const birdbotSupportedDictionaryIds = ["fr", "en", "de", "es", "pt-BR"] a
 
 export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
 export const modesEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
-export const recordsEnumSchema = z.enum(["word", "time", "multi_syllable", "previous_syllable", "flips", "depleted_syllables", "no_death", "alpha", "hyphen", "more_than_20_letters"]);
+export const recordsEnumSchema = z.enum([
+    "word",
+    "time",
+    "multi_syllable",
+    "previous_syllable",
+    "flips",
+    "depleted_syllables",
+    "no_death",
+    "alpha",
+    "hyphen",
+    "more_than_20_letters",
+]);
 
 export const defaultLanguage: BirdBotLanguage = "en";
 export const defaultMode: BirdBotGameMode = "regular";
@@ -122,14 +136,23 @@ export const languageAliases: Record<BirdBotLanguage, string[]> = {
 export const recordAliases: Record<BirdBotRecordType, string[]> = {
     word: ["words", "word", "mots", "mot", "mots", "w", "m"],
     time: ["time", "temps", "temp", "t"],
-    multi_syllable: ["multi-syllable", "multi-syllables", "ms", "multi"],
-    previous_syllable: ["previous-syllable", "previous-syllables", "previous", "prev", "ps"],
+    multi_syllable: ["multi-syllable", "multi-syllables", "ms", "multi", "m"],
+    previous_syllable: ["previous-syllable", "previous-syllables", "previous", "prev", "ps", "p"],
     flips: ["flips", "flip", "life", "lives", "vie", "vies", "v"],
-    depleted_syllables: ["depleted-syllables", "syllables-depleted", "sn", "depleted", "syll"],
-    no_death: ["no-death", "nd", "sans-mort", "sm"],
-    alpha: ["alpha", "alp"],
-    hyphen: ["hyphen", "hyp", "hyph", "compose", "mot-compose", "mot-composes"],
-    more_than_20_letters: ["more-than-20-letters", "20+", "plus-de-20-lettres", "long", "longs", "20-letters"],
+    depleted_syllables: ["depleted-syllables", "syllables-depleted", "depleted", "syll", "sn"],
+    no_death: ["no-death", "nd", "sans-mort", "sm", "nodeath"],
+    alpha: ["alpha", "alp", "a"],
+    hyphen: ["hyphen", "hyp", "hyph", "compose", "mot-compose", "mot-composes", "h"],
+    more_than_20_letters: [
+        "more-than-20-letters",
+        "20+",
+        "plus-de-20-lettres",
+        "long",
+        "longs",
+        "20-letters",
+        "20",
+        "l",
+    ],
 };
 
 export const sortWordsModeRecords = ["flips", "multi_syllable", "depleted_syllables"] as const;

@@ -1,5 +1,3 @@
-import Logger from "./Logger.class";
-
 import Utilitary from "./Utilitary.class";
 export type Resource<ResourceType extends any, ResourceMetadataType extends any> = {
     resource: ResourceType;
@@ -27,14 +25,7 @@ export default class ResourceManager {
     }
 
     public async loadArrayResourceFromFile(path: string) {
-        const startTime = performance.now();
         const stringArray = Utilitary.readArrayFromFile(path);
-        const endTime = performance.now();
-
-        Logger.log({
-            message: `Time taken to set resource array from file ${path}: ${endTime - startTime} milliseconds`,
-            path: "ResourceManager.class.ts",
-        });
         return stringArray;
     }
 
