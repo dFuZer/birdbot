@@ -287,10 +287,13 @@ export default class Utilitary {
                 !(
                     (command.roomCreatorRequired &&
                         ctx.room.constantRoomData.roomCreatorUsername === gamerAccountName) ||
-                    ctx.utils.userIsAdmin(gamerAccountName)
+                    ctx.utils.userIsAdmin(gamerAccountName) ||
+                    !command.roomCreatorRequired
                 )
             ) {
-                ctx.utils.sendChatMessage("This command is only available for the room creator.");
+                console.log(
+                    `command ${command.id} not handled because user ${gamerAccountName} is not the room creator. ${command.roomCreatorRequired}`
+                );
                 return "not-room-creator";
             }
             Logger.log({
