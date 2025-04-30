@@ -258,7 +258,7 @@ const setRoomLanguageCommand: Command = c({
 
 const searchWordsCommand: Command = c({
     id: "searchWords",
-    aliases: ["c", "searchwords", "words"],
+    aliases: ["searchwords", "c", "words"],
     desc: "Search for words in the dictionary. The user can provide any number of syllables or regexes to search for. The command will return the words that match every given regex.",
     usageDesc: "/c [syllable|regex] [...]",
     exampleUsage: "/c hello - /c ^hello$",
