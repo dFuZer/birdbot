@@ -87,7 +87,7 @@ export default class BirdBot extends Bot {
                 topSnWords,
             };
 
-            Utilitary.writeFileInDataFolder(`${resourceHash}.metadata.json`, JSON.stringify(metadata, null, 2));
+            Utilitary.writeFileInDataFolder(`${resourceHash}.metadata.json`, JSON.stringify(metadata));
 
             this.resourceManager.set<DictionaryResource>(key, {
                 resource: words,

@@ -89,7 +89,7 @@ export default class BirdBotUtils {
         return dictionary
             .map((word) => {
                 const score = this.evaluateFlipWord(word, letterRarityScores, necessaryLetters, "");
-                return { word, score };
+                return { word, score: Math.round(score * 100) / 100 };
             })
             .sort((a, b) => b.score - a.score)
             .slice(0, n);
@@ -123,7 +123,7 @@ export default class BirdBotUtils {
         return dictionary
             .map((word) => {
                 const score = this.evaluateSnWord(word, syllablesCount);
-                return { word, score };
+                return { word, score: Math.round(score * 100) / 100 };
             })
             .sort((a, b) => b.score - a.score)
             .slice(0, n);
