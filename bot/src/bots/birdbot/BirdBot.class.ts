@@ -34,7 +34,7 @@ export default class BirdBot extends Bot {
         const resourceHash = createHash("sha256").update(words.concat(dictionaryId, key, path).join(" ")).digest("hex");
         const et2 = performance.now();
 
-        const restoredResourceMetadataString = Utilitary.readFileInDataFolder(`${resourceHash}.json`);
+        const restoredResourceMetadataString = Utilitary.readFileInDataFolder(`${resourceHash}.metadata.json`);
         if (restoredResourceMetadataString) {
             try {
                 const st3 = performance.now();
@@ -43,6 +43,7 @@ export default class BirdBot extends Bot {
                 this.resourceManager.set<DictionaryResource>(key, {
                     resource: words,
                     metadata: restoredMetadata,
+                    hash: resourceHash,
                 });
                 Logger.log({
                     message: `Loaded words ${key} in ${Math.round(et1 - st1)}ms, hashed in ${Math.round(
@@ -86,11 +87,12 @@ export default class BirdBot extends Bot {
                 topSnWords,
             };
 
-            Utilitary.writeFileInDataFolder(`${resourceHash}.json`, JSON.stringify(metadata, null, 2));
+            Utilitary.writeFileInDataFolder(`${resourceHash}.metadata.json`, JSON.stringify(metadata, null, 2));
 
             this.resourceManager.set<DictionaryResource>(key, {
                 resource: words,
                 metadata,
+                hash: resourceHash,
             });
             Logger.log({
                 message: `Loaded words ${key} in ${Math.round(et1 - st1)}ms, hashed in ${Math.round(

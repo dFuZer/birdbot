@@ -2,6 +2,7 @@ import Utilitary from "./Utilitary.class";
 export type Resource<ResourceType extends any, ResourceMetadataType extends any> = {
     resource: ResourceType;
     metadata: ResourceMetadataType;
+    hash: string;
 };
 
 export type ResourceGetter = <T extends Resource<any, any>>(key: string) => T;
