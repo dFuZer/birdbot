@@ -7,12 +7,7 @@ import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
 import type { DictionaryId, DictionaryLessGameRules, Gamer, GameRules } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
-import {
-    birdbotModeRules,
-    dictionaryIdToBirdbotLanguage,
-    languageAliases as itemAliases,
-    recordsUtils,
-} from "./BirdBotConstants";
+import { birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
 import {
     BirdBotGameData,
@@ -84,6 +79,47 @@ export default class BirdBotUtils {
         }
     };
 
+    public static getTopFlipWords = (dictionary: string[], letterRarityScores: Record<string, number>, dictionaryId: DictionaryId, n: number): { word: string; score: number }[] => {
+        const necessaryLetters = dictionaryManifests[dictionaryId].bonusLetters;
+        return dictionary
+            .map((word) => {
+                const score = this.evaluateFlipWord(word, letterRarityScores, necessaryLetters, "");
+                return { word, score };
+            })
+            .sort((a, b) => b.score - a.score)
+            .slice(0, n);
+    };
+
+    public static evaluateSnWord = (word: string, syllablesCount: Record<string, number>) => {
+        const wordSyllables = this.splitWordIntoSyllables(word);
+        let score = 0;
+        for (let syllable in wordSyllables) {
+            if (syllablesCount[syllable] === undefined) {
+                Logger.error({
+                    message: `Syllable ${syllable} not found in syllablesCount. This should never happen.`,
+                    path: "BirdBotUtils.class.ts",
+                });
+                throw new Error(`Syllable ${syllable} not found in syllablesCount. This should never happen.`);
+            }
+            const beforePlacingWord = syllablesCount[syllable]!;
+            const afterPlacingWord = beforePlacingWord - wordSyllables[syllable]!;
+            const depletionPercentage = (beforePlacingWord - afterPlacingWord) / beforePlacingWord;
+            const syllableScore = Math.pow(depletionPercentage, 2);
+            score += syllableScore;
+        }
+        return score;
+    };
+
+    public static getTopSnWords = (dictionary: string[], syllablesCount: Record<string, number>, n: number): { word: string; score: number }[] => {
+        return dictionary
+            .map((word) => {
+                const score = this.evaluateSnWord(word, syllablesCount);
+                return { word, score };
+            })
+            .sort((a, b) => b.score - a.score)
+            .slice(0, n);
+    };
+
     public static getApiPlayerData = (player: Gamer) => {
         return {
             accountName: player.identity.name,
@@ -97,24 +133,22 @@ export default class BirdBotUtils {
         await BirdBotUtils.registerGameRecap(gameRecap);
     };
 
-    public static findValueInAliasesObject = <T extends string>(
-        values: string[],
-        aliases: Record<T, string[]>
-    ): T | null => {
-        let targetItem: T | null = null;
+    public static findValueInAliasesObject = <T extends string>(values: string[], aliases: Record<T, string[]>): T | null => {
+        return this.findValuesInAliasesObject(values, aliases)?.[0] ?? null;
+    };
+
+    public static findValuesInAliasesObject = <T extends string>(values: string[], aliases: Record<T, string[]>): T[] => {
+        const targetItems: T[] = [];
         for (const str of values) {
-            for (const item in itemAliases) {
-                for (const alias of itemAliases[item as BirdBotLanguage]) {
-                    if (str === alias) {
-                        targetItem = item as T;
-                        break;
+            for (const item in aliases) {
+                for (const alias of aliases[item]) {
+                    if (str === alias && !targetItems.includes(item)) {
+                        targetItems.push(item);
                     }
                 }
-                if (targetItem) break;
             }
-            if (targetItem) break;
         }
-        return targetItem;
+        return targetItems;
     };
 
     public static getApiGameRecap = (ctx: EventCtx, gamerId: number): BirdBotGameRecap => {
@@ -196,11 +230,7 @@ export default class BirdBotUtils {
 
     public static setRoomGameMode = (ctx: CommandOrEventCtx, mode: DictionaryLessGameRules) => {
         for (const rule of Object.keys(mode)) {
-            this.setRoomGameRuleIfDifferent(
-                ctx,
-                rule as keyof DictionaryLessGameRules,
-                mode[rule as keyof DictionaryLessGameRules]
-            );
+            this.setRoomGameRuleIfDifferent(ctx, rule as keyof DictionaryLessGameRules, mode[rule as keyof DictionaryLessGameRules]);
         }
     };
 
@@ -318,21 +348,9 @@ export default class BirdBotUtils {
         }
     };
 
-    public static getRecordsFromApi = async ({
-        language,
-        gameMode,
-        recordType,
-        page,
-    }: {
-        language: BirdBotLanguage;
-        gameMode: BirdBotGameMode;
-        recordType?: BirdBotRecordType;
-        page?: number;
-    }) => {
+    public static getRecordsFromApi = async ({ language, gameMode, recordType, page }: { language: BirdBotLanguage; gameMode: BirdBotGameMode; recordType?: BirdBotRecordType; page?: number }) => {
         if (recordType) {
-            return await this.getJsonFromApi<ApiResponseBestScoresSpecificRecord>(
-                `/get-records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`
-            );
+            return await this.getJsonFromApi<ApiResponseBestScoresSpecificRecord>(`/get-records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`);
         } else {
             return await this.getJsonFromApi<ApiResponseAllRecords>(`/get-records?lang=${language}&mode=${gameMode}`);
         }
@@ -349,13 +367,9 @@ export default class BirdBotUtils {
     public static findBestUsernameMatch = (str: string, gamers: Gamer[]): Gamer | null => {
         const perfectMatch = gamers.find((gamer) => gamer.identity.nickname === str);
         if (perfectMatch) return perfectMatch;
-        const perfectCaseInsensitiveMatch = gamers.find(
-            (gamer) => gamer.identity.nickname.toLowerCase() === str.toLowerCase()
-        );
+        const perfectCaseInsensitiveMatch = gamers.find((gamer) => gamer.identity.nickname.toLowerCase() === str.toLowerCase());
         if (perfectCaseInsensitiveMatch) return perfectCaseInsensitiveMatch;
-        const startsWithMatch = gamers.find((gamer) =>
-            gamer.identity.nickname.toLowerCase().startsWith(str.toLowerCase())
-        );
+        const startsWithMatch = gamers.find((gamer) => gamer.identity.nickname.toLowerCase().startsWith(str.toLowerCase()));
         if (startsWithMatch) return startsWithMatch;
         const includeMatch = gamers.find((gamer) => gamer.identity.nickname.toLowerCase().includes(str.toLowerCase()));
         if (includeMatch) return includeMatch;
@@ -369,13 +383,7 @@ export default class BirdBotUtils {
         ws.send(submitMessage);
     };
 
-    public static getRandomValidWord = ({
-        dictionary,
-        isWordValid,
-    }: {
-        dictionary: string[];
-        isWordValid: (word: string) => boolean;
-    }): string | null => {
+    public static getRandomValidWord = ({ dictionary, isWordValid }: { dictionary: string[]; isWordValid: (word: string) => boolean }): string | null => {
         const randomIndex = Math.floor(Math.random() * dictionary.length);
 
         let foundWord = null;
@@ -398,6 +406,23 @@ export default class BirdBotUtils {
         return foundWord;
     };
 
+    public static evaluateFlipWord = (word: string, letterRarityScores: Record<string, number>, requiredLetters: string, placedLetters: string) => {
+        const requiredLettersSet = new Set(requiredLetters);
+        const placedLettersSet = new Set(placedLetters);
+
+        let wordScore = 0;
+        const alreadyEvaluatedLetters = new Set<string>();
+        for (const letter of word) {
+            if (alreadyEvaluatedLetters.has(letter)) continue;
+            if (letterRarityScores[letter] !== undefined && !placedLettersSet.has(letter) && requiredLettersSet.has(letter)) {
+                wordScore += letterRarityScores[letter]!;
+            }
+            alreadyEvaluatedLetters.add(letter);
+        }
+
+        return wordScore;
+    };
+
     public static getBestFlipWord = ({
         dictionaryResource,
         requiredLetters,
@@ -410,30 +435,14 @@ export default class BirdBotUtils {
         isWordValid: (word: string) => boolean;
     }): string | null => {
         const letterRarityScores = dictionaryResource.metadata.letterRarityScores;
-        const alreadyPlacedLettersSet = new Set(placedLetters);
-        const requiredLettersSet = new Set(requiredLetters);
 
-        const isLetterValuable = (letter: string): boolean => {
-            return (
-                letterRarityScores[letter] !== undefined &&
-                !alreadyPlacedLettersSet.has(letter) &&
-                requiredLettersSet.has(letter)
-            );
-        };
-        const evaluatedWord = (word: string): number => {
-            let score = 0;
-            for (const letter of word) {
-                if (isLetterValuable(letter)) score += letterRarityScores[letter]!;
-            }
-            return score;
-        };
-        const maxPossibleScore = evaluatedWord(requiredLetters);
+        const maxPossibleScore = this.evaluateFlipWord(requiredLetters, letterRarityScores, requiredLetters, placedLetters);
         let bestWord: [string, number] | null = null;
         const randomStartIndex = Math.floor(Math.random() * dictionaryResource.resource.length);
         for (let i = randomStartIndex; i < dictionaryResource.resource.length; i++) {
             const word = dictionaryResource.resource[i]!;
             if (!isWordValid(word)) continue;
-            const score = evaluatedWord(word);
+            const score = this.evaluateFlipWord(word, letterRarityScores, requiredLetters, placedLetters);
             if (bestWord === null || score > bestWord[1]) {
                 bestWord = [word, score];
                 if (Math.abs(maxPossibleScore - score) < 0.001) break;
@@ -442,7 +451,7 @@ export default class BirdBotUtils {
         for (let i = 0; i < randomStartIndex; i++) {
             const word = dictionaryResource.resource[i]!;
             if (!isWordValid(word)) continue;
-            const score = evaluatedWord(word);
+            const score = this.evaluateFlipWord(word, letterRarityScores, requiredLetters, placedLetters);
             if (bestWord === null || score > bestWord[1]) {
                 bestWord = [word, score];
                 if (Math.abs(maxPossibleScore - score) < 0.001) break;
@@ -510,8 +519,8 @@ export default class BirdBotUtils {
         const syllablesCount: Record<string, number> = {};
         for (const word of dictionary) {
             const syllables = this.splitWordIntoSyllables(word);
-            for (const syllable of syllables) {
-                syllablesCount[syllable] = (syllablesCount[syllable] ?? 0) + 1;
+            for (const syllable in syllables) {
+                syllablesCount[syllable] = (syllablesCount[syllable] ?? 0) + syllables[syllable];
             }
         }
         return syllablesCount;
@@ -522,13 +531,13 @@ export default class BirdBotUtils {
     };
 
     public static splitWordIntoSyllables = (word: string) => {
-        const syllables = [];
+        const syllables: Record<string, number> = {};
         const subwords = this.splitWordIntoValidSubwords(word);
         for (const subword of subwords) {
             for (let syllableLength = 2; syllableLength <= 3; syllableLength++) {
                 for (let letterIndex = 0; letterIndex <= subword.length - syllableLength; letterIndex++) {
                     const syllable = subword.substring(letterIndex, letterIndex + syllableLength);
-                    syllables.push(syllable);
+                    syllables[syllable] = (syllables[syllable] ?? 0) + 1;
                 }
             }
         }
@@ -559,39 +568,13 @@ export default class BirdBotUtils {
         const scores: [BirdBotRecordType, number, string][] = [
             ["word", playerStats.words, recordsUtils.word.specificScoreDisplayStringGenerator(playerStats.words)],
             ["flips", playerStats.flips, recordsUtils.flips.specificScoreDisplayStringGenerator(playerStats.flips)],
-            [
-                "depleted_syllables",
-                playerStats.depletedSyllables,
-                recordsUtils.depleted_syllables.specificScoreDisplayStringGenerator(playerStats.depletedSyllables),
-            ],
+            ["depleted_syllables", playerStats.depletedSyllables, recordsUtils.depleted_syllables.specificScoreDisplayStringGenerator(playerStats.depletedSyllables)],
             ["alpha", playerStats.alpha, recordsUtils.alpha.specificScoreDisplayStringGenerator(playerStats.alpha)],
-            [
-                "no_death",
-                playerStats.maxWordsWithoutDeath,
-                recordsUtils.no_death.specificScoreDisplayStringGenerator(playerStats.maxWordsWithoutDeath),
-            ],
-            [
-                "multi_syllable",
-                playerStats.multiSyllables,
-                recordsUtils.multi_syllable.specificScoreDisplayStringGenerator(playerStats.multiSyllables),
-            ],
-            [
-                "previous_syllable",
-                playerStats.previousSyllableScore,
-                recordsUtils.previous_syllable.specificScoreDisplayStringGenerator(playerStats.previousSyllableScore),
-            ],
-            [
-                "hyphen",
-                playerStats.hyphenWords,
-                recordsUtils.hyphen.specificScoreDisplayStringGenerator(playerStats.hyphenWords),
-            ],
-            [
-                "more_than_20_letters",
-                playerStats.moreThan20LettersWords,
-                recordsUtils.more_than_20_letters.specificScoreDisplayStringGenerator(
-                    playerStats.moreThan20LettersWords
-                ),
-            ],
+            ["no_death", playerStats.maxWordsWithoutDeath, recordsUtils.no_death.specificScoreDisplayStringGenerator(playerStats.maxWordsWithoutDeath)],
+            ["multi_syllable", playerStats.multiSyllables, recordsUtils.multi_syllable.specificScoreDisplayStringGenerator(playerStats.multiSyllables)],
+            ["previous_syllable", playerStats.previousSyllableScore, recordsUtils.previous_syllable.specificScoreDisplayStringGenerator(playerStats.previousSyllableScore)],
+            ["hyphen", playerStats.hyphenWords, recordsUtils.hyphen.specificScoreDisplayStringGenerator(playerStats.hyphenWords)],
+            ["more_than_20_letters", playerStats.moreThan20LettersWords, recordsUtils.more_than_20_letters.specificScoreDisplayStringGenerator(playerStats.moreThan20LettersWords)],
         ];
         return scores
             .filter((x) => x[1] !== 0)

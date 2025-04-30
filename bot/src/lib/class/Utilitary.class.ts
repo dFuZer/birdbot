@@ -25,6 +25,10 @@ export default class Utilitary {
         return `${hoursDisplay}:${minutesDisplay}:${secondsDisplay}`;
     }
 
+    public static getUniqueStrings<T extends string>(items: T[]): T[] {
+        return [...new Set(items)];
+    }
+
     public static readFileInDataFolder(fileName: string): string | null {
         const dataFolder = "./.data";
         if (!fs.existsSync(dataFolder)) {
@@ -252,13 +256,7 @@ export default class Utilitary {
         rawMessage: string,
         gamerAccountName: string | null,
         commands: Command[]
-    ):
-        | "no-command-given"
-        | "command-not-found"
-        | "command-handled"
-        | "no-command-attempted"
-        | "invalid-arguments"
-        | "not-room-creator" {
+    ): "no-command-given" | "command-not-found" | "command-handled" | "no-command-attempted" | "invalid-arguments" | "not-room-creator" {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
         const commandPrefixes = ["!", "/", "."];
         if (commandPrefixes.some((prefix) => normalizedMessage.startsWith(prefix))) {
@@ -275,13 +273,7 @@ export default class Utilitary {
                 .map((arg) => arg.toLowerCase());
             const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
-            if (
-                !(
-                    (command.roomCreatorRequired &&
-                        ctx.room.constantRoomData.roomCreatorUsername === gamerAccountName) ||
-                    ctx.utils.userIsAdmin(gamerAccountName)
-                )
-            ) {
+            if (!((command.roomCreatorRequired && ctx.room.constantRoomData.roomCreatorUsername === gamerAccountName) || ctx.utils.userIsAdmin(gamerAccountName))) {
                 ctx.utils.sendChatMessage("This command is only available for the room creator.");
                 return "not-room-creator";
             }

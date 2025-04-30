@@ -3,10 +3,7 @@ import Utilitary from "../../lib/class/Utilitary.class";
 import { DictionaryId, DictionaryLessGameRules } from "../../lib/types/gameTypes";
 import { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotSupportedDictionaryId } from "./BirdBotTypes";
 
-const birdbotRulesBase: Omit<
-    DictionaryLessGameRules,
-    "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives"
-> = {
+const birdbotRulesBase: Omit<DictionaryLessGameRules, "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives"> = {
     roundsToWin: 1,
     scoreGoal: 100,
     gameMode: "survival",
@@ -93,18 +90,7 @@ export const birdbotSupportedDictionaryIds = ["fr", "en", "de", "es", "pt-BR"] a
 
 export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
 export const modesEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
-export const recordsEnumSchema = z.enum([
-    "word",
-    "time",
-    "multi_syllable",
-    "previous_syllable",
-    "flips",
-    "depleted_syllables",
-    "no_death",
-    "alpha",
-    "hyphen",
-    "more_than_20_letters",
-]);
+export const recordsEnumSchema = z.enum(["word", "time", "multi_syllable", "previous_syllable", "flips", "depleted_syllables", "no_death", "alpha", "hyphen", "more_than_20_letters"]);
 
 export const defaultLanguage: BirdBotLanguage = "en";
 export const defaultMode: BirdBotGameMode = "regular";
@@ -145,6 +131,9 @@ export const recordAliases: Record<BirdBotRecordType, string[]> = {
     hyphen: ["hyphen", "hyp", "hyph", "compose", "mot-compose", "mot-composes"],
     more_than_20_letters: ["more-than-20-letters", "20+", "plus-de-20-lettres", "long", "longs", "20-letters"],
 };
+
+export const sortWordsModeRecords = ["flips", "multi_syllable", "depleted_syllables"] as const;
+export const filterWordsModeRecords = ["hyphen", "more_than_20_letters"] as const;
 
 export const modeDisplayStrings: Record<BirdBotGameMode, string> = {
     regular: "Regular",

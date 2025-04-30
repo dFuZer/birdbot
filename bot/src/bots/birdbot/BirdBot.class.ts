@@ -11,25 +11,21 @@ export default class BirdBot extends Bot {
         super({ handlers: birdbotEventHandlers, networkAdapter });
     }
 
-    public async loadDictionaryResourceFromFile({
-        key,
-        path,
-        dictionaryId,
-    }: {
-        key: string;
-        path: string;
-        dictionaryId: DictionaryId;
-    }) {
+    public async loadDictionaryResourceFromFile({ key, path, dictionaryId }: { key: string; path: string; dictionaryId: DictionaryId }) {
         Logger.log({
             message: `Loading dictionary resource ${key} from file ${path} with dictionaryId ${dictionaryId}`,
             path: "BirdBot.class.ts",
         });
         const words = await this.resourceManager.loadArrayResourceFromFile(path);
+        const letterRarityScores = BirdBotUtils.getLetterRarityScores(words, dictionaryId);
+        const syllablesCount = BirdBotUtils.getSyllablesCount(words);
         this.resourceManager.set<DictionaryResource>(key, {
             resource: words,
             metadata: {
-                letterRarityScores: BirdBotUtils.getLetterRarityScores(words, dictionaryId),
-                syllablesCount: BirdBotUtils.getSyllablesCount(words),
+                letterRarityScores,
+                syllablesCount,
+                topFlipWords: BirdBotUtils.getTopFlipWords(words, letterRarityScores, dictionaryId, 2000),
+                topSnWords: BirdBotUtils.getTopSnWords(words, syllablesCount, 2000),
             },
         });
     }

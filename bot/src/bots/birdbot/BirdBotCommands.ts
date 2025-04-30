@@ -8,6 +8,7 @@ import {
     defaultLanguage,
     defaultMode,
     dictionaryIdToBirdbotLanguage,
+    filterWordsModeRecords,
     languageAliases,
     languageDisplayStrings,
     languageFlagMap,
@@ -15,12 +16,10 @@ import {
     modesEnumSchema,
     recordAliases,
     recordsUtils,
+    sortWordsModeRecords,
 } from "./BirdBotConstants";
-import { BirdBotLanguage, BirdBotRoomMetadata, BirdBotSupportedDictionaryId, DictionaryResource } from "./BirdBotTypes";
-import BirdBotUtils, {
-    type ApiResponseAllRecords,
-    type ApiResponseBestScoresSpecificRecord,
-} from "./BirdBotUtils.class";
+import { BirdBotLanguage, BirdBotRecordType, BirdBotRoomMetadata, BirdBotSupportedDictionaryId, DictionaryResource } from "./BirdBotTypes";
+import BirdBotUtils, { type ApiResponseAllRecords, type ApiResponseBestScoresSpecificRecord } from "./BirdBotUtils.class";
 
 const c = CommandUtils.createCommandHelper;
 
@@ -36,9 +35,7 @@ const helpCommand: Command = c({
                 .filter((command) => !command.adminRequired)
                 .map((c) => `/${c.aliases[0]}`)
                 .join(" - ");
-            ctx.utils.sendChatMessage(
-                `${commandFirstAliases} — For more information about a command, use /help [command]`
-            );
+            ctx.utils.sendChatMessage(`${commandFirstAliases} — For more information about a command, use /help [command]`);
             return "handled";
         }
         const requestedCommand = ctx.args[0]!;
@@ -47,9 +44,7 @@ const helpCommand: Command = c({
             ctx.utils.sendChatMessage(`Command not found: ${requestedCommand}`);
             return "handled";
         }
-        ctx.utils.sendChatMessage(
-            `/${command.aliases[0]}: ${command.desc} — Use: ${command.usageDesc} — Ex. ${command.exampleUsage}`
-        );
+        ctx.utils.sendChatMessage(`/${command.aliases[0]}: ${command.desc} — Use: ${command.usageDesc} — Ex. ${command.exampleUsage}`);
         return "handled";
     },
 });
@@ -81,15 +76,8 @@ const recordsCommand: Command = c({
         } else {
             if (targetRecordType) {
                 const r = records as ApiResponseBestScoresSpecificRecord;
-                const message = `[${languageFlagMap[language]} ${modeDisplayStrings[mode]} ${
-                    recordsUtils[targetRecordType].recordDisplayString
-                }] ${r.bestScores
-                    .map(
-                        (score) =>
-                            `${score.rank}) ${score.player_username} with ${recordsUtils[
-                                targetRecordType
-                            ].scoreDisplayStringGenerator(score.score)}`
-                    )
+                const message = `[${languageFlagMap[language]} ${modeDisplayStrings[mode]} ${recordsUtils[targetRecordType].recordDisplayString}] ${r.bestScores
+                    .map((score) => `${score.rank}) ${score.player_username} with ${recordsUtils[targetRecordType].scoreDisplayStringGenerator(score.score)}`)
                     .join(" — ")}`;
                 ctx.utils.sendChatMessage(message);
             } else {
@@ -97,9 +85,7 @@ const recordsCommand: Command = c({
                 const message = `[${languageFlagMap[language]} ${modeDisplayStrings[mode]}] ${r.bestScores
                     .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
                     .map((score) => {
-                        return `${recordsUtils[score.record_type].recordDisplayString}: ${
-                            score.player_username
-                        } with ${recordsUtils[score.record_type].scoreDisplayStringGenerator(score.score)}`;
+                        return `${recordsUtils[score.record_type].recordDisplayString}: ${score.player_username} with ${recordsUtils[score.record_type].scoreDisplayStringGenerator(score.score)}`;
                     })
                     .join(" — ")}`;
                 ctx.utils.sendChatMessage(message);
@@ -251,12 +237,44 @@ const setRoomLanguageCommand: Command = c({
 const searchWordsCommand: Command = c({
     id: "searchWords",
     aliases: ["c", "searchwords", "words"],
-    desc: "Search for words in the dictionary. The user can provide any number of syllables or regexes to search for.",
+    desc: "Search for words in the dictionary. The user can provide any number of syllables or regexes to search for. The command will return the words that match every given regex.",
     usageDesc: "/c [syllable|regex] [...]",
     exampleUsage: "/c hello - /c ^hello$",
     handler: (ctx) => {
         const paramLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
-        const paramRecord = BirdBotUtils.findValueInAliasesObject(ctx.params, recordAliases);
+        const allParamRecords = BirdBotUtils.findValuesInAliasesObject(ctx.params, recordAliases);
+
+        const nonSensicalSearchRecords: BirdBotRecordType[] = ["no_death", "word", "time"];
+        if (allParamRecords.some((record) => nonSensicalSearchRecords.includes(record))) {
+            ctx.utils.sendChatMessage(`Error: It makes no sense to sort words by record(s): ${allParamRecords.map((record) => recordsUtils[record].recordDisplayString).join(", ")}.`);
+            return "handled";
+        }
+
+        if (allParamRecords.includes("previous_syllable")) {
+            ctx.utils.sendChatMessage(
+                `Instead of filtering words for the ${recordsUtils["previous_syllable"].recordDisplayString} record, you should provide multiple regexes. Example: /c ER FA, if ER is the current prompt and FA the previous prompt.`
+            );
+            return "handled";
+        }
+        if (allParamRecords.includes("alpha")) {
+            ctx.utils.sendChatMessage(
+                `Instead of filtering words for the ${recordsUtils["alpha"].recordDisplayString} record, you should provide multiple regexes. Example: /c ^E FA, if E is the current alpha letter and FA is the current prompt.`
+            );
+            return "handled";
+        }
+
+        const requestedFilterRecords = Utilitary.getUniqueStrings(allParamRecords.filter((record) => filterWordsModeRecords.includes(record as any)) as (typeof filterWordsModeRecords)[number][]);
+        const requestedSortRecords = Utilitary.getUniqueStrings(allParamRecords.filter((record) => sortWordsModeRecords.includes(record as any)) as (typeof sortWordsModeRecords)[number][]);
+        if (requestedSortRecords.length > 1) {
+            ctx.utils.sendChatMessage(
+                `Error: You can only sort by one sort record at a time. The sort records are: ${sortWordsModeRecords
+                    .map((record) => recordsUtils[record].recordDisplayString)
+                    .join(", ")}. Note that you can still filter by multiple filter records. The filter records are: ${filterWordsModeRecords
+                    .map((record) => recordsUtils[record].recordDisplayString)
+                    .join(", ")}.`
+            );
+            return "handled";
+        }
 
         let targetLanguage: BirdBotLanguage | null = null;
         if (paramLanguage) {
@@ -271,8 +289,26 @@ const searchWordsCommand: Command = c({
             targetLanguage = roomBirdBotLanguage;
         }
 
-        const dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
-        const dictionary = dictionaryResource.resource;
+        let dictionaryResource;
+        try {
+            dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
+        } catch (e) {
+            ctx.utils.sendChatMessage("Error: Could not find dictionary for this language.");
+            return "handled";
+        }
+        let searchList: string[];
+        if (requestedSortRecords.includes("flips")) {
+            // TODO: replace this by the list of best flip words
+            searchList = [];
+        } else if (requestedSortRecords.includes("multi_syllable")) {
+            // TODO: replace this by the list of best multi-syllable words
+            searchList = [];
+        } else if (requestedSortRecords.includes("depleted_syllables")) {
+            // TODO: replace this by the list of best depleted-syllable words
+            searchList = [];
+        } else {
+            searchList = dictionaryResource.resource;
+        }
 
         const regexes: RegExp[] = [];
         for (const arg of ctx.args) {
@@ -297,12 +333,21 @@ const searchWordsCommand: Command = c({
             return otherRoomPrompts.some((prompt) => word.includes(prompt));
         }
 
+        const filterFns: ((word: string) => boolean)[] = [];
+        if (requestedFilterRecords.includes("hyphen")) {
+            filterFns.push((word) => word.includes("-"));
+        }
+        if (requestedFilterRecords.includes("more_than_20_letters")) {
+            filterFns.push((word) => word.length >= 20);
+        }
+
         function isWordValid(word: string) {
-            return regexes.every((regex) => regex.test(word));
+            return regexes.every((regex) => regex.test(word)) && filterFns.every((filterFn) => filterFn(word));
         }
 
         const RESULT_LIMIT = 500;
         const TOTAL_CHARACTER_LIMIT = 120;
+
         let hiddenWordsCount = 0;
         const foundWords: string[] = [];
 
@@ -312,7 +357,7 @@ const searchWordsCommand: Command = c({
 
         function searchForWordsInDictionary(startIndex: number, endIndex: number) {
             for (let i = startIndex; i < endIndex; i++) {
-                const word = dictionary[i];
+                const word = searchList[i];
                 const wordValid = isWordValid(word);
 
                 if (wordValid) {
@@ -330,8 +375,8 @@ const searchWordsCommand: Command = c({
             }
         }
 
-        const randomStartIndex = Math.floor(Math.random() * dictionary.length);
-        searchForWordsInDictionary(randomStartIndex, dictionary.length);
+        const randomStartIndex = Math.floor(Math.random() * searchList.length);
+        searchForWordsInDictionary(randomStartIndex, searchList.length);
         const shouldKeepSearching = !shouldStopSearchingWords();
         if (shouldKeepSearching) {
             searchForWordsInDictionary(0, randomStartIndex);
@@ -350,20 +395,12 @@ const searchWordsCommand: Command = c({
         const moreHiddenThanLimit = hiddenWordsCount > RESULT_LIMIT;
 
         ctx.utils.sendChatMessage(
-            `[${foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount} (${
-                moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount
-            } hidden)] ${cutResults.length > 0 ? cutResults.join(" ").toUpperCase() : "No results available"}`
+            `[${foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount} (${moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount} hidden)] ${
+                cutResults.length > 0 ? cutResults.join(" ").toUpperCase() : "No results available"
+            }`
         );
         return "handled";
     },
 });
 
-export const birdbotCommands: Command[] = [
-    helpCommand,
-    recordsCommand,
-    currentGameScoresCommand,
-    startGameCommand,
-    setGameModeCommand,
-    setRoomLanguageCommand,
-    searchWordsCommand,
-];
+export const birdbotCommands: Command[] = [helpCommand, recordsCommand, currentGameScoresCommand, startGameCommand, setGameModeCommand, setRoomLanguageCommand, searchWordsCommand];
