@@ -298,14 +298,9 @@ const searchWordsCommand: Command = c({
         }
         let searchList: string[];
         if (requestedSortRecords.includes("flips")) {
-            // TODO: replace this by the list of best flip words
-            searchList = [];
-        } else if (requestedSortRecords.includes("multi_syllable")) {
-            // TODO: replace this by the list of best multi-syllable words
-            searchList = [];
+            searchList = dictionaryResource.metadata.topFlipWords.map((obj) => obj.word);
         } else if (requestedSortRecords.includes("depleted_syllables")) {
-            // TODO: replace this by the list of best depleted-syllable words
-            searchList = [];
+            searchList = dictionaryResource.metadata.topSnWords.map((obj) => obj.word);
         } else {
             searchList = dictionaryResource.resource;
         }
@@ -339,6 +334,19 @@ const searchWordsCommand: Command = c({
         }
         if (requestedFilterRecords.includes("more_than_20_letters")) {
             filterFns.push((word) => word.length >= 20);
+        }
+        if (requestedSortRecords.includes("multi_syllable")) {
+            if (ctx.args.length > 1) {
+                ctx.utils.sendChatMessage("Error: You can only sort by multi-syllable words if you provide exactly one syllable.");
+                return "handled";
+            }
+            const syllable = ctx.args[0];
+            const syllCount = dictionaryResource.metadata.syllablesCount[syllable];
+            if (syllCount === undefined) {
+                ctx.utils.sendChatMessage("Error: This syllable does not exist in the requested dictionary.");
+                return "handled";
+            }
+            filterFns.push((word) => word.split(syllable).length > 1);
         }
 
         function isWordValid(word: string) {
