@@ -27,7 +27,7 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
     const selectedRecord = isValidRecordParam(recordParamValue) ? recordParamValue : recordsEnumSchema.Values.word;
 
     const data = await getFromApi(
-        `/get-records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=1&perPage=10`
+        `/records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=1&perPage=10`
     );
 
     const json: IApiResponse = await data.json();

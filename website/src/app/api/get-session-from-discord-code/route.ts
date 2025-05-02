@@ -1,4 +1,4 @@
-import { postJsonToApi } from "@/lib/fetching";
+import { postToApi } from "@/lib/fetching";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { code } = body;
 
-    const response = await postJsonToApi("/get-session-cookie-discord", { code });
+    const response = await postToApi("/auth-code", { code }, "POST");
 
     const data: { cookie: string } = await response.json();
 

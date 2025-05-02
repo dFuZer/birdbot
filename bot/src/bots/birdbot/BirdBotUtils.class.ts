@@ -211,17 +211,17 @@ export default class BirdBotUtils {
     };
 
     public static registerGameRecap = async (gameRecap: BirdBotGameRecap) => {
-        const res = await this.postJsonToApi("/add-game-recap", gameRecap);
+        const res = await this.postJsonToApi("/game-recap", gameRecap, "PUT");
         return res;
     };
 
     public static registerWord = async (wordData: BirdBotWordData) => {
-        const res = await this.postJsonToApi("/add-word", wordData);
+        const res = await this.postJsonToApi("/word", wordData, "PUT");
         return res;
     };
 
     public static registerGame = async (gameData: BirdBotGameData) => {
-        const res = await this.postJsonToApi("/add-game", gameData);
+        const res = await this.postJsonToApi("/game", gameData, "PUT");
         return res;
     };
 
@@ -338,10 +338,14 @@ export default class BirdBotUtils {
         }
     };
 
-    public static postJsonToApi = async <T>(url: string, body: any): Promise<T | null> => {
+    public static postJsonToApi = async <T>(
+        url: string,
+        body: any,
+        method: "POST" | "PUT" | "DELETE"
+    ): Promise<T | null> => {
         const logError = (error: any) => {
             Logger.error({
-                message: `Failed to post to ${url}`,
+                message: `Failed to post to ${url} with method ${method}`,
                 path: "BirdBotUtils.class.ts",
                 error,
                 json: body,
@@ -349,7 +353,7 @@ export default class BirdBotUtils {
         };
         try {
             const res = await fetch(`${API_URL}${url}`, {
-                method: "POST",
+                method,
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${API_KEY}`,
@@ -380,10 +384,10 @@ export default class BirdBotUtils {
     }) => {
         if (recordType) {
             return await this.getJsonFromApi<ApiResponseBestScoresSpecificRecord>(
-                `/get-records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`
+                `/records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`
             );
         } else {
-            return await this.getJsonFromApi<ApiResponseAllRecords>(`/get-records?lang=${language}&mode=${gameMode}`);
+            return await this.getJsonFromApi<ApiResponseAllRecords>(`/records?lang=${language}&mode=${gameMode}`);
         }
     };
 

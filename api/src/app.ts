@@ -6,21 +6,25 @@ import { addPlayersRouteHandler } from "./routes/addPlayers.route";
 import { addWordRouteHandler } from "./routes/addWord.route";
 import { getBestScoresForCategoryRouteHandler } from "./routes/getBestScoresForCategory.route";
 import { getDiscordUserIdRouteHandler } from "./routes/getDiscordUserId.route";
+import { getPlayerRecordsRouteHandler } from "./routes/getPlayerRecords.route";
 import { healthRouteHandler } from "./routes/health.route";
 
 const app = Fastify();
 
 // -- API Routes --
 
+// PUT
+app.put("/word", { preHandler: authMiddleware }, addWordRouteHandler);
+app.put("/players", { preHandler: authMiddleware }, addPlayersRouteHandler);
+app.put("/game", { preHandler: authMiddleware }, addGameRouteHandler);
+app.put("/game-recap", { preHandler: authMiddleware }, addGameRecapRouteHandler);
+
 // POST
-app.post("/add-word", { preHandler: authMiddleware }, addWordRouteHandler);
-app.post("/add-player", { preHandler: authMiddleware }, addPlayersRouteHandler);
-app.post("/add-game", { preHandler: authMiddleware }, addGameRouteHandler);
-app.post("/add-game-recap", { preHandler: authMiddleware }, addGameRecapRouteHandler);
-app.post("/get-session-cookie-discord", { preHandler: authMiddleware }, getDiscordUserIdRouteHandler);
+app.post("/auth-code", { preHandler: authMiddleware }, getDiscordUserIdRouteHandler);
 
 // GET
-app.get("/get-records", { preHandler: authMiddleware }, getBestScoresForCategoryRouteHandler);
+app.get("/records", { preHandler: authMiddleware }, getBestScoresForCategoryRouteHandler);
 app.get("/health", healthRouteHandler);
+app.get("/player-records", { preHandler: authMiddleware }, getPlayerRecordsRouteHandler);
 
 export default app;
