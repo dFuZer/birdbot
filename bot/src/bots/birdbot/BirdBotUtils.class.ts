@@ -607,11 +607,17 @@ export default class BirdBotUtils {
     };
 
     public static setupRoomMetadata = (ctx: EventCtx) => {
+        Logger.log({
+            message: "Setting up room metadata",
+            path: "BirdBotUtils.class.ts",
+        });
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         this.detectRoomGameMode(ctx);
         roomMetadata.scoresByGamerId = {};
+        this.initializeScoresForAllPlayers(ctx);
         const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
         roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);
+        roomMetadata.wasInitialized = true;
     };
 
     public static initializeScoresForAllPlayers = (ctx: EventCtx) => {

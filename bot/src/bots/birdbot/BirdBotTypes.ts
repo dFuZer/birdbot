@@ -1,7 +1,12 @@
 import { z } from "zod";
 import type { Resource } from "../../lib/class/ResourceManager.class";
 import { SubmitResultType } from "../../lib/types/gameTypes";
-import type { birdbotSupportedDictionaryIds, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "./BirdBotConstants";
+import type {
+    birdbotSupportedDictionaryIds,
+    languageEnumSchema,
+    modesEnumSchema,
+    recordsEnumSchema,
+} from "./BirdBotConstants";
 
 export type DictionaryMetadata = {
     letterRarityScores: Record<string, number>;
@@ -36,6 +41,7 @@ export type BirdBotRoomMetadata = {
     gameMode: BirdBotGameMode | "custom";
     scoresByGamerId: Record<string, PlayerGameScores>;
     remainingSyllables: Record<string, number>;
+    wasInitialized: boolean;
 };
 
 export type BirdBotGameData = {

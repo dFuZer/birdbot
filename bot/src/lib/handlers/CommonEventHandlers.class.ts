@@ -1,4 +1,5 @@
 import Logger from "../class/Logger.class";
+import Utilitary from "../class/Utilitary.class";
 import type { BotEventHandlerFn } from "../types/libEventTypes";
 
 export class CommonEventHandlers {
@@ -16,6 +17,15 @@ export class CommonEventHandlers {
             message: `Room ${ctx.room.constantRoomData.roomCode} socket closed.`,
             path: "CommonEventHandlers.class.ts",
         });
+    };
+
+    public static attemptToReconnectOnClose: BotEventHandlerFn = (ctx) => {
+        Logger.log({
+            message: `Attempting to reconnect to ${ctx.room.constantRoomData.roomCode}...`,
+            path: "CommonEventHandlers.class.ts",
+        });
+
+        Utilitary.initializeRoomSocket(ctx.bot.rawBot, ctx.room.rawRoom);
     };
 
     public static hello: BotEventHandlerFn = (ctx) => {

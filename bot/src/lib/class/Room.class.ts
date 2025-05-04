@@ -68,8 +68,5 @@ export default class Room {
         });
 
         this.nodeHost = joinRoomResponse.nodeHost;
-        this.ws = new WebSocket(`wss://${joinRoomResponse.nodeHost}/api/websocket`, {
-            perMessageDeflate: false,
-        });
     }
 }

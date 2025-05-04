@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import fs, { readFileSync } from "fs";
 import { v5 as uuidv5 } from "uuid";
-import type WebSocket from "ws";
+import WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
 import { NAMESPACE_UUID } from "../env";
 import type { GameData, Player } from "../types/gameTypes";
@@ -123,14 +123,14 @@ export default class Utilitary {
         return gameData.players[index]!;
     }
 
-    public static async executeEventHandlers(eventHandler: BotEventHandler, ctx: EventCtx) {
+    public static executeEventHandlers(eventHandler: BotEventHandler, ctx: EventCtx) {
         const previousHandlersCtx: BotEventPreviousHandlersCtx = {};
         if (Array.isArray(eventHandler)) {
             for (const handler of eventHandler) {
-                await handler(ctx, previousHandlersCtx);
+                handler(ctx, previousHandlersCtx);
             }
         } else {
-            await eventHandler(ctx, previousHandlersCtx);
+            eventHandler(ctx, previousHandlersCtx);
         }
     }
 
@@ -144,7 +144,29 @@ export default class Utilitary {
         player.text = "";
     }
 
+    public static destroyRoom(bot: Bot, room: Room) {
+        const ws = room.ws;
+        if (ws) {
+            ws.listeners("close").forEach((listener) => {
+                ws.off("close", listener as any);
+            });
+            ws.listeners("open").forEach((listener) => {
+                ws.off("open", listener as any);
+            });
+            ws.listeners("message").forEach((listener) => {
+                ws.off("message", listener as any);
+            });
+            ws.terminate();
+        }
+        delete bot.rooms[room.id];
+    }
+
     public static initializeRoomSocket(bot: Bot, room: Room) {
+        const ws = new WebSocket(`wss://${room.nodeHost}/api/websocket`, {
+            perMessageDeflate: false,
+        });
+        room.ws = ws;
+
         const getEventCtx = (buffer: Buffer): EventCtx => {
             const ctx: EventCtx = {
                 bot: {
@@ -152,6 +174,7 @@ export default class Utilitary {
                     session: bot.botData!.session,
                     networkAdapter: bot.networkAdapter,
                     rooms: bot.rooms,
+                    rawBot: bot,
                 },
                 message: buffer,
                 utils: {
@@ -166,12 +189,18 @@ export default class Utilitary {
                     roomState: room.roomState,
                     constantRoomData: room.constantRoomData,
                     ws: room.ws!,
+                    rawRoom: room,
+                    isHealthy: () => {
+                        const botRoom = bot.rooms[room.id];
+
+                        return botRoom !== undefined && botRoom.ws !== null && botRoom.ws.readyState === WebSocket.OPEN;
+                    },
                 },
             };
             return ctx;
         };
 
-        room.ws!.on("open", () => {
+        ws.on("open", () => {
             if (!bot.handlers.open) {
                 Logger.error({
                     message: "No open handler",
@@ -179,14 +208,11 @@ export default class Utilitary {
                 });
                 return;
             }
-            const eventName = "open";
-            bot.enqueueHandler({
-                handler: bot.handlers.open,
-                ctx: getEventCtx(new Buffer("")),
-                eventName: eventName,
-            });
+
+            Utilitary.executeEventHandlers(bot.handlers.open, getEventCtx(new Buffer("")));
         });
-        room.ws!.on("close", () => {
+
+        ws.on("close", () => {
             if (!bot.handlers.close) {
                 Logger.error({
                     message: "No close handler",
@@ -194,14 +220,10 @@ export default class Utilitary {
                 });
                 return;
             }
-            const eventName = "close";
-            bot.enqueueHandler({
-                handler: bot.handlers.close,
-                ctx: getEventCtx(new Buffer("")),
-                eventName: eventName,
-            });
+            Utilitary.executeEventHandlers(bot.handlers.close, getEventCtx(new Buffer("")));
         });
-        room.ws!.on("message", (message: Buffer) => {
+
+        ws.on("message", (message: Buffer) => {
             const baseMessageData = bot.networkAdapter.readNodeMessageBaseData(message);
             let handler: BotEventHandler | undefined;
             let eventName: string;
@@ -223,11 +245,7 @@ export default class Utilitary {
                 return;
             }
 
-            bot.enqueueHandler({
-                handler: handler,
-                ctx: getEventCtx(message),
-                eventName: eventName,
-            });
+            Utilitary.executeEventHandlers(handler, getEventCtx(message));
         });
     }
 
@@ -263,9 +281,8 @@ export default class Utilitary {
     ):
         | "no-command-given"
         | "command-not-found"
-        | "command-handled"
+        | "trying-to-handle-command"
         | "no-command-attempted"
-        | "invalid-arguments"
         | "not-room-creator" {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
         const commandPrefixes = ["!", "/", "."];
@@ -308,9 +325,8 @@ export default class Utilitary {
                 usedAlias: requestedCommand,
                 normalizedTextAfterCommand: normalizedMessage.slice(requestedCommand.length + 1).trim(),
             };
-            const commandStatus = command.handler(commandHandlerCtx);
-            if (commandStatus === "handled") return "command-handled";
-            if (commandStatus === "invalid-arguments") return "invalid-arguments";
+            command.handler(commandHandlerCtx);
+            return "trying-to-handle-command";
         }
         return "no-command-attempted";
     }

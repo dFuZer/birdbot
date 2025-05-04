@@ -14,8 +14,7 @@ export type CommandHandlerCtx = {
 
 export type CommandOrEventCtx = CommandHandlerCtx | EventCtx;
 
-export type CommandStatus = "handled" | "invalid-arguments";
-export type CommandHandler = (commandCtx: CommandHandlerCtx) => CommandStatus | Promise<CommandStatus>;
+export type CommandHandler = (commandCtx: CommandHandlerCtx) => void;
 
 export type Command = {
     id: string;
@@ -29,15 +28,15 @@ export type Command = {
 };
 
 export default class CommandUtils {
-    static DEFAULT_COMMAND_DESCRIPTION = "No description provided for this command";
-    static DEFAULT_COMMAND_USAGE_DESCRIPTION = "No usage description provided for this command";
-    static DEFAULT_COMMAND_EXAMPLE_USAGE = "No example usage provided for this command";
+    public static DEFAULT_COMMAND_DESCRIPTION = "No description provided for this command";
+    public static DEFAULT_COMMAND_USAGE_DESCRIPTION = "No usage description provided for this command";
+    public static DEFAULT_COMMAND_EXAMPLE_USAGE = "No example usage provided for this command";
     public static createCommandHelper({
         id,
         aliases,
-        desc = this.DEFAULT_COMMAND_DESCRIPTION,
-        usageDesc = this.DEFAULT_COMMAND_USAGE_DESCRIPTION,
-        exampleUsage = this.DEFAULT_COMMAND_EXAMPLE_USAGE,
+        desc = CommandUtils.DEFAULT_COMMAND_DESCRIPTION,
+        usageDesc = CommandUtils.DEFAULT_COMMAND_USAGE_DESCRIPTION,
+        exampleUsage = CommandUtils.DEFAULT_COMMAND_EXAMPLE_USAGE,
         handler,
         adminRequired = false,
         roomCreatorRequired = false,

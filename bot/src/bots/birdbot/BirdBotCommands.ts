@@ -26,6 +26,7 @@ import {
     BirdBotRoomMetadata,
     BirdBotSupportedDictionaryId,
     DictionaryResource,
+    PlayerGameScores,
 } from "./BirdBotTypes";
 import BirdBotUtils, {
     type ApiResponseAllRecords,
@@ -49,18 +50,17 @@ const helpCommand: Command = c({
             ctx.utils.sendChatMessage(
                 `${commandFirstAliases} — For more information about a command, use /help [command]`
             );
-            return "handled";
+            return;
         }
         const requestedCommand = ctx.args[0]!;
         const command = birdbotCommands.find((c) => c.aliases.includes(requestedCommand));
         if (!command) {
             ctx.utils.sendChatMessage(`Command not found: ${requestedCommand}`);
-            return "handled";
+            return;
         }
         ctx.utils.sendChatMessage(
             `/${command.aliases[0]}: ${command.desc} — Use: ${command.usageDesc} — Ex. ${command.exampleUsage}`
         );
-        return "handled";
     },
 });
 
@@ -92,7 +92,7 @@ const recordsCommand: Command = c({
 
             if (!recordsRequest.ok) {
                 if (recordsRequest.status === 500) ctx.utils.sendChatMessage("Error fetching records");
-                return "handled";
+                return;
             }
 
             const json = (await recordsRequest.json()) as ApiResponseBestScoresSpecificRecord | ApiResponseAllRecords;
@@ -105,7 +105,15 @@ const recordsCommand: Command = c({
                 error: e,
             });
             ctx.utils.sendChatMessage("Error fetching records");
-            return "handled";
+            return;
+        }
+
+        if (!ctx.room.isHealthy()) {
+            Logger.warn({
+                message: "Room is not healthy anymore, skipping the rest of command execution",
+                path: "BirdBotCommands.ts",
+            });
+            return;
         }
 
         if (targetRecordType) {
@@ -133,7 +141,6 @@ const recordsCommand: Command = c({
                 .join(" — ")}`;
             ctx.utils.sendChatMessage(message);
         }
-        return "handled" as const;
     },
 });
 
@@ -147,8 +154,14 @@ const currentGameScoresCommand: Command = c({
         const targetPlayerName = ctx.normalizedMessage.slice(ctx.usedAlias.length + 2);
         if (ctx.room.roomState.gameData!.step.value !== "round") {
             ctx.utils.sendChatMessage("Error: No game in progress.");
-            return "handled";
+            return;
         }
+
+        function sendResults(username: string, playerStats: PlayerGameScores) {
+            const scores = BirdBotUtils.getFormattedPlayerScores(playerStats);
+            ctx.utils.sendChatMessage(`${username}: ${scores.length > 0 ? scores : "No scores available"}`);
+        }
+
         if (targetPlayerName.length) {
             const bestMatch = BirdBotUtils.findBestUsernameMatch(targetPlayerName, ctx.room.roomState.roomData!.gamers);
             if (bestMatch) {
@@ -157,38 +170,31 @@ const currentGameScoresCommand: Command = c({
 
                 if (playerStats === undefined) {
                     ctx.utils.sendChatMessage("Error: This player has no stats for this game. This should not happen.");
-                    return "handled";
+                    return;
                 }
-                const scores = BirdBotUtils.getFormattedPlayerScores(playerStats);
-                ctx.utils.sendChatMessage(`${bestMatch.identity.nickname}: ${scores}`);
-
-                return "handled";
+                sendResults(bestMatch.identity.nickname, playerStats);
             } else {
                 ctx.utils.sendChatMessage("Error: Player not found.");
-                return "handled";
             }
         } else {
             const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
-            if (currentPlayer) {
-                const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-                const playerStats = roomMetadata.scoresByGamerId[currentPlayer.gamerId];
-                if (playerStats === undefined) {
-                    ctx.utils.sendChatMessage("Error: This player has no stats for this game. This should not happen.");
-                    return "handled";
-                }
-                const scores = BirdBotUtils.getFormattedPlayerScores(playerStats);
-                const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === currentPlayer.gamerId);
-                if (gamer === undefined) {
-                    ctx.utils.sendChatMessage("Error: This gamer was not found in the room. This should not happen.");
-                    return "handled";
-                }
-                ctx.utils.sendChatMessage(`${gamer.identity.nickname}: ${scores}`);
-            } else {
+            if (!currentPlayer) {
                 ctx.utils.sendChatMessage("Error: No current player.");
-                return "handled";
+                return;
             }
+            const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+            const playerStats = roomMetadata.scoresByGamerId[currentPlayer.gamerId];
+            if (playerStats === undefined) {
+                ctx.utils.sendChatMessage("Error: This player has no stats for this game. This should not happen.");
+                return;
+            }
+            const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === currentPlayer.gamerId);
+            if (gamer === undefined) {
+                ctx.utils.sendChatMessage("Error: This gamer was not found in the room. This should not happen.");
+                return;
+            }
+            sendResults(gamer.identity.nickname, playerStats);
         }
-        return "handled";
     },
 });
 
@@ -201,16 +207,15 @@ const startGameCommand: Command = c({
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
             ctx.utils.sendChatMessage("Error: Not in pregame.");
-            return "handled";
+            return;
         }
         if (ctx.room.roomState.gameData!.players.length < 2) {
             ctx.utils.sendChatMessage("Error: Not enough players to start the game.");
-            return "handled";
+            return;
         }
         const startGameMessage = ctx.bot.networkAdapter.getStartGameMessage();
         ctx.room.ws!.send(startGameMessage);
         ctx.utils.sendChatMessage("Starting game...");
-        return "handled";
     },
 });
 
@@ -224,24 +229,21 @@ const setGameModeCommand: Command = c({
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
             ctx.utils.sendChatMessage("Error: Cannot set mode outside of pregame.");
-            return "handled";
+            return;
         }
         const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(ctx.args, modesEnumSchema);
         if (targetGameMode) {
             const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
             if (roomMetadata.gameMode === targetGameMode) {
                 ctx.utils.sendChatMessage(`Game mode is already ${modeDisplayStrings[targetGameMode]}.`);
-                return "handled";
+                return;
             }
             ctx.utils.sendChatMessage(`Setting mode to ${modeDisplayStrings[targetGameMode]}...`);
             const targetGameModeRules = birdbotModeRules[targetGameMode];
 
             BirdBotUtils.setRoomGameMode(ctx, targetGameModeRules);
-
-            return "handled";
         } else {
             ctx.utils.sendChatMessage("Error: Invalid game mode.");
-            return "handled";
         }
     },
 });
@@ -256,7 +258,7 @@ const setRoomLanguageCommand: Command = c({
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
             ctx.utils.sendChatMessage("Error: Cannot set language outside of pregame.");
-            return "handled";
+            return;
         }
 
         const targetLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
@@ -264,14 +266,12 @@ const setRoomLanguageCommand: Command = c({
         if (targetLanguage) {
             if (ctx.room.roomState.gameData!.rules.dictionaryId === targetLanguage) {
                 ctx.utils.sendChatMessage(`Error: Language is already ${languageDisplayStrings[targetLanguage]}.`);
-                return "handled";
+                return;
             }
             ctx.utils.sendChatMessage(`Setting language to ${languageDisplayStrings[targetLanguage]}.`);
             BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", birdbotLanguageToDictionaryId[targetLanguage]);
-            return "handled";
         } else {
             ctx.utils.sendChatMessage("Error: Invalid language.");
-            return "handled";
         }
     },
 });
@@ -293,20 +293,20 @@ const searchWordsCommand: Command = c({
                     .map((record) => recordsUtils[record].recordDisplayString)
                     .join(", ")}.`
             );
-            return "handled";
+            return;
         }
 
         if (allParamRecords.includes("previous_syllable")) {
             ctx.utils.sendChatMessage(
                 `Instead of filtering words for the ${recordsUtils["previous_syllable"].recordDisplayString} record, you should provide multiple regexes. Example: /c ER FA, if ER is the current prompt and FA the previous prompt.`
             );
-            return "handled";
+            return;
         }
         if (allParamRecords.includes("alpha")) {
             ctx.utils.sendChatMessage(
                 `Instead of filtering words for the ${recordsUtils["alpha"].recordDisplayString} record, you should provide multiple regexes. Example: /c ^E FA, if E is the current alpha letter and FA is the current prompt.`
             );
-            return "handled";
+            return;
         }
 
         const requestedFilterRecords = Utilitary.getUniqueStrings(
@@ -329,7 +329,7 @@ const searchWordsCommand: Command = c({
                     .map((record) => recordsUtils[record].recordDisplayString)
                     .join(", ")}.`
             );
-            return "handled";
+            return;
         }
 
         let targetLanguage: BirdBotLanguage | null = null;
@@ -339,7 +339,7 @@ const searchWordsCommand: Command = c({
             const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
             if (!birdbotSupportedDictionaryIds.includes(roomDictionaryId as any)) {
                 ctx.utils.sendChatMessage("Error: This language is not supported.");
-                return "handled";
+                return;
             }
             const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
             targetLanguage = roomBirdBotLanguage;
@@ -350,7 +350,7 @@ const searchWordsCommand: Command = c({
             dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
         } catch (e) {
             ctx.utils.sendChatMessage("Error: Could not find dictionary for this language.");
-            return "handled";
+            return;
         }
         let searchList: string[];
         let targetMsSyllable: string | null = null;
@@ -363,13 +363,13 @@ const searchWordsCommand: Command = c({
                 ctx.utils.sendChatMessage(
                     "Error: You can only sort by multi-syllable words if you provide exactly one syllable."
                 );
-                return "handled";
+                return;
             }
             const syllable = ctx.args[0];
             const syllCount = dictionaryResource.metadata.syllablesCount[syllable];
             if (syllCount === undefined) {
                 ctx.utils.sendChatMessage("Error: This syllable does not exist in the requested dictionary.");
-                return "handled";
+                return;
             }
             targetMsSyllable = syllable;
             searchList = dictionaryResource.resource;
@@ -384,7 +384,7 @@ const searchWordsCommand: Command = c({
                 regexes.push(reg);
             } catch (e) {
                 ctx.utils.sendChatMessage(`Error: Invalid regex: ${arg}`);
-                return "handled";
+                return;
             }
         }
 
@@ -492,7 +492,6 @@ const searchWordsCommand: Command = c({
                 moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount
             } hidden)] ${cutResults.length > 0 ? cutResults.join(" ").toUpperCase() : "No results available"}`
         );
-        return "handled";
     },
 });
 
@@ -536,7 +535,7 @@ const playerProfileCommand: Command = c({
                 } else {
                     ctx.utils.sendChatMessage("Error fetching player data");
                 }
-                return "handled";
+                return;
             }
             playerData = (await playerDataRequest.json()) as ResultType;
         } catch (e) {
@@ -546,7 +545,15 @@ const playerProfileCommand: Command = c({
                 error: e,
             });
             ctx.utils.sendChatMessage("Error fetching player data");
-            return "handled";
+            return;
+        }
+
+        if (!ctx.room.isHealthy()) {
+            Logger.warn({
+                message: "Room is not healthy anymore, skipping the rest of command execution",
+                path: "BirdBotCommands.ts",
+            });
+            return;
         }
 
         const messageIntroduction = `[${languageFlagMap[playerData.language]} ${modeDisplayStrings[playerData.mode]}] ${
@@ -555,7 +562,7 @@ const playerProfileCommand: Command = c({
 
         if (playerData.records.length === 0) {
             ctx.utils.sendChatMessage(`${messageIntroduction} Player has no records in this category`);
-            return "handled";
+            return;
         }
 
         const message = `${playerData.records
@@ -567,8 +574,16 @@ const playerProfileCommand: Command = c({
             .join(" — ")}`;
 
         ctx.utils.sendChatMessage(`${messageIntroduction} ${message}`);
+    },
+});
 
-        return "handled" as const;
+const testCommand: Command = c({
+    id: "test",
+    aliases: ["test"],
+    adminRequired: true,
+    usageDesc: "/test",
+    handler: (ctx) => {
+        ctx.room.ws.close();
     },
 });
 
@@ -581,4 +596,5 @@ export const birdbotCommands: Command[] = [
     setRoomLanguageCommand,
     searchWordsCommand,
     playerProfileCommand,
+    testCommand,
 ];
