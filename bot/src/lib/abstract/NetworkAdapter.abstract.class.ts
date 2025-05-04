@@ -12,7 +12,9 @@ import type {
     NodeMessageKind,
     Player,
     PromptDifficulty,
+    RoomAccessMode,
     RoomData,
+    RoomRole,
     SubmitResultType,
 } from "../types/gameTypes";
 
@@ -230,6 +232,10 @@ export default abstract class NetworkAdapter {
     public abstract readNodeMessageBaseData(message: Buffer): ReadNodeMessageBaseData;
 
     public abstract readByeMessageData(message: Buffer): ReadByeMessageData;
+
+    public abstract getSetRoomAccessModeMessage({ accessMode }: { accessMode: RoomAccessMode }): Uint8Array;
+
+    public abstract getSetGamerRoleMessage({ gamerId, role }: { gamerId: number; role: RoomRole }): Uint8Array;
 
     public abstract readGetGamerModerationInfoResultData(message: Buffer): ReadGetGamerModerationInfoResultData;
 

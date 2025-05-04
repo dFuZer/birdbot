@@ -27,7 +27,7 @@ import type {
     ReadUpdatePlaylistRatingsData,
 } from "../abstract/NetworkAdapter.abstract.class";
 import NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
-import type { BombPartyRuleKey, DictionaryId, GameMode } from "../types/gameTypes";
+import type { BombPartyRuleKey, DictionaryId, GameMode, RoomAccessMode, RoomRole } from "../types/gameTypes";
 
 // This bogus implementation obviously does not work.
 // To run BirdBot yourself, you will have to reverse engineer the Croco protocol.
@@ -50,6 +50,15 @@ export default class BogusNetworkAdapter implements NetworkAdapter {
     }): Uint8Array {
         return 0 as any;
     }
+
+    public getSetRoomAccessModeMessage({ accessMode }: { accessMode: RoomAccessMode }): Uint8Array {
+        return 0 as any;
+    }
+
+    public getSetGamerRoleMessage({ gamerId, role }: { gamerId: number; role: RoomRole }): Uint8Array {
+        return 0 as any;
+    }
+
     public getJoinMessage(): Uint8Array {
         return 0 as any;
     }

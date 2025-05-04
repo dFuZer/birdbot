@@ -2,6 +2,7 @@ import type { Command } from "../../lib/class/CommandUtils.class";
 import CommandUtils from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
+import { RoomRole } from "../../lib/types/gameTypes";
 import {
     birdbotLanguageToDictionaryId,
     birdbotModeRules,
@@ -9,15 +10,19 @@ import {
     defaultLanguage,
     defaultMode,
     dictionaryIdToBirdbotLanguage,
+    DISCORD_SERVER_LINK,
     filterWordsModeRecords,
+    GITHUB_REPO_LINK,
     languageAliases,
     languageDisplayStrings,
     languageFlagMap,
     modeDisplayStrings,
     modesEnumSchema,
+    PAYPAL_DONATE_LINK,
     recordAliases,
     recordsUtils,
     sortWordsModeRecords,
+    WEBSITE_LINK,
 } from "./BirdBotConstants";
 import {
     BirdBotGameMode,
@@ -278,7 +283,7 @@ const setRoomLanguageCommand: Command = c({
 
 const searchWordsCommand: Command = c({
     id: "searchWords",
-    aliases: ["searchwords", "c", "words"],
+    aliases: ["searchwords", "c", "words", "search"],
     desc: "Search for words in the dictionary. The user can provide any number of syllables or regexes to search for. The command will return the words that match every given regex.",
     usageDesc: "/c [syllable|regex] [...]",
     exampleUsage: "/c hello - /c ^hello$",
@@ -582,19 +587,300 @@ const testCommand: Command = c({
     aliases: ["test"],
     adminRequired: true,
     usageDesc: "/test",
+    hidden: true,
     handler: (ctx) => {
         ctx.room.ws.close();
+    },
+});
+
+const rareSyllablesCommand: Command = c({
+    id: "rareSyllables",
+    aliases: ["raresyllables", "raresyll", "rares", "rs"],
+    desc: "Shows the rare syllables in the dictionary.",
+    usageDesc: "/rareSyllables",
+    handler: (ctx) => {
+        const paramLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
+        const targetWord = ctx.args[0];
+
+        if (!targetWord.length) {
+            ctx.utils.sendChatMessage("Error: You must provide a word to use this command.");
+            return;
+        }
+
+        let targetLanguage: BirdBotLanguage | null = null;
+        if (paramLanguage) {
+            targetLanguage = paramLanguage;
+        } else {
+            const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
+            targetLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
+        }
+
+        const dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
+        const dictionaryWords = dictionaryResource.resource;
+
+        if (!dictionaryWords.includes(targetWord)) {
+            ctx.utils.sendChatMessage("Error: Word not found in dictionary.");
+            return;
+        }
+
+        const wordSyllables = BirdBotUtils.splitWordIntoSyllables(targetWord);
+        const rareSyllables: { syllable: string; count: number }[] = [];
+
+        for (const syllable in wordSyllables) {
+            const syllableCount = wordSyllables[syllable];
+
+            if (syllableCount < 9) {
+                rareSyllables.push({ syllable, count: syllableCount });
+            }
+        }
+
+        ctx.utils.sendChatMessage(
+            `[${languageFlagMap[targetLanguage]}] Rare syllables in ${targetWord}: ${
+                rareSyllables.length ? rareSyllables.map((s) => `${s.syllable}: ${s.count}`).join(", ") : "None"
+            }`
+        );
+    },
+});
+
+const broadcastCommand: Command = c({
+    id: "broadcast",
+    aliases: ["broadcast", "bc"],
+    desc: "Broadcasts a message to all players in all rooms.",
+    usageDesc: "/broadcast [message]",
+    adminRequired: true,
+    hidden: true,
+    handler: (ctx) => {
+        const message = ctx.args.join(" ");
+        for (const roomId in ctx.bot.rooms) {
+            const room = ctx.bot.rooms[roomId];
+            if (room.ws && room.ws.readyState === WebSocket.OPEN) {
+                room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(`Broadcast: ${message}`));
+            }
+        }
+    },
+});
+
+const discordCommand: Command = c({
+    id: "discord",
+    aliases: ["discord"],
+    desc: "Gives the discord server link.",
+    usageDesc: "/discord",
+    handler: (ctx) => {
+        ctx.utils.sendChatMessage(
+            `Discord server: ${DISCORD_SERVER_LINK} - Join the server to get the latest news and updates!`
+        );
+    },
+});
+
+const githubCommand: Command = c({
+    id: "github",
+    aliases: ["github"],
+    desc: "Gives the github repository link.",
+    usageDesc: "/github",
+    handler: (ctx) => {
+        ctx.utils.sendChatMessage(
+            `Github repository: ${GITHUB_REPO_LINK} - Give a star if you like the project and want to support us!`
+        );
+    },
+});
+
+const donateCommand: Command = c({
+    id: "donate",
+    aliases: ["donate"],
+    desc: "Gives the paypal donation link.",
+    usageDesc: "/donate",
+    handler: (ctx) => {
+        ctx.utils.sendChatMessage(`Paypal donation link: ${PAYPAL_DONATE_LINK} - Thank you so much for your support!`);
+    },
+});
+
+const websiteCommand: Command = c({
+    id: "website",
+    aliases: ["website"],
+    desc: "Gives the website link.",
+    usageDesc: "/website",
+    handler: (ctx) => {
+        ctx.utils.sendChatMessage(
+            `Website: ${WEBSITE_LINK} - On the website you will find all the player records, the documentation on the commands, and much more!`
+        );
+    },
+});
+
+const uptimeCommand: Command = c({
+    id: "uptime",
+    aliases: ["uptime"],
+    desc: "Gives the uptime of the bot.",
+    usageDesc: "/uptime",
+    handler: (ctx) => {
+        const uptimeMs = process.uptime() * 1000;
+        const uptimeString = Utilitary.formatTime(uptimeMs);
+        ctx.utils.sendChatMessage(`Uptime: ${uptimeString}`);
+    },
+});
+
+const modUserCommand: Command = c({
+    id: "modUser",
+    aliases: ["mod"],
+    desc: "Gives moderator capabilities to the user.",
+    roomCreatorRequired: true,
+    usageDesc: "/mod [username]",
+    handler: (ctx) => {
+        const username = ctx.normalizedTextAfterCommand;
+        if (!username) {
+            ctx.utils.sendChatMessage("Error: You must provide a username to use this command.");
+            return;
+        }
+
+        const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.gamers);
+        if (!gamer) {
+            ctx.utils.sendChatMessage("Error: Player not found.");
+            return;
+        }
+
+        const gamerId = gamer.id;
+        const role = "moderator" as RoomRole;
+
+        const message = ctx.bot.networkAdapter.getSetGamerRoleMessage({
+            gamerId,
+            role,
+        });
+
+        ctx.utils.sendChatMessage(`Modding ${gamer.identity.nickname}...`);
+
+        ctx.room.ws.send(message);
+    },
+});
+
+const unmodUserCommand: Command = c({
+    id: "unmodUser",
+    aliases: ["unmod"],
+    desc: "Removes moderator capabilities from the user.",
+    roomCreatorRequired: true,
+    usageDesc: "/unmod [username]",
+    handler: (ctx) => {
+        const username = ctx.normalizedTextAfterCommand;
+        if (!username) {
+            ctx.utils.sendChatMessage("Error: You must provide a username to use this command.");
+            return;
+        }
+
+        const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.gamers);
+        if (!gamer) {
+            ctx.utils.sendChatMessage("Error: Player not found.");
+            return;
+        }
+
+        const gamerId = gamer.id;
+        const role = "" as RoomRole;
+
+        const message = ctx.bot.networkAdapter.getSetGamerRoleMessage({
+            gamerId,
+            role,
+        });
+
+        ctx.utils.sendChatMessage(`Unmodding ${gamer.identity.nickname}...`);
+
+        ctx.room.ws.send(message);
+    },
+});
+
+const privateRoomCommand: Command = c({
+    id: "privateRoom",
+    aliases: ["private", "priv"],
+    desc: "Creates a private room.",
+    usageDesc: "/private",
+    adminRequired: true,
+    hidden: true,
+    handler: (ctx) => {
+        const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
+            accessMode: "private",
+        });
+        ctx.utils.sendChatMessage("Setting room to private...");
+        ctx.room.ws.send(message);
+    },
+});
+
+const publicRoomCommand: Command = c({
+    id: "publicRoom",
+    aliases: ["public", "pub"],
+    desc: "Creates a public room.",
+    usageDesc: "/public",
+    adminRequired: true,
+    hidden: true,
+    handler: (ctx) => {
+        const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
+            accessMode: "public",
+        });
+        ctx.utils.sendChatMessage("Setting room to public...");
+        ctx.room.ws.send(message);
+    },
+});
+
+const destroyAllRoomsCommand: Command = c({
+    id: "destroyAllRooms",
+    aliases: ["destroy", "destroyall", "destroyallrooms"],
+    desc: "Destroys all rooms.",
+    usageDesc: "/destroyAllRooms",
+    adminRequired: true,
+    hidden: true,
+    handler: (ctx) => {
+        for (const roomId in ctx.bot.rooms) {
+            const room = ctx.bot.rooms[roomId];
+
+            if (room.ws && room.ws.readyState === WebSocket.OPEN) {
+                room.ws.send(
+                    ctx.bot.networkAdapter.getSendChatMessage(
+                        `Destroying all rooms, probably for maintenance purposes. BirdBot will come back soon!`
+                    )
+                );
+            }
+
+            Utilitary.destroyRoom(ctx.bot.rawBot, room);
+        }
+    },
+});
+
+const showAllRoomsCommand: Command = c({
+    id: "showAllRooms",
+    aliases: ["rooms", "roomlist", "listrooms", "listroom"],
+    desc: "Shows all rooms.",
+    usageDesc: "/rooms",
+    adminRequired: true,
+    hidden: true,
+    handler: (ctx) => {
+        const roomString = Object.values(ctx.bot.rooms)
+            .map((room) => {
+                return `${room.constantRoomData.roomCode}: ${
+                    room.roomState.gameData?.step.value ?? "gameData unknown"
+                }`;
+            })
+            .join(" - ");
+
+        ctx.utils.sendChatMessage(`Rooms: ${roomString}`);
     },
 });
 
 export const birdbotCommands: Command[] = [
     helpCommand,
     recordsCommand,
+    playerProfileCommand,
     currentGameScoresCommand,
-    startGameCommand,
+    searchWordsCommand,
     setGameModeCommand,
     setRoomLanguageCommand,
-    searchWordsCommand,
-    playerProfileCommand,
+    startGameCommand,
+    modUserCommand,
+    unmodUserCommand,
+    rareSyllablesCommand,
+    privateRoomCommand,
+    publicRoomCommand,
+    discordCommand,
+    githubCommand,
+    donateCommand,
+    websiteCommand,
+    broadcastCommand,
+    uptimeCommand,
     testCommand,
+    destroyAllRoomsCommand,
+    showAllRoomsCommand,
 ];

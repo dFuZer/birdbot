@@ -25,12 +25,14 @@ export type Command = {
     adminRequired: boolean;
     roomCreatorRequired: boolean;
     exampleUsage: string;
+    hidden: boolean;
 };
 
 export default class CommandUtils {
     public static DEFAULT_COMMAND_DESCRIPTION = "No description provided for this command";
     public static DEFAULT_COMMAND_USAGE_DESCRIPTION = "No usage description provided for this command";
     public static DEFAULT_COMMAND_EXAMPLE_USAGE = "No example usage provided for this command";
+
     public static createCommandHelper({
         id,
         aliases,
@@ -40,6 +42,7 @@ export default class CommandUtils {
         handler,
         adminRequired = false,
         roomCreatorRequired = false,
+        hidden = false,
     }: {
         id: Command["id"];
         aliases: Command["aliases"];
@@ -49,6 +52,7 @@ export default class CommandUtils {
         adminRequired?: Command["adminRequired"];
         roomCreatorRequired?: Command["roomCreatorRequired"];
         exampleUsage?: Command["exampleUsage"];
+        hidden?: Command["hidden"];
     }): Command {
         return {
             id,
@@ -59,6 +63,7 @@ export default class CommandUtils {
             adminRequired,
             roomCreatorRequired,
             exampleUsage,
+            hidden,
         };
     }
 }
