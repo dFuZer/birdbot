@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
+export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt", "it"]);
 export const modesEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
 export const recordsEnumSchema = z.enum([
     "word",
@@ -60,4 +60,5 @@ export const LANGUAGES_DATA: { [key in LanguageEnum]: ILanguageData } = {
     de: { displayName: "German", shortDisplayName: "DE" },
     brpt: { displayName: "BRPT", shortDisplayName: "BRPT" },
     es: { displayName: "Spanish", shortDisplayName: "ES" },
+    it: { displayName: "Italian", shortDisplayName: "IT" },
 };

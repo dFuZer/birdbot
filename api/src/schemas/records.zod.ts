@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { numericString } from "./common.zod";
 
-const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
+const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt", "it"]);
 const modeEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
 const recordsEnumSchema = z.enum([
     "word",

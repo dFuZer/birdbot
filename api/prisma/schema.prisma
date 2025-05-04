@@ -13,6 +13,7 @@ enum Language {
     DE
     ES
     BRPT
+    IT
 
     @@map("language")
 }

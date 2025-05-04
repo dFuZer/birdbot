@@ -45,6 +45,7 @@ export const languageEnumToDatabaseEnumMap: { [key in TLanguage]: PrismaLanguage
     de: PrismaLanguage.DE,
     es: PrismaLanguage.ES,
     brpt: PrismaLanguage.BRPT,
+    it: PrismaLanguage.IT,
 };
 
 export const databaseEnumToLanguageEnumMap: { [key in PrismaLanguage]: TLanguage } = {
@@ -53,6 +54,7 @@ export const databaseEnumToLanguageEnumMap: { [key in PrismaLanguage]: TLanguage
     DE: "de",
     ES: "es",
     BRPT: "brpt",
+    IT: "it",
 };
 
 export const databaseEnumToModeEnumMap: { [key in PrismaGameMode]: TMode } = {

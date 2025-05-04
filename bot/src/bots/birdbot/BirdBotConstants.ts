@@ -79,6 +79,7 @@ export const birdbotLanguageToDictionaryId: Record<BirdBotLanguage, DictionaryId
     de: "de",
     es: "es",
     brpt: "pt-BR",
+    it: "it",
 };
 
 export const dictionaryIdToBirdbotLanguage: Record<BirdBotSupportedDictionaryId, BirdBotLanguage> = {
@@ -87,11 +88,12 @@ export const dictionaryIdToBirdbotLanguage: Record<BirdBotSupportedDictionaryId,
     "de": "de",
     "es": "es",
     "pt-BR": "brpt",
+    "it": "it",
 };
 
-export const birdbotSupportedDictionaryIds = ["fr", "en", "de", "es", "pt-BR"] as const;
+export const birdbotSupportedDictionaryIds = ["fr", "en", "de", "es", "pt-BR", "it"] as const;
 
-export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt"]);
+export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt", "it"]);
 export const modesEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
 export const recordsEnumSchema = z.enum([
     "word",
@@ -115,6 +117,7 @@ export const languageFlagMap: Record<BirdBotLanguage, string> = {
     de: "🇩🇪",
     es: "🇪🇸",
     brpt: "🇧🇷",
+    it: "🇮🇹",
 };
 
 export const languageDisplayStrings: Record<BirdBotLanguage, string> = {
@@ -123,6 +126,7 @@ export const languageDisplayStrings: Record<BirdBotLanguage, string> = {
     de: "German",
     es: "Spanish",
     brpt: "Brazilian Portuguese",
+    it: "Italian",
 };
 
 export const languageAliases: Record<BirdBotLanguage, string[]> = {
@@ -131,6 +135,7 @@ export const languageAliases: Record<BirdBotLanguage, string[]> = {
     de: ["german", "de", "deutsch", "deutsch", "allemand", "ger"],
     es: ["spanish", "es", "español", "español", "espagnol", "esp"],
     brpt: ["brasileiro", "brpt", "portuguese", "portugais", "br", "pt", "portugais"],
+    it: ["italian", "it", "italiano", "italiano", "italien", "it"],
 };
 
 export const recordAliases: Record<BirdBotRecordType, string[]> = {
