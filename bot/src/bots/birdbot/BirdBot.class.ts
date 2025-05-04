@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import type NetworkAdapter from "../../lib/abstract/NetworkAdapter.abstract.class";
-import Bot from "../../lib/class/Bot.class";
+import Bot, { PeriodicTask } from "../../lib/class/Bot.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import type { DictionaryId } from "../../lib/types/gameTypes";
@@ -8,8 +8,8 @@ import birdbotEventHandlers from "./BirdBotEventHandlers";
 import type { BirdbotRoomTargetConfig, DictionaryResource } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 export default class BirdBot extends Bot {
-    constructor({ networkAdapter }: { networkAdapter: NetworkAdapter }) {
-        super({ handlers: birdbotEventHandlers, networkAdapter });
+    constructor({ networkAdapter, periodicTasks }: { networkAdapter: NetworkAdapter; periodicTasks?: PeriodicTask[] }) {
+        super({ handlers: birdbotEventHandlers, networkAdapter, periodicTasks });
     }
 
     public async createRoom({

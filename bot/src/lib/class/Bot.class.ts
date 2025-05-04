@@ -12,19 +12,54 @@ type BotData = {
     adminAccountUsernames: string[];
 };
 
+export type PeriodicTaskCtx = {
+    bot: Bot;
+};
+
+export type PeriodicTask = {
+    intervalInMs: number;
+    timeout: NodeJS.Timeout | undefined;
+    fn: (ctx: PeriodicTaskCtx) => void;
+};
+
 export default class Bot {
+    public periodicTasks: PeriodicTask[];
     public handlers: BotEventHandlers;
     public botData: BotData | null;
     public rooms: Record<string, Room>;
     public resourceManager: ResourceManager;
     public networkAdapter: NetworkAdapter;
 
-    constructor({ handlers, networkAdapter }: { handlers: BotEventHandlers; networkAdapter: NetworkAdapter }) {
+    constructor({
+        handlers,
+        networkAdapter,
+        periodicTasks,
+    }: {
+        handlers: BotEventHandlers;
+        networkAdapter: NetworkAdapter;
+        periodicTasks?: PeriodicTask[];
+    }) {
         this.handlers = handlers;
         this.botData = null;
         this.rooms = {};
         this.resourceManager = new ResourceManager();
         this.networkAdapter = networkAdapter;
+        this.periodicTasks = periodicTasks ?? [];
+    }
+
+    public startPeriodicTasks() {
+        const thisBot = this;
+        thisBot.periodicTasks.forEach((task) => {
+            task.timeout = setInterval(() => {
+                task.fn({ bot: thisBot });
+            }, task.intervalInMs);
+        });
+    }
+
+    public clearPeriodicTasks() {
+        this.periodicTasks.forEach((task) => {
+            if (task.timeout) clearInterval(task.timeout);
+        });
     }
 
     public async init({ adminAccountUsernames }: { adminAccountUsernames: string[] }) {
