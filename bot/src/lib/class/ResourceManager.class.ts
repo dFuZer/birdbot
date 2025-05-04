@@ -25,7 +25,7 @@ export default class ResourceManager {
         this.resources[key] = value;
     }
 
-    public async loadArrayResourceFromFile(path: string) {
+    public loadArrayResourceFromFile(path: string) {
         const stringArray = Utilitary.readArrayFromFile(path);
         return stringArray;
     }

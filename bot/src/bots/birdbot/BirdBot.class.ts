@@ -12,7 +12,7 @@ export default class BirdBot extends Bot {
         super({ handlers: birdbotEventHandlers, networkAdapter });
     }
 
-    public async loadDictionaryResourceFromFile({
+    public loadDictionaryResourceFromFile({
         key,
         path,
         dictionaryId,
@@ -27,7 +27,7 @@ export default class BirdBot extends Bot {
         });
 
         const st1 = performance.now();
-        const words = await this.resourceManager.loadArrayResourceFromFile(path);
+        const words = this.resourceManager.loadArrayResourceFromFile(path);
         const et1 = performance.now();
 
         const st2 = performance.now();
