@@ -10,7 +10,14 @@ async function start() {
         path: "./resources/en.dictionary.example.txt",
         dictionaryId: "en",
     });
-    await bot.createRoom({ dictionaryId: "en", gameMode: "survival", roomCreatorUsername: null });
+    await bot.createRoom({
+        roomCreatorUsername: null,
+        targetConfig: {
+            dictionaryId: "fr",
+            gameMode: "survival",
+            birdbotGameMode: "regular",
+        },
+    });
 }
 
 start();

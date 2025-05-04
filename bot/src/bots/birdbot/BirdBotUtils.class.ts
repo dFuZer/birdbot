@@ -602,7 +602,17 @@ export default class BirdBotUtils {
     };
 
     public static getCurrentDictionaryResource = (ctx: EventCtx) => {
-        const roomLanguage = ctx.room.roomState.gameData!.rules.dictionaryId;
+        const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
+        const roomLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
+        if (!roomLanguage) {
+            Logger.error({
+                message: `Tried to create a room for unsupported dictionary id ${roomDictionaryId}. This should not happen.`,
+                path: "BirdBotUtils.class.ts",
+            });
+            throw new Error(
+                `Tried to create a room for unsupported dictionary id ${roomDictionaryId}. This should not happen.`
+            );
+        }
         return ctx.bot.getResource<DictionaryResource>(`dictionary-${roomLanguage}`);
     };
 

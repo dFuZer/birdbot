@@ -33,7 +33,14 @@ async function start() {
     loadDictionaryShortcut("it", "it", true);
     loadDictionaryShortcut("pt-BR", "brpt", true);
 
-    await bot.createRoom({ dictionaryId: "fr", gameMode: "survival", roomCreatorUsername: null });
+    await bot.createRoom({
+        roomCreatorUsername: null,
+        targetConfig: {
+            dictionaryId: "fr",
+            gameMode: "survival",
+            birdbotGameMode: "regular",
+        },
+    });
 }
 
 start();

@@ -4,7 +4,7 @@ import { v5 as uuidv5 } from "uuid";
 import WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
 import { NAMESPACE_UUID } from "../env";
-import type { GameData, Player } from "../types/gameTypes";
+import type { GameData, Gamer, Player } from "../types/gameTypes";
 import type { BotEventHandler, BotEventPreviousHandlersCtx, EventCtx } from "../types/libEventTypes";
 import type Bot from "./Bot.class";
 import type { Command, CommandHandlerCtx } from "./CommandUtils.class";
@@ -276,7 +276,7 @@ export default class Utilitary {
     public static handleCommandIfExists(
         ctx: EventCtx,
         rawMessage: string,
-        gamerAccountName: string | null,
+        gamer: Gamer,
         commands: Command[]
     ):
         | "no-command-given"
@@ -303,8 +303,8 @@ export default class Utilitary {
             if (
                 !(
                     (command.roomCreatorRequired &&
-                        ctx.room.constantRoomData.roomCreatorUsername === gamerAccountName) ||
-                    ctx.utils.userIsAdmin(gamerAccountName) ||
+                        ctx.room.constantRoomData.roomCreatorUsername === gamer.identity.name) ||
+                    ctx.utils.userIsAdmin(gamer.identity.name) ||
                     !command.roomCreatorRequired
                 )
             ) {
@@ -321,6 +321,7 @@ export default class Utilitary {
                 rawMessage,
                 params,
                 args: commandArgs,
+                gamer,
                 normalizedMessage,
                 usedAlias: requestedCommand,
                 normalizedTextAfterCommand: normalizedMessage.slice(requestedCommand.length + 1).trim(),

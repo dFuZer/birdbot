@@ -1,6 +1,5 @@
 import WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
-import type { DictionaryId, GameMode } from "../types/gameTypes";
 import type { BotEventHandlers } from "../types/libEventTypes";
 import Logger from "./Logger.class";
 import ResourceManager from "./ResourceManager.class";
@@ -44,7 +43,7 @@ export default class Bot {
         roomCreatorUsername,
     }: {
         roomCode: string;
-        targetConfig?: RoomTargetConfig;
+        targetConfig: RoomTargetConfig;
         roomCreatorUsername: string | null;
     }) {
         try {
@@ -69,13 +68,13 @@ export default class Bot {
     }
 
     public async createRoom({
-        dictionaryId,
-        gameMode,
         roomCreatorUsername,
+        targetConfig,
+        callback,
     }: {
-        dictionaryId: DictionaryId;
-        gameMode: GameMode;
+        targetConfig: RoomTargetConfig;
         roomCreatorUsername: string | null;
+        callback?: (roomCode: string) => void;
     }) {
         const ws = new WebSocket(`wss://croco.games/api/websocket`, {
             perMessageDeflate: false,
@@ -83,7 +82,7 @@ export default class Bot {
 
         const onOpen = () => {
             let msg = this.networkAdapter.getCreateRoomMessage({
-                dictionaryId,
+                dictionaryId: targetConfig.dictionaryId,
                 secret: this.botData!.session.session!.secret,
             });
             ws.send(msg);
@@ -94,10 +93,11 @@ export default class Bot {
             if (data.eventType === "roomReady") {
                 this.joinRoom({
                     roomCode: data.roomCode,
-                    targetConfig: { dictionaryId, gameMode },
+                    targetConfig,
                     roomCreatorUsername: roomCreatorUsername,
                 });
                 ws.close();
+                callback?.(data.roomCode);
             }
         };
 

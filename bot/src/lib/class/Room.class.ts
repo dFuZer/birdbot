@@ -15,13 +15,14 @@ export type RoomState = {
 
 export type ConstantRoomData = {
     roomCode: string;
-    targetConfig: RoomTargetConfig | null;
+    targetConfig: RoomTargetConfig;
     roomCreatorUsername: string | null;
 };
 
 export type RoomTargetConfig = {
     gameMode: CrocoTypes.GameMode;
     dictionaryId: CrocoTypes.DictionaryId;
+    [key: string]: any;
 };
 
 export default class Room {
@@ -39,7 +40,7 @@ export default class Room {
     }: {
         roomCode: string;
         id: string;
-        targetConfig?: RoomTargetConfig;
+        targetConfig: RoomTargetConfig;
         roomCreatorUsername: string | null;
     }) {
         this.ws = null;
@@ -47,7 +48,7 @@ export default class Room {
         this.id = id;
         this.constantRoomData = {
             roomCode: roomCode,
-            targetConfig: targetConfig ?? null,
+            targetConfig: targetConfig,
             roomCreatorUsername: roomCreatorUsername,
         };
         this.roomState = {

@@ -3,6 +3,7 @@ import CommandUtils from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { RoomRole } from "../../lib/types/gameTypes";
+import BirdBot from "./BirdBot.class";
 import {
     birdbotLanguageToDictionaryId,
     birdbotModeRules,
@@ -597,7 +598,7 @@ const rareSyllablesCommand: Command = c({
     id: "rareSyllables",
     aliases: ["raresyllables", "raresyll", "rares", "rs"],
     desc: "Shows the rare syllables in the dictionary.",
-    usageDesc: "/rareSyllables",
+    usageDesc: "/rareSyllables [word]",
     handler: (ctx) => {
         const paramLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
         const targetWord = ctx.args[0];
@@ -820,7 +821,7 @@ const destroyAllRoomsCommand: Command = c({
     id: "destroyAllRooms",
     aliases: ["destroy", "destroyall", "destroyallrooms"],
     desc: "Destroys all rooms.",
-    usageDesc: "/destroyAllRooms",
+    usageDesc: "/destroyallrooms",
     adminRequired: true,
     hidden: true,
     handler: (ctx) => {
@@ -860,8 +861,52 @@ const showAllRoomsCommand: Command = c({
     },
 });
 
+const createRoomCommand: Command = c({
+    id: "createRoom",
+    aliases: ["createroom", "b"],
+    desc: "Creates a room.",
+    usageDesc: "/createroom",
+    handler: (ctx) => {
+        const gamer = ctx.gamer;
+        if (!gamer.identity.name) {
+            ctx.utils.sendChatMessage(
+                `Error: You must be logged in to Croco.games to use this command. To log in, go to the home page at https://croco.games/ and click "Log in" if you have an account or "New account" if you don't.`
+            );
+            return;
+        }
+        const allArguments = ctx.args.concat(ctx.params);
+        const targetLanguage = BirdBotUtils.findValueInAliasesObject(allArguments, languageAliases);
+        const targetMode = BirdBotUtils.findTargetItemInZodEnum(allArguments, modesEnumSchema);
+
+        if (
+            targetLanguage !== null &&
+            !birdbotSupportedDictionaryIds.includes(birdbotLanguageToDictionaryId[targetLanguage] as any)
+        ) {
+            ctx.utils.sendChatMessage("Error: This language is not supported by BirdBot.");
+            return;
+        }
+
+        (ctx.bot.rawBot as BirdBot).createRoom({
+            targetConfig: {
+                dictionaryId: birdbotLanguageToDictionaryId[targetLanguage ?? defaultLanguage],
+                gameMode: "survival",
+                birdbotGameMode: targetMode ?? defaultMode,
+            },
+            roomCreatorUsername: gamer.identity.name,
+            callback: (roomCode) => {
+                if (ctx.room.isHealthy()) {
+                    ctx.room.ws.send(
+                        ctx.bot.networkAdapter.getSendChatMessage(`Room created: https://croco.games/${roomCode}`)
+                    );
+                }
+            },
+        });
+    },
+});
+
 export const birdbotCommands: Command[] = [
     helpCommand,
+    createRoomCommand,
     recordsCommand,
     playerProfileCommand,
     currentGameScoresCommand,

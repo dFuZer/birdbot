@@ -5,11 +5,27 @@ import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import type { DictionaryId } from "../../lib/types/gameTypes";
 import birdbotEventHandlers from "./BirdBotEventHandlers";
-import type { DictionaryResource } from "./BirdBotTypes";
+import type { BirdbotRoomTargetConfig, DictionaryResource } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 export default class BirdBot extends Bot {
     constructor({ networkAdapter }: { networkAdapter: NetworkAdapter }) {
         super({ handlers: birdbotEventHandlers, networkAdapter });
+    }
+
+    public async createRoom({
+        roomCreatorUsername,
+        targetConfig,
+        callback,
+    }: {
+        targetConfig: BirdbotRoomTargetConfig;
+        roomCreatorUsername: string | null;
+        callback?: (roomCode: string) => void;
+    }) {
+        super.createRoom({
+            roomCreatorUsername,
+            targetConfig,
+            callback,
+        });
     }
 
     public loadDictionaryResourceFromFile({

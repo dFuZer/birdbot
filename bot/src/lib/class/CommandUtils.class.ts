@@ -1,3 +1,4 @@
+import { Gamer } from "../types/gameTypes";
 import type { BotEventCtx, EventCtx, EventCtxUtils, RoomEventCtx } from "../types/libEventTypes";
 
 export type CommandHandlerCtx = {
@@ -10,6 +11,7 @@ export type CommandHandlerCtx = {
     bot: BotEventCtx;
     room: RoomEventCtx;
     utils: EventCtxUtils;
+    gamer: Gamer;
 };
 
 export type CommandOrEventCtx = CommandHandlerCtx | EventCtx;

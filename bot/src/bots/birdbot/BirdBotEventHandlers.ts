@@ -4,8 +4,8 @@ import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventH
 import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
 import type { BotEventHandlers } from "../../lib/types/libEventTypes";
 import { birdbotCommands } from "./BirdBotCommands";
-import { birdbotSupportedDictionaryIds, defaultBirdBotBombPartyRules, recordsUtils } from "./BirdBotConstants";
-import type { BirdBotRoomMetadata } from "./BirdBotTypes";
+import { birdbotModeRules, birdbotSupportedDictionaryIds, recordsUtils } from "./BirdBotConstants";
+import type { BirdBotRoomMetadata, BirdbotRoomTargetConfig } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 
 const birdbotEventHandlers: BotEventHandlers = {
@@ -60,13 +60,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                 });
                 throw new Error(`Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}.`);
             }
-            const gamerAccountName = gamer.identity.name;
-            const handleCommandResult = Utilitary.handleCommandIfExists(
-                ctx,
-                rawMessage,
-                gamerAccountName,
-                birdbotCommands
-            );
+            const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, gamer, birdbotCommands);
             if (handleCommandResult === "command-not-found") {
                 ctx.utils.sendChatMessage(`Command not found: ${rawMessage}`);
             } else if (handleCommandResult === "not-room-creator") {
@@ -92,7 +86,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                             message: "This is the initial setup, setting rules to default values.",
                             path: "BirdBotEventHandlers.ts",
                         });
-                        BirdBotUtils.setRoomGameMode(ctx, defaultBirdBotBombPartyRules);
+                        const birdbotTargetConfig = ctx.room.constantRoomData.targetConfig as BirdbotRoomTargetConfig;
+                        const targetGameMode = birdbotTargetConfig.birdbotGameMode;
+                        BirdBotUtils.setRoomGameMode(ctx, birdbotModeRules[targetGameMode]);
                         if (ctx.room.constantRoomData.targetConfig !== null) {
                             BirdBotUtils.setRoomGameRuleIfDifferent(
                                 ctx,
@@ -351,7 +347,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                         const handleCommandResult = Utilitary.handleCommandIfExists(
                             ctx,
                             word,
-                            currentGamer.identity.name,
+                            currentGamer,
                             birdbotCommands
                         );
                         if (handleCommandResult === "command-not-found") {
