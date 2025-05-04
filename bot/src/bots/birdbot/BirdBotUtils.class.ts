@@ -138,7 +138,31 @@ export default class BirdBotUtils {
 
     public static handlePlayerDeath = async (ctx: EventCtx, gamerId: number) => {
         const gameRecap = BirdBotUtils.getApiGameRecap(ctx, gamerId);
-        if (gameRecap.wordsCount < 10) return;
+        const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === gamerId);
+
+        if (!gamer) {
+            Logger.error({
+                message: `Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`,
+                path: "BirdBotUtils.class.ts",
+            });
+            throw new Error(
+                `Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`
+            );
+        }
+        const timeSurvived = gameRecap.diedAt - ctx.room.roomState.gameData!.round.startTimestamp;
+
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        if (gameRecap.wordsCount === 0) {
+            ctx.utils.sendChatMessage(`Oh no, you didn't place any words this game. Better luck next time!`);
+        } else {
+            const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByGamerId[gamerId]);
+            ctx.utils.sendChatMessage(
+                `${gamer.identity.nickname} died at ${recordsUtils.time.specificScoreDisplayStringGenerator(
+                    timeSurvived
+                )} after placing: ${scores}`
+            );
+        }
+
         await BirdBotUtils.registerGameRecap(gameRecap);
     };
 
