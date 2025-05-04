@@ -648,6 +648,14 @@ export default class BirdBotUtils {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         this.detectRoomGameMode(ctx);
         roomMetadata.scoresByGamerId = {};
+        roomMetadata.globalScores = {
+            flips: 0,
+            previousSyllables: 0,
+            hyphenWords: 0,
+            moreThan20LettersWords: 0,
+            multiSyllables: 0,
+            depletedSyllables: 0,
+        };
         this.initializeScoresForAllPlayers(ctx);
         const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
         roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);
@@ -709,6 +717,14 @@ export default class BirdBotUtils {
     public static resetRoomMetadata = (ctx: EventCtx) => {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         roomMetadata.scoresByGamerId = {};
+        roomMetadata.globalScores = {
+            flips: 0,
+            previousSyllables: 0,
+            hyphenWords: 0,
+            moreThan20LettersWords: 0,
+            multiSyllables: 0,
+            depletedSyllables: 0,
+        };
         for (const player of ctx.room.roomState.gameData!.players) {
             this.initializeScoresForPlayerId(roomMetadata, player.gamerId);
         }

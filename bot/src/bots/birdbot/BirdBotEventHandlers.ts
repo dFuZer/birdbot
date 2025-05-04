@@ -207,10 +207,13 @@ const birdbotEventHandlers: BotEventHandlers = {
                         if (isLifeGain) {
                             const oldFlips = playerScores.flips;
                             playerScores.flips++;
+                            roomMetadata.globalScores.flips++;
                             const newFlips = playerScores.flips;
                             const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, newFlips, 4);
                             if (passedMilestone) {
-                                turnComments.push(`gained ${newFlips} lives`);
+                                turnComments.push(
+                                    `gained ${newFlips} lives (${playerScores.flips}/${roomMetadata.globalScores.flips})`
+                                );
                             }
                         }
 
@@ -236,14 +239,20 @@ const birdbotEventHandlers: BotEventHandlers = {
                         // More than 20 letters score
                         if (word.length > 20) {
                             playerScores.moreThan20LettersWords++;
-                            turnComments.push(`placed a long word`);
+                            roomMetadata.globalScores.moreThan20LettersWords++;
+                            turnComments.push(
+                                `placed a long word (${playerScores.moreThan20LettersWords}/${roomMetadata.globalScores.moreThan20LettersWords})`
+                            );
                             showWord = true;
                         }
 
                         // Hyphens score
                         if (word.includes("-")) {
                             playerScores.hyphenWords++;
-                            turnComments.push(`placed a hyphenated word`);
+                            roomMetadata.globalScores.hyphenWords++;
+                            turnComments.push(
+                                `placed a hyphenated word (${playerScores.hyphenWords}/${roomMetadata.globalScores.hyphenWords})`
+                            );
                             showWord = true;
                         }
 
@@ -272,7 +281,12 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const currentWordIncludesPreviousSyllable = word.includes(previousSyllable);
                             if (currentWordIncludesPreviousSyllable) {
                                 playerScores.previousSyllableScore++;
-                                turnComments.push(`placed a previous syllable: ${previousSyllable.toUpperCase()}`);
+                                roomMetadata.globalScores.previousSyllables++;
+                                turnComments.push(
+                                    `placed a previous syllable: ${previousSyllable.toUpperCase()} (${
+                                        playerScores.previousSyllableScore
+                                    }/${roomMetadata.globalScores.previousSyllables})`
+                                );
                                 showWord = true;
                             }
                         }
@@ -281,10 +295,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                         const multiSyllableGainedPoints = word.split(currentPrompt).length - 2;
                         if (multiSyllableGainedPoints > 0) {
                             playerScores.multiSyllables += multiSyllableGainedPoints;
+                            roomMetadata.globalScores.multiSyllables += multiSyllableGainedPoints;
                             turnComments.push(
                                 `gained ${multiSyllableGainedPoints} MS (${currentPrompt.toUpperCase()} x ${
                                     multiSyllableGainedPoints + 1
-                                })`
+                                }) (${playerScores.multiSyllables}/${roomMetadata.globalScores.multiSyllables})`
                             );
                             showWord = true;
                         }
@@ -324,10 +339,13 @@ const birdbotEventHandlers: BotEventHandlers = {
                         }
                         if (depletedSyllables.length > 0) {
                             playerScores.depletedSyllables += depletedSyllables.length;
+                            roomMetadata.globalScores.depletedSyllables += depletedSyllables.length;
                             turnComments.push(
                                 `depleted ${depletedSyllables.length} syllable(s): ${depletedSyllables
                                     .join(", ")
-                                    .toUpperCase()}`
+                                    .toUpperCase()} (${playerScores.depletedSyllables}/${
+                                    roomMetadata.globalScores.depletedSyllables
+                                })`
                             );
                         }
                         if (turnComments.length > 0 && ctx.room.roomState.myGamerId !== currentPlayer.gamerId) {

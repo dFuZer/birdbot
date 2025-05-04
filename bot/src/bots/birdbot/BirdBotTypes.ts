@@ -39,6 +39,15 @@ export type PlayerGameScores = {
     moreThan20LettersWords: number;
 };
 
+export type GlobalGameScores = {
+    flips: number;
+    depletedSyllables: number;
+    previousSyllables: number;
+    hyphenWords: number;
+    moreThan20LettersWords: number;
+    multiSyllables: number;
+};
+
 export type BirdbotRoomTargetConfig = {
     gameMode: CrocoTypes.GameMode;
     dictionaryId: CrocoTypes.DictionaryId;
@@ -48,6 +57,7 @@ export type BirdbotRoomTargetConfig = {
 export type BirdBotRoomMetadata = {
     gameMode: BirdBotGameMode | "custom";
     scoresByGamerId: Record<string, PlayerGameScores>;
+    globalScores: GlobalGameScores;
     remainingSyllables: Record<string, number>;
     wasInitialized: boolean;
 };
