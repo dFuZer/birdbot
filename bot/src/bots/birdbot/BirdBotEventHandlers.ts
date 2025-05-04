@@ -347,7 +347,22 @@ const birdbotEventHandlers: BotEventHandlers = {
                                 );
                             }
                         }
+                    } else {
+                        const handleCommandResult = Utilitary.handleCommandIfExists(
+                            ctx,
+                            word,
+                            currentGamer.identity.name,
+                            birdbotCommands
+                        );
+                        if (handleCommandResult === "command-not-found") {
+                            ctx.utils.sendChatMessage(`Command not found: ${word}`);
+                        } else if (handleCommandResult === "not-room-creator") {
+                            ctx.utils.sendChatMessage(
+                                `You cannot use this command if you are not the room creator. /b to create your room will be available soon.`
+                            );
+                        }
                     }
+
                     if (currentGamer.identity.name && roomMetadata.gameMode !== "custom") {
                         BirdBotUtils.registerWord({
                             flip: isLifeGain ?? false,
