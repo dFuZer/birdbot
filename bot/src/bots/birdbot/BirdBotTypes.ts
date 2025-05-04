@@ -13,6 +13,7 @@ export type DictionaryMetadata = {
     syllablesCount: Record<string, number>;
     topFlipWords: { word: string; score: number }[];
     topSnWords: { word: string; score: number }[];
+    lightMode: boolean;
 };
 
 export type DictionaryResource = Resource<string[], DictionaryMetadata>;

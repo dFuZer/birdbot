@@ -16,10 +16,12 @@ export default class BirdBot extends Bot {
         key,
         path,
         dictionaryId,
+        lightMode = false,
     }: {
         key: string;
         path: string;
         dictionaryId: DictionaryId;
+        lightMode?: boolean;
     }) {
         Logger.log({
             message: `Loading dictionary resource ${key} from file ${path} with dictionaryId ${dictionaryId}`,
@@ -85,6 +87,7 @@ export default class BirdBot extends Bot {
                 syllablesCount,
                 topFlipWords,
                 topSnWords,
+                lightMode,
             };
 
             Utilitary.writeFileInDataFolder(`${resourceHash}.metadata.json`, JSON.stringify(metadata));
