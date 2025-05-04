@@ -231,7 +231,7 @@ const setGameModeCommand: Command = c({
             ctx.utils.sendChatMessage("Error: Cannot set mode outside of pregame.");
             return;
         }
-        const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(ctx.args, modesEnumSchema);
+        const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(ctx.args.concat(ctx.params), modesEnumSchema);
         if (targetGameMode) {
             const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
             if (roomMetadata.gameMode === targetGameMode) {
@@ -261,7 +261,7 @@ const setRoomLanguageCommand: Command = c({
             return;
         }
 
-        const targetLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
+        const targetLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params.concat(ctx.args), languageAliases);
 
         if (targetLanguage) {
             if (ctx.room.roomState.gameData!.rules.dictionaryId === targetLanguage) {
