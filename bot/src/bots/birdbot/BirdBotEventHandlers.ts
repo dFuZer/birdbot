@@ -329,7 +329,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                         if (depletedSyllables.length > 0) {
                             playerScores.depletedSyllables += depletedSyllables.length;
                             turnComments.push(
-                                `depleted ${depletedSyllables.length} syllables: ${depletedSyllables
+                                `depleted ${depletedSyllables.length} syllable(s): ${depletedSyllables
                                     .join(", ")
                                     .toUpperCase()}`
                             );
