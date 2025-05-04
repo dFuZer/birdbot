@@ -311,31 +311,14 @@ export default class BirdBotUtils {
         return number ? Number(number) : null;
     };
 
-    public static getJsonFromApi = async <T>(url: string): Promise<T | null> => {
-        const logError = (error: any) => {
-            Logger.error({
-                message: `Failed to fetch ${url}`,
-                path: "BirdBotUtils.class.ts",
-                error,
-            });
-        };
-        try {
-            const res = await fetch(`${API_URL}${url}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${API_KEY}`,
-                },
-            });
-            if (!res.ok) {
-                logError(res);
-                return null;
-            }
-            return (await res.json()) as T;
-        } catch (error) {
-            logError(error);
-            return null;
-        }
+    public static getJsonFromApi = async <T>(url: string) => {
+        return await fetch(`${API_URL}${url}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`,
+            },
+        });
     };
 
     public static postJsonToApi = async <T>(

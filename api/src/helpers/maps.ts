@@ -47,6 +47,23 @@ export const languageEnumToDatabaseEnumMap: { [key in TLanguage]: PrismaLanguage
     brpt: PrismaLanguage.BRPT,
 };
 
+export const databaseEnumToLanguageEnumMap: { [key in PrismaLanguage]: TLanguage } = {
+    FR: "fr",
+    EN: "en",
+    DE: "de",
+    ES: "es",
+    BRPT: "brpt",
+};
+
+export const databaseEnumToModeEnumMap: { [key in PrismaGameMode]: TMode } = {
+    REGULAR: "regular",
+    EASY: "easy",
+    BLITZ: "blitz",
+    SUB500: "sub500",
+    SUB50: "sub50",
+    FREEPLAY: "freeplay",
+};
+
 export const modeEnumToDatabaseEnumMap: { [key in TMode]: PrismaGameMode } = {
     regular: PrismaGameMode.REGULAR,
     easy: PrismaGameMode.EASY,

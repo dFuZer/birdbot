@@ -1,6 +1,7 @@
 import { type RouteHandlerMethod } from "fastify";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
+import { calculateXpFromGameRecap } from "../helpers/calculateXpFromGame";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
 import { gameRecap } from "../schemas/game.zod";
@@ -10,13 +11,21 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
     let requestJson = req.body;
     let parsed = gameRecap.safeParse(requestJson);
     if (!parsed.success) {
-        Logger.error({ message: "Input rejected by Zod", path: "addGameRecap.route.ts", errorType: "zod", error: parsed.error });
+        Logger.error({
+            message: "Input rejected by Zod",
+            path: "addGameRecap.route.ts",
+            errorType: "zod",
+            error: parsed.error,
+        });
         return res.status(400).send({ message: "Invalid input!" });
     }
     Logger.log({ message: `Trying to add game recap`, path: "addGameRecap.route.ts", json: { parsed: parsed.data } });
     try {
         const gameRecapData = parsed.data;
-        const [game, player] = await Promise.all([addGameIfNotExist(gameRecapData.game), addPlayerIfNotExist(gameRecapData.player)]);
+        const [game, player] = await Promise.all([
+            addGameIfNotExist(gameRecapData.game),
+            addPlayerIfNotExist(gameRecapData.player),
+        ]);
         Logger.log({ message: `Inserting game recap`, path: "addGameRecap.route.ts" });
         await prisma.$executeRaw`
             INSERT INTO game_recap (id,
@@ -46,9 +55,33 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             ${gameRecapData.hyphenWordsCount},
             ${gameRecapData.moreThan20LettersWordsCount})
         `;
+
+        const gainedExperience = calculateXpFromGameRecap({
+            time: gameRecapData.diedAt - game.started_at.getTime(),
+            wordsCount: gameRecapData.wordsCount,
+            flipsCount: gameRecapData.flipsCount,
+            depletedSyllablesCount: gameRecapData.depletedSyllablesCount,
+            alphaCount: gameRecapData.alphaCount,
+            wordsWithoutDeathCount: gameRecapData.wordsWithoutDeathCount,
+            previousSyllablesCount: gameRecapData.previousSyllablesCount,
+            multiSyllablesCount: gameRecapData.multiSyllablesCount,
+            listedRecordsTotalCount: gameRecapData.hyphenWordsCount + gameRecapData.moreThan20LettersWordsCount,
+        });
+
+        await prisma.$executeRaw`
+            UPDATE player
+            SET xp = xp + ${gainedExperience}
+            WHERE id = ${player.id}::UUID
+        `;
+
         return res.status(200).send({ message: "Game recap added successfully" });
     } catch (e) {
-        Logger.error({ message: "Failed to add game recap", path: "addGameRecap.route.ts", errorType: "unknown", error: e });
+        Logger.error({
+            message: "Failed to add game recap",
+            path: "addGameRecap.route.ts",
+            errorType: "unknown",
+            error: e,
+        });
         return res.status(500).send({ message: "Failed to add game recap" });
     }
 };

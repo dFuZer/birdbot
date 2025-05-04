@@ -291,9 +291,6 @@ export default class Utilitary {
                     !command.roomCreatorRequired
                 )
             ) {
-                console.log(
-                    `command ${command.id} not handled because user ${gamerAccountName} is not the room creator. ${command.roomCreatorRequired}`
-                );
                 return "not-room-creator";
             }
             Logger.log({
@@ -309,6 +306,7 @@ export default class Utilitary {
                 args: commandArgs,
                 normalizedMessage,
                 usedAlias: requestedCommand,
+                normalizedTextAfterCommand: normalizedMessage.slice(requestedCommand.length + 1).trim(),
             };
             const commandStatus = command.handler(commandHandlerCtx);
             if (commandStatus === "handled") return "command-handled";

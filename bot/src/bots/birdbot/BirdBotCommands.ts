@@ -1,5 +1,6 @@
 import type { Command } from "../../lib/class/CommandUtils.class";
 import CommandUtils from "../../lib/class/CommandUtils.class";
+import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import {
     birdbotLanguageToDictionaryId,
@@ -19,6 +20,7 @@ import {
     sortWordsModeRecords,
 } from "./BirdBotConstants";
 import {
+    BirdBotGameMode,
     BirdBotLanguage,
     BirdBotRecordType,
     BirdBotRoomMetadata,
@@ -78,40 +80,58 @@ const recordsCommand: Command = c({
         const language = targetLanguage ?? defaultLanguage;
         const mode = targetMode ?? defaultMode;
 
-        const records = await BirdBotUtils.getRecordsFromApi({
-            language,
-            gameMode: mode,
-            recordType: targetRecordType ?? undefined,
-            page: targetPage ?? undefined,
-        });
-        if (records === null) {
-            ctx.utils.sendChatMessage("Error fetching records");
-        } else {
-            if (targetRecordType) {
-                const r = records as ApiResponseBestScoresSpecificRecord;
-                const message = `[${languageFlagMap[language]} ${modeDisplayStrings[mode]} ${
-                    recordsUtils[targetRecordType].recordDisplayString
-                }] ${r.bestScores
-                    .map(
-                        (score) =>
-                            `${score.rank}) ${score.player_username} with ${recordsUtils[
-                                targetRecordType
-                            ].scoreDisplayStringGenerator(score.score)}`
-                    )
-                    .join(" — ")}`;
-                ctx.utils.sendChatMessage(message);
-            } else {
-                const r = records as ApiResponseAllRecords;
-                const message = `[${languageFlagMap[language]} ${modeDisplayStrings[mode]}] ${r.bestScores
-                    .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
-                    .map((score) => {
-                        return `${recordsUtils[score.record_type].recordDisplayString}: ${
-                            score.player_username
-                        } with ${recordsUtils[score.record_type].scoreDisplayStringGenerator(score.score)}`;
-                    })
-                    .join(" — ")}`;
-                ctx.utils.sendChatMessage(message);
+        let responseData: ApiResponseBestScoresSpecificRecord | ApiResponseAllRecords | null = null;
+
+        try {
+            const recordsRequest = await BirdBotUtils.getRecordsFromApi({
+                language,
+                gameMode: mode,
+                recordType: targetRecordType ?? undefined,
+                page: targetPage ?? undefined,
+            });
+
+            if (!recordsRequest.ok) {
+                if (recordsRequest.status === 500) ctx.utils.sendChatMessage("Error fetching records");
+                return "handled";
             }
+
+            const json = (await recordsRequest.json()) as ApiResponseBestScoresSpecificRecord | ApiResponseAllRecords;
+
+            responseData = json;
+        } catch (e) {
+            Logger.error({
+                message: "Error fetching records",
+                path: "BirdBotCommands.ts",
+                error: e,
+            });
+            ctx.utils.sendChatMessage("Error fetching records");
+            return "handled";
+        }
+
+        if (targetRecordType) {
+            const r = responseData as ApiResponseBestScoresSpecificRecord;
+            const message = `[${languageFlagMap[language]} ${modeDisplayStrings[mode]} ${
+                recordsUtils[targetRecordType].recordDisplayString
+            }] ${r.bestScores
+                .map(
+                    (score) =>
+                        `${score.rank}) ${score.player_username} with ${recordsUtils[
+                            targetRecordType
+                        ].scoreDisplayStringGenerator(score.score)}`
+                )
+                .join(" — ")}`;
+            ctx.utils.sendChatMessage(message);
+        } else {
+            const r = responseData as ApiResponseAllRecords;
+            const message = `[${languageFlagMap[language]} ${modeDisplayStrings[mode]}] ${r.bestScores
+                .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
+                .map((score) => {
+                    return `${recordsUtils[score.record_type].recordDisplayString}: ${
+                        score.player_username
+                    } with ${recordsUtils[score.record_type].scoreDisplayStringGenerator(score.score)}`;
+                })
+                .join(" — ")}`;
+            ctx.utils.sendChatMessage(message);
         }
         return "handled" as const;
     },
@@ -414,7 +434,6 @@ const searchWordsCommand: Command = c({
                 if (wordValid) {
                     const wordHidden = isWordHidden(word);
                     if (wordHidden) {
-                        console.log(word, "hidden");
                         hiddenWordsCount++;
                     } else {
                         foundWords.push(word);
@@ -477,6 +496,82 @@ const searchWordsCommand: Command = c({
     },
 });
 
+const playerProfileCommand: Command = c({
+    id: "playerProfile",
+    aliases: ["profile", "p"],
+    desc: "Shows the player profile of a given player.",
+    usageDesc: "/p [username] (-language -mode)",
+    exampleUsage: "/p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
+    handler: async (ctx) => {
+        const targetUsername = ctx.args.join(" ");
+        const targetLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
+        const targetMode = BirdBotUtils.findTargetItemInZodEnum(ctx.params, modesEnumSchema);
+
+        type ResultType = {
+            playerId: string;
+            playerAccountName: string;
+            playerUsername: string;
+            foundUsername: string;
+            xp: number;
+            language: BirdBotLanguage;
+            mode: BirdBotGameMode;
+            records: {
+                record_type: BirdBotRecordType;
+                score: number;
+                rank: number;
+            }[];
+        };
+
+        let playerData: ResultType | null = null;
+
+        try {
+            const playerDataRequest = await BirdBotUtils.getJsonFromApi(
+                `/player-profile?name=${encodeURIComponent(targetUsername)}${
+                    targetLanguage ? `&language=${targetLanguage}` : ""
+                }${targetMode ? `&mode=${targetMode}` : ""}`
+            );
+            if (!playerDataRequest.ok) {
+                if (playerDataRequest.status === 404) {
+                    ctx.utils.sendChatMessage("Error: Player not found");
+                } else {
+                    ctx.utils.sendChatMessage("Error fetching player data");
+                }
+                return "handled";
+            }
+            playerData = (await playerDataRequest.json()) as ResultType;
+        } catch (e) {
+            Logger.error({
+                message: "Error fetching player data",
+                path: "BirdBotCommands.ts",
+                error: e,
+            });
+            ctx.utils.sendChatMessage("Error fetching player data");
+            return "handled";
+        }
+
+        const messageIntroduction = `[${languageFlagMap[playerData.language]} ${modeDisplayStrings[playerData.mode]}] ${
+            playerData.playerUsername
+        }:`;
+
+        if (playerData.records.length === 0) {
+            ctx.utils.sendChatMessage(`${messageIntroduction} Player has no records in this category`);
+            return "handled";
+        }
+
+        const message = `${playerData.records
+            .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
+            .map((record) => {
+                const r = recordsUtils[record.record_type];
+                return `${r.recordDisplayString}: ${r.scoreDisplayStringGenerator(record.score)}`;
+            })
+            .join(" — ")}`;
+
+        ctx.utils.sendChatMessage(`${messageIntroduction} ${message}`);
+
+        return "handled" as const;
+    },
+});
+
 export const birdbotCommands: Command[] = [
     helpCommand,
     recordsCommand,
@@ -485,4 +580,5 @@ export const birdbotCommands: Command[] = [
     setGameModeCommand,
     setRoomLanguageCommand,
     searchWordsCommand,
+    playerProfileCommand,
 ];

@@ -57,6 +57,7 @@ model Player {
     created_at DateTime @default(now())
 
     account_name String
+    xp           Int    @default(0)
 
     words             Word[]
     usernames         PlayerUsername[]

@@ -53,7 +53,11 @@ export default class Logger {
 
         if (type === "error" && "error" in logData) {
             if (logData.errorType === "zod") {
-                console.error(logData.error.errors.map((error) => `(${error.code}) (${error.path.join(".")}): ${error.message}`).join(", "));
+                console.error(
+                    logData.error.errors
+                        .map((error) => `(${error.code}) (${error.path.join(".")}): ${error.message}`)
+                        .join(", ")
+                );
             } else {
                 console.error(logData.error);
             }

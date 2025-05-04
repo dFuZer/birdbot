@@ -225,9 +225,9 @@ export const recordsUtils: Record<
         order: 8,
     },
     more_than_20_letters: {
-        recordDisplayString: "20+",
+        recordDisplayString: "Long words",
         scoreDisplayStringGenerator: (score) => `${score} words`,
-        specificScoreDisplayStringGenerator: (score) => `${score} 20+`,
+        specificScoreDisplayStringGenerator: (score) => `${score} long words`,
         order: 9,
     },
     hyphen: {

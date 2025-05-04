@@ -6,6 +6,7 @@ export type CommandHandlerCtx = {
     usedAlias: string;
     args: string[];
     params: string[];
+    normalizedTextAfterCommand: string;
     bot: BotEventCtx;
     room: RoomEventCtx;
     utils: EventCtxUtils;
