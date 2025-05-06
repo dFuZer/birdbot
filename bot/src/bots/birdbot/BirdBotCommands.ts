@@ -361,9 +361,9 @@ const searchWordsCommand: Command = c({
         let searchList: string[];
         let targetMsSyllable: string | null = null;
         if (requestedSortRecords.includes("flips")) {
-            searchList = dictionaryResource.metadata.topFlipWords.map((obj) => obj.word);
+            searchList = dictionaryResource.metadata.topFlipWords.map((obj) => obj[0]);
         } else if (requestedSortRecords.includes("depleted_syllables")) {
-            searchList = dictionaryResource.metadata.topSnWords.map((obj) => obj.word);
+            searchList = dictionaryResource.metadata.topSnWords.map((obj) => obj[0]);
         } else if (requestedSortRecords.includes("multi_syllable")) {
             if (ctx.args.length > 1) {
                 ctx.utils.sendChatMessage(

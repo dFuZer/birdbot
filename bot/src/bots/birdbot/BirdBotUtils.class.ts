@@ -47,6 +47,7 @@ export default class BirdBotUtils {
         if (currentPlayer.gamerId !== ctx.room.roomState.myGamerId) return;
         const myPlayer = currentPlayer;
         const dictionaryResource = this.getCurrentDictionaryResource(ctx);
+        console.log({ dictionaryResource });
         const history = ctx.room.roomState.wordHistory;
         const prompt = ctx.room.roomState.gameData!.round.prompt;
         const ws = ctx.room.ws!;

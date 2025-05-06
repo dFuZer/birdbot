@@ -1,33 +1,49 @@
 import BirdBot from "./bots/birdbot/BirdBot.class";
-import { BirdBotLanguage, BirdBotSupportedDictionaryId } from "./bots/birdbot/BirdBotTypes";
+import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
+import { DictionaryResource } from "./bots/birdbot/BirdBotTypes";
 import Logger from "./lib/class/Logger.class";
+import Utilitary from "./lib/class/Utilitary.class";
 // @ts-ignore
 import WorkingNetworkAdapter from "./lib/class/private/WorkingNetworkAdapter.class";
-import Utilitary from "./lib/class/Utilitary.class";
 
 async function start() {
     const bot = new BirdBot({ networkAdapter: new WorkingNetworkAdapter() });
-    const admins = Utilitary.readArrayFromFile("./admins.txt");
+    const admins = Utilitary.readArrayFromFile("./admins.example.txt");
     Logger.log({
         message: `Starting bot with admins: ${admins.join(", ")}`,
         path: "index.unstable.ts",
     });
+
+    const s1 = performance.now();
+    const [
+        frenchDictionaryResource,
+        englishDictionaryResource,
+        spanishDictionaryResource,
+        germanDictionaryResource,
+        italianDictionaryResource,
+        portugueseDictionaryResource,
+    ] = await Promise.all([
+        loadDictionaryResource("fr", "fr.dictionary.txt"),
+        loadDictionaryResource("en", "en.dictionary.txt"),
+        loadDictionaryResource("es", "es.dictionary.txt"),
+        loadDictionaryResource("de", "de.dictionary.txt"),
+        loadDictionaryResource("it", "it.dictionary.txt"),
+        loadDictionaryResource("brpt", "brpt.dictionary.txt"),
+    ]);
+    const s2 = performance.now();
+    Logger.log({
+        message: `Time taken to load 6 dictionaries in parallel: ${(s2 - s1).toFixed(2)} milliseconds`,
+        path: "index.unstable.ts",
+    });
+
+    bot.resourceManager.set<DictionaryResource>(`dictionary-fr`, frenchDictionaryResource);
+    bot.resourceManager.set<DictionaryResource>(`dictionary-en`, englishDictionaryResource);
+    bot.resourceManager.set<DictionaryResource>(`dictionary-es`, spanishDictionaryResource);
+    bot.resourceManager.set<DictionaryResource>(`dictionary-de`, germanDictionaryResource);
+    bot.resourceManager.set<DictionaryResource>(`dictionary-it`, italianDictionaryResource);
+    bot.resourceManager.set<DictionaryResource>(`dictionary-brpt`, portugueseDictionaryResource);
+
     await bot.init({ adminAccountUsernames: admins });
-
-    const loadDictionaryShortcut = (dictionaryId: BirdBotSupportedDictionaryId, language: BirdBotLanguage, lightMode: boolean) => {
-        bot.loadDictionaryResourceFromFile({
-            key: `dictionary-${language}`,
-            path: `./resources/${language}.dictionary.txt`,
-            dictionaryId,
-        });
-    };
-
-    loadDictionaryShortcut("fr", "fr", false);
-    loadDictionaryShortcut("en", "en", false);
-    loadDictionaryShortcut("es", "es", false);
-    loadDictionaryShortcut("de", "de", true);
-    loadDictionaryShortcut("it", "it", true);
-    loadDictionaryShortcut("pt-BR", "brpt", true);
 
     await bot.createRoom({
         roomCreatorUsername: null,
