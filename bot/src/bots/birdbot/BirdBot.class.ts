@@ -12,15 +12,7 @@ export default class BirdBot extends Bot {
         super({ handlers: birdbotEventHandlers, networkAdapter, periodicTasks });
     }
 
-    public async createRoom({
-        roomCreatorUsername,
-        targetConfig,
-        callback,
-    }: {
-        targetConfig: BirdbotRoomTargetConfig;
-        roomCreatorUsername: string | null;
-        callback?: (roomCode: string) => void;
-    }) {
+    public async createRoom({ roomCreatorUsername, targetConfig, callback }: { targetConfig: BirdbotRoomTargetConfig; roomCreatorUsername: string | null; callback?: (roomCode: string) => void }) {
         super.createRoom({
             roomCreatorUsername,
             targetConfig,
@@ -28,17 +20,7 @@ export default class BirdBot extends Bot {
         });
     }
 
-    public loadDictionaryResourceFromFile({
-        key,
-        path,
-        dictionaryId,
-        lightMode = false,
-    }: {
-        key: string;
-        path: string;
-        dictionaryId: DictionaryId;
-        lightMode?: boolean;
-    }) {
+    public loadDictionaryResourceFromFile({ key, path, dictionaryId }: { key: string; path: string; dictionaryId: DictionaryId }) {
         Logger.log({
             message: `Loading dictionary resource ${key} from file ${path} with dictionaryId ${dictionaryId}`,
             path: "BirdBot.class.ts",
@@ -61,12 +43,9 @@ export default class BirdBot extends Bot {
                 this.resourceManager.set<DictionaryResource>(key, {
                     resource: words,
                     metadata: restoredMetadata,
-                    hash: resourceHash,
                 });
                 Logger.log({
-                    message: `Loaded words ${key} in ${Math.round(et1 - st1)}ms, hashed in ${Math.round(
-                        et2 - st2
-                    )}ms, restored metadata in ${Math.round(et3 - st3)}ms`,
+                    message: `Loaded words ${key} in ${Math.round(et1 - st1)}ms, hashed in ${Math.round(et2 - st2)}ms, restored metadata in ${Math.round(et3 - st3)}ms`,
                     path: "BirdBot.class.ts",
                 });
             } catch (e) {
@@ -103,7 +82,6 @@ export default class BirdBot extends Bot {
                 syllablesCount,
                 topFlipWords,
                 topSnWords,
-                lightMode,
             };
 
             Utilitary.writeFileInDataFolder(`${resourceHash}.metadata.json`, JSON.stringify(metadata));
@@ -111,12 +89,9 @@ export default class BirdBot extends Bot {
             this.resourceManager.set<DictionaryResource>(key, {
                 resource: words,
                 metadata,
-                hash: resourceHash,
             });
             Logger.log({
-                message: `Loaded words ${key} in ${Math.round(et1 - st1)}ms, hashed in ${Math.round(
-                    et2 - st2
-                )}ms, letter rarity scores in ${Math.round(et3 - st3)}ms, syllables count in ${Math.round(
+                message: `Loaded words ${key} in ${Math.round(et1 - st1)}ms, hashed in ${Math.round(et2 - st2)}ms, letter rarity scores in ${Math.round(et3 - st3)}ms, syllables count in ${Math.round(
                     et4 - st4
                 )}ms, top flip words in ${Math.round(et5 - st5)}ms, top sn words in ${Math.round(et6 - st6)}ms`,
                 path: "BirdBot.class.ts",

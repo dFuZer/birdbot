@@ -263,7 +263,7 @@ fn read_bbdm_file(file_path: &Path) -> io::Result<(String, serde_json::Value)> {
 fn write_bbdm_file(file_path: &Path, hash: &str, metadata: &serde_json::Value) -> io::Result<()> {
     let mut file = File::create(file_path)?;
     writeln!(file, "{}", hash)?;
-    writeln!(file, "{}", serde_json::to_string_pretty(metadata)?)?;
+    writeln!(file, "{}", serde_json::to_string(metadata)?)?;
     Ok(())
 }
 

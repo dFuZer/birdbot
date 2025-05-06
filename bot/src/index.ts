@@ -1,6 +1,7 @@
 import BirdBot from "./bots/birdbot/BirdBot.class";
 import { BirdBotLanguage, BirdBotSupportedDictionaryId } from "./bots/birdbot/BirdBotTypes";
 import Logger from "./lib/class/Logger.class";
+// @ts-ignore
 import WorkingNetworkAdapter from "./lib/class/private/WorkingNetworkAdapter.class";
 import Utilitary from "./lib/class/Utilitary.class";
 
@@ -13,16 +14,11 @@ async function start() {
     });
     await bot.init({ adminAccountUsernames: admins });
 
-    const loadDictionaryShortcut = (
-        dictionaryId: BirdBotSupportedDictionaryId,
-        language: BirdBotLanguage,
-        lightMode: boolean
-    ) => {
+    const loadDictionaryShortcut = (dictionaryId: BirdBotSupportedDictionaryId, language: BirdBotLanguage, lightMode: boolean) => {
         bot.loadDictionaryResourceFromFile({
             key: `dictionary-${language}`,
             path: `./resources/${language}.dictionary.txt`,
             dictionaryId,
-            lightMode,
         });
     };
 

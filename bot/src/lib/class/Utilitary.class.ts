@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
-import fs, { readFileSync } from "fs";
+import fs, { createReadStream, readFileSync } from "fs";
+import readline from "readline";
 import { v5 as uuidv5 } from "uuid";
 import WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
@@ -267,10 +268,25 @@ export default class Utilitary {
         return messages;
     }
 
-    public static readArrayFromFile(path: string) {
-        const fileText = readFileSync(path, "utf-8");
+    public static readArrayFromFile(filePath: string) {
+        const fileText = readFileSync(filePath, "utf-8");
         const words = fileText.split(/\r?\n/);
         return words.map((word) => word.trim()).filter((word) => word.length > 0);
+    }
+
+    public static async readArrayFromFileAsync(filePath: string) {
+        const fileStream = createReadStream(filePath);
+        const array: string[] = [];
+
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity,
+        });
+
+        for await (const line of rl) {
+            array.push(line);
+        }
+        return array;
     }
 
     public static handleCommandIfExists(
@@ -278,12 +294,7 @@ export default class Utilitary {
         rawMessage: string,
         gamer: Gamer,
         commands: Command[]
-    ):
-        | "no-command-given"
-        | "command-not-found"
-        | "trying-to-handle-command"
-        | "no-command-attempted"
-        | "not-room-creator" {
+    ): "no-command-given" | "command-not-found" | "trying-to-handle-command" | "no-command-attempted" | "not-room-creator" {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
         const commandPrefixes = ["!", "/", "."];
         if (commandPrefixes.some((prefix) => normalizedMessage.startsWith(prefix))) {
@@ -301,12 +312,7 @@ export default class Utilitary {
             const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
             if (
-                !(
-                    (command.roomCreatorRequired &&
-                        ctx.room.constantRoomData.roomCreatorUsername === gamer.identity.name) ||
-                    ctx.utils.userIsAdmin(gamer.identity.name) ||
-                    !command.roomCreatorRequired
-                )
+                !((command.roomCreatorRequired && ctx.room.constantRoomData.roomCreatorUsername === gamer.identity.name) || ctx.utils.userIsAdmin(gamer.identity.name) || !command.roomCreatorRequired)
             ) {
                 return "not-room-creator";
             }
