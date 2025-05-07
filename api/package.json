@@ -4,7 +4,7 @@
         "db:deploy": "npx prisma migrate deploy",
         "dev:build": "tsc -w",
         "dev:run": "nodemon --delay 100ms --watch dist dist/index.js",
-        "dev": "tsc && concurrently npm:dev:*",
+        "dev": "npm run build && concurrently npm:dev:*",
         "build": "npx prisma generate && tsc",
         "start": "node dist/index.js",
         "sample": "node dist/scripts/add-sample-data.js",
