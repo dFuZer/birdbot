@@ -1,4 +1,3 @@
-import { GameMode as PrismaGameMode, Language as PrismaLanguage } from "@prisma/client";
 import prisma from "../prisma";
 import { defaultLanguage, defaultMode, TLanguage, TMode } from "../schemas/records.zod";
 import {
@@ -6,6 +5,8 @@ import {
     databaseEnumToModeEnumMap,
     languageEnumToDatabaseEnumMap,
     modeEnumToDatabaseEnumMap,
+    PrismaGameMode,
+    PrismaLanguage,
 } from "./maps";
 
 export let getPlayerPreferredCategory = async function ({

@@ -1,5 +1,5 @@
 import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
-import OptionalImage from "@/components/ui/OptionalAvatar";
+import OptionalImage from "@/components/ui/OptionalImage";
 import { gridColsTailwindClass } from "./RecordListLayout";
 
 export default function PlayerRow<T extends IPlayerScoreCommonProps>({

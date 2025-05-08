@@ -102,7 +102,6 @@ export default function LandingInstructionsSection() {
                         ></div>
                     </div>
                 </div>
-                {/* ADD CORRECT LINKS */}
                 <div className="flex w-full py-5">
                     <div className="w-1/3 px-3">
                         <p className="text-sm text-neutral-800 md:text-base">

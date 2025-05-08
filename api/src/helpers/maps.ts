@@ -83,3 +83,5 @@ export const submitResultEnumToDatabaseEnumMap: { [key in TSubmitResult]: Prisma
     alreadyUsed: PrismaSubmitResultType.ALREADY_USED,
     bombExploded: PrismaSubmitResultType.BOMB_EXPLODED,
 };
+
+export { PrismaGameMode, PrismaLanguage, PrismaSubmitResultType };
