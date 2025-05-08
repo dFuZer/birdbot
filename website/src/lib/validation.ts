@@ -9,7 +9,7 @@ import {
     type RecordsEnum,
 } from "./records";
 
-export const sortModeEnumSchema = z.enum(["experience", "records"]);
+export const sortModeEnumSchema = z.enum(["experience", "records", "pp"]);
 export type SortModeEnum = z.infer<typeof sortModeEnumSchema>;
 
 export function isValidRecordParam(record: TSearchParamOption): record is RecordsEnum {

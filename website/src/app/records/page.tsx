@@ -38,6 +38,7 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
             rank: record.rank,
             level: 1,
             score: record.score,
+            id: record.player_id,
         };
     });
 

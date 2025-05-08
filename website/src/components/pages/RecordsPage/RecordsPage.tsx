@@ -6,6 +6,7 @@ import RecordsListLayout from "../common/RecordListLayout";
 import RecordsPageSelectors from "./RecordsPageSelectors";
 
 export interface IScoreData {
+    id: string;
     name: string;
     avatarUrl?: string;
     rank: number;
