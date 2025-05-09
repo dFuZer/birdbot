@@ -8,142 +8,109 @@ export const GITHUB_REPO_LINK = "https://github.com/dFuZer/birdbot";
 export const PAYPAL_DONATE_LINK = "https://www.paypal.com/paypalme/enzotomassi";
 export const WEBSITE_LINK = "https://birdbot.gg";
 
-const birdbotRulesBase: Omit<
-    DictionaryLessGameRules,
-    "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives"
-> = {
+const birdbotRulesBase = {
     roundsToWin: 1,
     scoreGoal: 100,
     gameMode: "survival",
     minWordLengthOption: "0",
     promptDifficulty: "custom",
-};
+} satisfies Omit<DictionaryLessGameRules, "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives">;
 
-const birdbotRegularModeRules: DictionaryLessGameRules = {
+const birdbotRegularModeRules = {
     ...birdbotRulesBase,
     bombDuration: 5,
     customPromptDifficulty: 1,
     maxLives: 3,
     startingLives: 2,
-};
+} satisfies DictionaryLessGameRules;
 
-const birdbotEasyModeRules: DictionaryLessGameRules = {
+const birdbotEasyModeRules = {
     ...birdbotRulesBase,
     bombDuration: 7,
     customPromptDifficulty: 400,
     maxLives: 3,
     startingLives: 3,
-};
+} satisfies DictionaryLessGameRules;
 
-const birdbotBlitzModeRules: DictionaryLessGameRules = {
+const birdbotBlitzModeRules = {
     ...birdbotRulesBase,
     bombDuration: 3,
     customPromptDifficulty: 1,
     maxLives: 2,
     startingLives: 3,
-};
+} satisfies DictionaryLessGameRules;
 
-const birdbotSub500ModeRules: DictionaryLessGameRules = {
+const birdbotSub500ModeRules = {
     ...birdbotRulesBase,
     bombDuration: 5,
     customPromptDifficulty: -500,
     maxLives: 3,
     startingLives: 2,
-};
+} satisfies DictionaryLessGameRules;
 
-const birdbotSub50ModeRules: DictionaryLessGameRules = {
+const birdbotSub50ModeRules = {
     ...birdbotRulesBase,
     bombDuration: 5,
     customPromptDifficulty: -50,
     maxLives: 3,
     startingLives: 2,
-};
+} satisfies DictionaryLessGameRules;
 
-const birdbotFreeplayModeRules: DictionaryLessGameRules = {
+const birdbotFreeplayModeRules = {
     ...birdbotRulesBase,
     bombDuration: 10,
     customPromptDifficulty: 1,
     maxLives: 10,
     startingLives: 10,
-};
+} satisfies DictionaryLessGameRules;
 
-export const defaultBirdBotBombPartyRules: DictionaryLessGameRules = birdbotRegularModeRules;
+export const defaultBirdBotBombPartyRules = birdbotRegularModeRules satisfies DictionaryLessGameRules;
 
-export const birdbotModeRules: Record<BirdBotGameMode, DictionaryLessGameRules> = {
+export const birdbotModeRules = {
     regular: birdbotRegularModeRules,
     easy: birdbotEasyModeRules,
     blitz: birdbotBlitzModeRules,
     sub500: birdbotSub500ModeRules,
     sub50: birdbotSub50ModeRules,
     freeplay: birdbotFreeplayModeRules,
-};
+} satisfies Record<BirdBotGameMode, DictionaryLessGameRules>;
 
-export const birdbotLanguageToDictionaryId: Record<BirdBotLanguage, DictionaryId> = {
+export const birdbotLanguageToDictionaryId = {
     fr: "fr",
     en: "en",
     de: "de",
     es: "es",
     brpt: "pt-BR",
     it: "it",
-};
+} satisfies Record<BirdBotLanguage, DictionaryId>;
 
-export const dictionaryIdToBirdbotLanguage: Record<BirdBotSupportedDictionaryId, BirdBotLanguage> = {
+export const dictionaryIdToBirdbotLanguage = {
     "fr": "fr",
     "en": "en",
     "de": "de",
     "es": "es",
     "pt-BR": "brpt",
     "it": "it",
-};
+} satisfies Record<BirdBotSupportedDictionaryId, BirdBotLanguage>;
 
-export const birdbotSupportedDictionaryIds = ["fr", "en", "de", "es", "pt-BR", "it"] as const;
-
+export const birdbotSupportedDictionaryIds = ["fr", "en", "de", "es", "pt-BR", "it"] satisfies DictionaryId[];
 export const languageEnumSchema = z.enum(["fr", "en", "de", "es", "brpt", "it"]);
 export const modesEnumSchema = z.enum(["regular", "easy", "blitz", "sub500", "sub50", "freeplay"]);
-export const recordsEnumSchema = z.enum([
-    "word",
-    "time",
-    "multi_syllable",
-    "previous_syllable",
-    "flips",
-    "depleted_syllables",
-    "no_death",
-    "alpha",
-    "hyphen",
-    "more_than_20_letters",
-]);
+export const recordsEnumSchema = z.enum(["word", "time", "multi_syllable", "previous_syllable", "flips", "depleted_syllables", "no_death", "alpha", "hyphen", "more_than_20_letters"]);
 
-export const defaultLanguage: BirdBotLanguage = "en";
-export const defaultMode: BirdBotGameMode = "regular";
+export const defaultLanguage = "en" satisfies BirdBotLanguage;
+export const defaultMode = "regular" satisfies BirdBotGameMode;
 
-export const languageFlagMap: Record<BirdBotLanguage, string> = {
-    fr: "🇫🇷",
-    en: "🇺🇸",
-    de: "🇩🇪",
-    es: "🇪🇸",
-    brpt: "🇧🇷",
-    it: "🇮🇹",
-};
-
-export const languageDisplayStrings: Record<BirdBotLanguage, string> = {
-    fr: "French",
-    en: "English",
-    de: "German",
-    es: "Spanish",
-    brpt: "Brazilian Portuguese",
-    it: "Italian",
-};
-
-export const languageAliases: Record<BirdBotLanguage, string[]> = {
-    fr: ["french", "fr", "francais", "français"],
-    en: ["english", "en", "anglais", "anglais", "eng", "englais" /*  ça arrive plus souvent que ce qu'on croit */],
+export const languageAliases = {
+    fr: ["french", "fr", "francais", "français", "fra"],
+    en: ["english", "en", "anglais", "anglais", "ang", "eng", "englais" /*  "englais" ça arrive plus souvent que ce qu'on croit */],
     de: ["german", "de", "deutsch", "deutsch", "allemand", "ger"],
     es: ["spanish", "es", "español", "español", "espagnol", "esp"],
     brpt: ["brasileiro", "brpt", "portuguese", "portugais", "br", "pt", "portugais"],
     it: ["italian", "it", "italiano", "italiano", "italien", "it"],
-};
+} satisfies Record<BirdBotLanguage, string[]>;
 
-export const recordAliases: Record<BirdBotRecordType, string[]> = {
+export const recordAliases = {
     word: ["words", "word", "mots", "mot", "mots", "w", "m"],
     time: ["time", "temps", "temp", "t"],
     multi_syllable: ["multi-syllable", "multi-syllables", "ms", "multi", "m"],
@@ -153,97 +120,57 @@ export const recordAliases: Record<BirdBotRecordType, string[]> = {
     no_death: ["no-death", "nd", "sans-mort", "sm", "nodeath"],
     alpha: ["alpha", "alp", "a"],
     hyphen: ["hyphen", "hyp", "hyph", "compose", "mot-compose", "mot-composes", "h"],
-    more_than_20_letters: [
-        "more-than-20-letters",
-        "20+",
-        "plus-de-20-lettres",
-        "long",
-        "longs",
-        "20-letters",
-        "20",
-        "l",
-    ],
-};
+    more_than_20_letters: ["more-than-20-letters", "20+", "plus-de-20-lettres", "long", "longs", "20-letters", "20", "l"],
+} satisfies Record<BirdBotRecordType, string[]>;
 
-export const sortWordsModeRecords = ["flips", "multi_syllable", "depleted_syllables"] as const;
-export const filterWordsModeRecords = ["hyphen", "more_than_20_letters"] as const;
+export const sortWordsModeRecords = ["flips", "multi_syllable", "depleted_syllables"] satisfies BirdBotRecordType[];
+export const filterWordsModeRecords = ["hyphen", "more_than_20_letters"] satisfies BirdBotRecordType[];
 
-export const modeDisplayStrings: Record<BirdBotGameMode, string> = {
-    regular: "Regular",
-    easy: "Easy",
-    blitz: "Blitz",
-    sub500: "Sub500",
-    sub50: "Sub50",
-    freeplay: "Freeplay",
-};
-
-export const recordsUtils: Record<
-    BirdBotRecordType,
-    {
-        recordDisplayString: string;
-        scoreDisplayStringGenerator: (score: number) => string;
-        specificScoreDisplayStringGenerator: (score: number) => string;
-        order: number;
-    }
-> = {
+export const recordsUtils = {
     word: {
-        recordDisplayString: "Words",
-        scoreDisplayStringGenerator: (score) => `${score} words`,
-        specificScoreDisplayStringGenerator: (score) => `${score} words`,
+        format: (score) => score.toString(),
         order: 1,
     },
     time: {
-        recordDisplayString: "Time",
-        scoreDisplayStringGenerator: Utilitary.formatTime,
-        specificScoreDisplayStringGenerator: Utilitary.formatTime,
+        format: Utilitary.formatTime,
         order: 2,
     },
     flips: {
-        recordDisplayString: "Flips",
-        scoreDisplayStringGenerator: (score) => `${score} flips`,
-        specificScoreDisplayStringGenerator: (score) => `${score} flips`,
+        format: (score) => score.toString(),
         order: 3,
     },
     depleted_syllables: {
-        recordDisplayString: "Depleted syllables",
-        scoreDisplayStringGenerator: (score) => `${score} SN`,
-        specificScoreDisplayStringGenerator: (score) => `${score} SN`,
+        format: (score) => score.toString(),
         order: 4,
     },
     alpha: {
-        recordDisplayString: "Alpha",
-        scoreDisplayStringGenerator: Utilitary.displayAlphaScore,
-        specificScoreDisplayStringGenerator: Utilitary.displayAlphaScore,
+        format: Utilitary.displayAlphaScore,
         order: 5,
     },
     no_death: {
-        recordDisplayString: "No death",
-        scoreDisplayStringGenerator: (score) => `${score} words`,
-        specificScoreDisplayStringGenerator: (score) => `${score} words without death`,
+        format: (score) => score.toString(),
         order: 6,
     },
     multi_syllable: {
-        recordDisplayString: "Multi-syllable",
-        scoreDisplayStringGenerator: (score) => `${score} MS`,
-        specificScoreDisplayStringGenerator: (score) => `${score} MS`,
+        format: (score) => score.toString(),
         order: 7,
     },
     previous_syllable: {
-        recordDisplayString: "Previous syllable",
-        scoreDisplayStringGenerator: (score) => `${score} PS`,
-        specificScoreDisplayStringGenerator: (score) => `${score} PS`,
+        format: (score) => score.toString(),
         order: 8,
     },
     more_than_20_letters: {
-        recordDisplayString: "Long words",
-        scoreDisplayStringGenerator: (score) => `${score} words`,
-        specificScoreDisplayStringGenerator: (score) => `${score} long words`,
+        format: (score) => score.toString(),
         order: 9,
     },
     hyphen: {
-        recordDisplayString: "Hyphen",
-        scoreDisplayStringGenerator: (score) => `${score} words`,
-        specificScoreDisplayStringGenerator: (score) => `${score} hyphens`,
+        format: (score) => score.toString(),
         order: 10,
     },
-};
+} satisfies Record<
+    BirdBotRecordType,
+    {
+        format: (arg0: number) => string;
+        order: number;
+    }
+>;
