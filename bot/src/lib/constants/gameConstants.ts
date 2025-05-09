@@ -187,14 +187,7 @@ export const customPromptDifficultyRange = {
     min: -5e3,
     max: 5e3,
 } as const;
-export const submitResults = [
-    "success",
-    "failsPrompt",
-    "invalidWord",
-    "noText",
-    "alreadyUsed",
-    "bombExploded",
-] as const;
+export const submitResults = ["success", "failsPrompt", "invalidWord", "noText", "alreadyUsed", "bombExploded"] as const;
 export const resultPoints = {
     success: 5,
     failsPrompt: -5,

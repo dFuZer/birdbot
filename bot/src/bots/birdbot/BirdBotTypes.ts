@@ -2,18 +2,19 @@ import { z } from "zod";
 import type { Resource } from "../../lib/class/ResourceManager.class";
 import * as CrocoTypes from "../../lib/types/gameTypes";
 import { SubmitResultType } from "../../lib/types/gameTypes";
-import type {
-    birdbotSupportedDictionaryIds,
-    languageEnumSchema,
-    modesEnumSchema,
-    recordsEnumSchema,
-} from "./BirdBotConstants";
+import type { birdbotSupportedDictionaryIds, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "./BirdBotConstants";
 
-export type DictionaryMetadata = {
+export type CacheableDictionaryMetadata = {
     letterRarityScores: Record<string, number>;
     syllablesCount: Record<string, number>;
     topFlipWords: [string, number][];
     topSnWords: [string, number][];
+};
+
+export type DictionaryMetadata = CacheableDictionaryMetadata & {
+    testWords: { word: string; callbackRoomCode: string }[];
+    language: BirdBotLanguage;
+    fileName: string;
 };
 
 export type DictionaryResource = Resource<string[], DictionaryMetadata>;

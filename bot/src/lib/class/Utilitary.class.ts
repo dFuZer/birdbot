@@ -289,6 +289,20 @@ export default class Utilitary {
         return array;
     }
 
+    public static insertionSort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {
+        const n = arr.length;
+        for (let i = 1; i < n; i++) {
+            const currentElement = arr[i];
+            let j = i - 1;
+            while (j >= 0 && compare(arr[j], currentElement) > 0) {
+                arr[j + 1] = arr[j];
+                j--;
+            }
+            arr[j + 1] = currentElement;
+        }
+        return arr;
+    }
+
     public static handleCommandIfExists(
         ctx: EventCtx,
         rawMessage: string,

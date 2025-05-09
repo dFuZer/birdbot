@@ -3,6 +3,7 @@ import Utilitary from "../../lib/class/Utilitary.class";
 import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventHandlers.class";
 import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
 import type { BotEventHandlers } from "../../lib/types/libEventTypes";
+import BirdBot from "./BirdBot.class";
 import { birdbotCommands } from "./BirdBotCommands";
 import { birdbotModeRules, birdbotSupportedDictionaryIds, recordsUtils } from "./BirdBotConstants";
 import type { BirdBotRoomMetadata, BirdbotRoomTargetConfig } from "./BirdBotTypes";
@@ -35,8 +36,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                     ctx.room.ws!.send(setupMessage);
                 } else {
                     Logger.log({
-                        message:
-                            "My player is not the host or the target config is not set. I don't want to deal with that... Destroying room.",
+                        message: "My player is not the host or the target config is not set. I don't want to deal with that... Destroying room.",
                         path: "BirdBotEventHandlers.ts",
                     });
                     Utilitary.destroyRoom(ctx.bot.rawBot, ctx.room.rawRoom);
@@ -64,9 +64,7 @@ const birdbotEventHandlers: BotEventHandlers = {
             if (handleCommandResult === "command-not-found") {
                 ctx.utils.sendChatMessage(`Command not found: ${rawMessage}`);
             } else if (handleCommandResult === "not-room-creator") {
-                ctx.utils.sendChatMessage(
-                    `You cannot use this command if you are not the room creator. /b to create your room will be available soon.`
-                );
+                ctx.utils.sendChatMessage(`You cannot use this command if you are not the room creator. /b to create your room will be available soon.`);
             }
         },
         "chatRateLimited": CommonEH.chatRateLimited,
@@ -90,11 +88,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                         const targetGameMode = birdbotTargetConfig.birdbotGameMode;
                         BirdBotUtils.setRoomGameMode(ctx, birdbotModeRules[targetGameMode]);
                         if (ctx.room.constantRoomData.targetConfig !== null) {
-                            BirdBotUtils.setRoomGameRuleIfDifferent(
-                                ctx,
-                                "dictionaryId",
-                                ctx.room.constantRoomData.targetConfig.dictionaryId
-                            );
+                            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", ctx.room.constantRoomData.targetConfig.dictionaryId);
                         }
                         const joinMessage = ctx.bot.networkAdapter.getJoinMessage();
                         ctx.room.ws!.send(joinMessage);
@@ -118,9 +112,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                     roomMetadata.remainingSyllables = clonedSyllablesCount;
                     BirdBotUtils.initializeScoresForAllPlayers(ctx);
 
-                    if (
-                        birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)
-                    ) {
+                    if (birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)) {
                         const gameData = BirdBotUtils.getApiGameData(ctx);
                         Logger.log({
                             message: `Registering game ${gameData.id}`,
@@ -180,12 +172,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                     if (!currentPlayer) {
                         throw new Error("Current player is not set");
                     }
-                    const currentGamer = ctx.room.roomState.roomData!.gamers.find(
-                        (gamer) => gamer.id === currentPlayer.gamerId
-                    );
+                    const currentGamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === currentPlayer.gamerId);
                     if (!currentGamer) {
                         throw new Error("Current gamer is not set");
                     }
+                    const isGamerMe = ctx.room.roomState.myGamerId === currentPlayer.gamerId;
                     const word = currentPlayer.text;
                     const currentPrompt = ctx.room.roomState.gameData!.round.prompt;
 
@@ -199,6 +190,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                     }
                     const playerScores = allPlayerScores[currentPlayer.gamerId]!;
                     const isLifeGain = previousHandlersCtx.isLifeGain as boolean | undefined;
+                    const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
+                    const currentRoomLanguage = BirdBotUtils.getCurrentRoomLanguage(ctx);
+                    const submitIsInDictionary = currentDictionaryResource.resource.includes(word);
                     if (result === "success") {
                         let showWord = false;
                         const turnComments = [];
@@ -211,9 +205,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const newFlips = playerScores.flips;
                             const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, newFlips, 4);
                             if (passedMilestone) {
-                                turnComments.push(
-                                    `gained ${newFlips} lives (${playerScores.flips}/${roomMetadata.globalScores.flips})`
-                                );
+                                turnComments.push(`gained ${newFlips} lives (${playerScores.flips}/${roomMetadata.globalScores.flips})`);
                             }
                         }
 
@@ -226,11 +218,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const oldMaxWordsWithoutDeath = playerScores.maxWordsWithoutDeath;
                             playerScores.maxWordsWithoutDeath = playerScores.currentWordsWithoutDeath;
                             const newMaxWordsWithoutDeath = playerScores.maxWordsWithoutDeath;
-                            const passedMilestone = BirdBotUtils.passedMilestone(
-                                oldMaxWordsWithoutDeath,
-                                newMaxWordsWithoutDeath,
-                                50
-                            );
+                            const passedMilestone = BirdBotUtils.passedMilestone(oldMaxWordsWithoutDeath, newMaxWordsWithoutDeath, 50);
                             if (passedMilestone) {
                                 turnComments.push(`reached ${newMaxWordsWithoutDeath} words without death`);
                             }
@@ -240,9 +228,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                         if (word.length > 20) {
                             playerScores.moreThan20LettersWords++;
                             roomMetadata.globalScores.moreThan20LettersWords++;
-                            turnComments.push(
-                                `placed a long word (${playerScores.moreThan20LettersWords}/${roomMetadata.globalScores.moreThan20LettersWords})`
-                            );
+                            turnComments.push(`placed a long word (${playerScores.moreThan20LettersWords}/${roomMetadata.globalScores.moreThan20LettersWords})`);
                             showWord = true;
                         }
 
@@ -250,28 +236,20 @@ const birdbotEventHandlers: BotEventHandlers = {
                         if (word.includes("-")) {
                             playerScores.hyphenWords++;
                             roomMetadata.globalScores.hyphenWords++;
-                            turnComments.push(
-                                `placed a hyphenated word (${playerScores.hyphenWords}/${roomMetadata.globalScores.hyphenWords})`
-                            );
+                            turnComments.push(`placed a hyphenated word (${playerScores.hyphenWords}/${roomMetadata.globalScores.hyphenWords})`);
                             showWord = true;
                         }
 
                         // Alpha score
                         const currentPlayerAlphaScore = playerScores.alpha;
-                        const currentPlayerAlphaLetter = String.fromCharCode(
-                            65 + (currentPlayerAlphaScore % 26)
-                        ).toLowerCase();
+                        const currentPlayerAlphaLetter = String.fromCharCode(65 + (currentPlayerAlphaScore % 26)).toLowerCase();
                         if (word[0] === currentPlayerAlphaLetter) {
                             const oldAlpha = playerScores.alpha;
                             playerScores.alpha++;
                             const newAlpha = playerScores.alpha;
                             const passedMilestone = BirdBotUtils.passedMilestone(oldAlpha, newAlpha, 26);
                             if (passedMilestone) {
-                                turnComments.push(
-                                    `completed an alpha: ${recordsUtils.alpha.specificScoreDisplayStringGenerator(
-                                        newAlpha
-                                    )}`
-                                );
+                                turnComments.push(`completed an alpha: ${recordsUtils.alpha.specificScoreDisplayStringGenerator(newAlpha)}`);
                             }
                         }
 
@@ -283,9 +261,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                 playerScores.previousSyllableScore++;
                                 roomMetadata.globalScores.previousSyllables++;
                                 turnComments.push(
-                                    `placed a previous syllable: ${previousSyllable.toUpperCase()} (${
-                                        playerScores.previousSyllableScore
-                                    }/${roomMetadata.globalScores.previousSyllables})`
+                                    `placed a previous syllable: ${previousSyllable.toUpperCase()} (${playerScores.previousSyllableScore}/${roomMetadata.globalScores.previousSyllables})`
                                 );
                                 showWord = true;
                             }
@@ -297,15 +273,15 @@ const birdbotEventHandlers: BotEventHandlers = {
                             playerScores.multiSyllables += multiSyllableGainedPoints;
                             roomMetadata.globalScores.multiSyllables += multiSyllableGainedPoints;
                             turnComments.push(
-                                `gained ${multiSyllableGainedPoints} MS (${currentPrompt.toUpperCase()} x ${
-                                    multiSyllableGainedPoints + 1
-                                }) (${playerScores.multiSyllables}/${roomMetadata.globalScores.multiSyllables})`
+                                `gained ${multiSyllableGainedPoints} MS (${currentPrompt.toUpperCase()} x ${multiSyllableGainedPoints + 1}) (${playerScores.multiSyllables}/${
+                                    roomMetadata.globalScores.multiSyllables
+                                })`
                             );
                             showWord = true;
                         }
 
                         // Depleted syllables score
-                        const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
+
                         const depletedSyllables = [];
                         if (currentDictionaryResource.resource.includes(word)) {
                             const splitWord = BirdBotUtils.splitWordIntoSyllables(word);
@@ -341,39 +317,61 @@ const birdbotEventHandlers: BotEventHandlers = {
                             playerScores.depletedSyllables += depletedSyllables.length;
                             roomMetadata.globalScores.depletedSyllables += depletedSyllables.length;
                             turnComments.push(
-                                `depleted ${depletedSyllables.length} syllable(s): ${depletedSyllables
-                                    .join(", ")
-                                    .toUpperCase()} (${playerScores.depletedSyllables}/${
+                                `depleted ${depletedSyllables.length} syllable(s): ${depletedSyllables.join(", ").toUpperCase()} (${playerScores.depletedSyllables}/${
                                     roomMetadata.globalScores.depletedSyllables
                                 })`
                             );
                         }
-                        if (turnComments.length > 0 && ctx.room.roomState.myGamerId !== currentPlayer.gamerId) {
+                        if (turnComments.length > 0 && !isGamerMe) {
                             if (showWord) {
-                                ctx.utils.sendChatMessage(
-                                    `${currentGamer.identity.nickname}: (${word.toUpperCase()}) ${turnComments.join(
-                                        " - "
-                                    )}.`
-                                );
+                                ctx.utils.sendChatMessage(`${currentGamer.identity.nickname}: (${word.toUpperCase()}) ${turnComments.join(" - ")}.`);
                             } else {
-                                ctx.utils.sendChatMessage(
-                                    `${currentGamer.identity.nickname}: ${turnComments.join(" - ")}.`
-                                );
+                                ctx.utils.sendChatMessage(`${currentGamer.identity.nickname}: ${turnComments.join(" - ")}.`);
+                            }
+                        }
+                        if (!submitIsInDictionary) {
+                            if (isGamerMe) {
+                                // Add word to dictionary
+                                if (!currentDictionaryResource.resource.includes(word)) {
+                                    ctx.utils.sendChatMessage(`Unknown word ${word} is valid and was added to the dictionary.`);
+                                    currentDictionaryResource.resource.push(word);
+                                    BirdBotUtils.saveDictionaryResource(ctx, currentRoomLanguage);
+                                }
+                                currentDictionaryResource.metadata.testWords = currentDictionaryResource.metadata.testWords.filter((testWord) => testWord.word !== word);
+                            } else {
+                                // Queue word in test list for potential addition to dictionary
+                                if (!currentDictionaryResource.metadata.testWords.some((testWord) => testWord.word === word)) {
+                                    currentDictionaryResource.metadata.testWords.push({ word, callbackRoomCode: ctx.room.constantRoomData.roomCode });
+                                    ctx.utils.sendChatMessage(`Unknown word ${word} is valid and was added to the test list.`);
+                                }
                             }
                         }
                     } else {
-                        const handleCommandResult = Utilitary.handleCommandIfExists(
-                            ctx,
-                            word,
-                            currentGamer,
-                            birdbotCommands
-                        );
+                        const handleCommandResult = Utilitary.handleCommandIfExists(ctx, word, currentGamer, birdbotCommands);
                         if (handleCommandResult === "command-not-found") {
                             ctx.utils.sendChatMessage(`Command not found: ${word}`);
                         } else if (handleCommandResult === "not-room-creator") {
-                            ctx.utils.sendChatMessage(
-                                `You cannot use this command if you are not the room creator. /b to create your room will be available soon.`
-                            );
+                            ctx.utils.sendChatMessage(`You cannot use this command if you are not the room creator. /b to create your room will be available soon.`);
+                        }
+                        if (submitIsInDictionary) {
+                            if (result === "invalidWord") {
+                                if (isGamerMe) {
+                                    // Remove word from dictionary
+                                    const wordIndex = currentDictionaryResource.resource.indexOf(word);
+                                    if (wordIndex !== -1) {
+                                        ctx.utils.sendChatMessage(`Word ${word} is invalid and was removed from the dictionary.`);
+                                        currentDictionaryResource.resource.splice(wordIndex, 1);
+                                        BirdBotUtils.saveDictionaryResource(ctx, currentRoomLanguage);
+                                    }
+                                    currentDictionaryResource.metadata.testWords = currentDictionaryResource.metadata.testWords.filter((testWord) => testWord.word !== word);
+                                } else {
+                                    // Queue word in test list for potential removal from dictionary
+                                    if (!currentDictionaryResource.metadata.testWords.some((testWord) => testWord.word === word)) {
+                                        ctx.utils.sendChatMessage(`Word ${word} is invalid and was added to the test list for removal from the dictionary.`);
+                                        currentDictionaryResource.metadata.testWords.push({ word, callbackRoomCode: ctx.room.constantRoomData.roomCode });
+                                    }
+                                }
+                            }
                         }
                     }
 
