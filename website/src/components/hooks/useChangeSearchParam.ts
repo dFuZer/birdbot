@@ -1,6 +1,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-export default function useChangeSearchParam() {
+export default function useChangeSearchParam({ scroll = true }: { scroll?: boolean } = {}) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pathname = usePathname();
@@ -15,7 +15,7 @@ export default function useChangeSearchParam() {
         const search = currentParams.toString();
         const query = search ? `?${search}` : "";
 
-        router.push(`${pathname}${query}`);
+        router.push(`${pathname}${query}`, { scroll });
     }
 
     return changeSearchParam;

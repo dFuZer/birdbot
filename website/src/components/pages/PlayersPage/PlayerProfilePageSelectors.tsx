@@ -5,7 +5,7 @@ import ModeSelect from "@/components/pages/common/ModeSelect";
 import { ModesEnum } from "@/lib/records";
 
 export default function PlayerProfilePageSelectors({ mode }: { mode: ModesEnum }) {
-    const changeSearchParam = useChangeSearchParam();
+    const changeSearchParam = useChangeSearchParam({ scroll: false });
 
     return (
         <div>

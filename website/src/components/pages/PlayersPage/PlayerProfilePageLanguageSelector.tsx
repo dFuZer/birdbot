@@ -13,7 +13,7 @@ export default function PlayerProfilePageLanguageSelector({
     language: LanguageEnum;
     ppPerLanguage: Record<LanguageEnum, number>;
 }) {
-    const changeSearchParam = useChangeSearchParam();
+    const changeSearchParam = useChangeSearchParam({ scroll: false });
 
     return (
         <Select value={language} onValueChange={(value) => changeSearchParam("l", value)}>
