@@ -22,9 +22,20 @@ import {
     sortWordsModeRecords,
     WEBSITE_LINK,
 } from "./BirdBotConstants";
-import { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotRoomMetadata, BirdBotSupportedDictionaryId, DictionaryResource, PlayerGameScores } from "./BirdBotTypes";
-import BirdBotUtils, { type ApiResponseAllRecords, type ApiResponseBestScoresSpecificRecord } from "./BirdBotUtils.class";
-import i18next from "i18next";
+import { t } from "./BirdBotTexts";
+import {
+    BirdBotGameMode,
+    BirdBotLanguage,
+    BirdBotRecordType,
+    BirdBotRoomMetadata,
+    BirdBotSupportedDictionaryId,
+    DictionaryResource,
+    PlayerGameScores,
+} from "./BirdBotTypes";
+import BirdBotUtils, {
+    type ApiResponseAllRecords,
+    type ApiResponseBestScoresSpecificRecord,
+} from "./BirdBotUtils.class";
 
 const c = CommandUtils.createCommandHelper;
 
@@ -39,19 +50,19 @@ const helpCommand = c({
                 .filter((command) => !command.adminRequired)
                 .map((c) => `/${c.aliases[0]}`)
                 .join(" - ");
-            ctx.utils.sendChatMessage(i18next.t("command.help.list", { commandList: commandFirstAliases }));
+            ctx.utils.sendChatMessage(t("command.help.list", { commandList: commandFirstAliases }));
             return;
         }
         const requestedCommand = ctx.args[0]!;
         const command = birdbotCommands.find((c) => c.aliases.includes(requestedCommand));
         if (!command) {
-            ctx.utils.sendChatMessage(i18next.t("eventHandler.chat.commandNotFound", { command: requestedCommand }));
+            ctx.utils.sendChatMessage(t("eventHandler.chat.commandNotFound", { command: requestedCommand }));
             return;
         }
         ctx.utils.sendChatMessage(
-            i18next.t("command.help.details", {
+            t("command.help.details", {
                 commandName: command.aliases[0],
-                description: i18next.t(`command.${command.id}.description`),
+                description: t(`command.${command.id}.description`),
                 usage: command.usageDesc,
                 example: command.exampleUsage,
             })
@@ -85,7 +96,7 @@ const recordsCommand = c({
             });
 
             if (!recordsRequest.ok) {
-                if (recordsRequest.status === 500) ctx.utils.sendChatMessage(i18next.t("error.api.inaccessible"));
+                if (recordsRequest.status === 500) ctx.utils.sendChatMessage(t("error.api.inaccessible"));
                 return;
             }
 
@@ -98,7 +109,7 @@ const recordsCommand = c({
                 path: "BirdBotCommands.ts",
                 error: e,
             });
-            ctx.utils.sendChatMessage(i18next.t("error.api.inaccessible"));
+            ctx.utils.sendChatMessage(t("error.api.inaccessible"));
             return;
         }
 
@@ -112,13 +123,21 @@ const recordsCommand = c({
 
         if (targetRecordType) {
             const r = responseData as ApiResponseBestScoresSpecificRecord;
-            const records = r.bestScores.map((score) => `${score.rank}) ${score.player_username} with ${recordsUtils[targetRecordType].format(score.score)}`).join(" — ");
+            const records = r.bestScores
+                .map(
+                    (score) =>
+                        `${score.rank}) ${t("general.scorePresentation", {
+                            username: score.player_username,
+                            score: recordsUtils[targetRecordType].format(score.score),
+                        })}`
+                )
+                .join(" — ");
 
             ctx.utils.sendChatMessage(
-                i18next.t("command.records.specificRecord", {
-                    languageFlag: i18next.t(`lib.language.${language}.flag`),
-                    gameMode: i18next.t(`lib.mode.${mode}`),
-                    recordType: i18next.t(`lib.recordType.${targetRecordType}`),
+                t("command.records.specificRecord", {
+                    languageFlag: t(`lib.language.${language}.flag`),
+                    gameMode: t(`lib.mode.${mode}`),
+                    recordType: t(`lib.recordType.${targetRecordType}`),
                     records,
                 })
             );
@@ -127,14 +146,17 @@ const recordsCommand = c({
             const records = r.bestScores
                 .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
                 .map((score) => {
-                    return `${i18next.t(`lib.recordType.${score.record_type}`)}: ${score.player_username} with ${recordsUtils[score.record_type].format(score.score)}`;
+                    return `${t(`lib.recordType.${score.record_type}`)}: ${t("general.scorePresentation", {
+                        username: score.player_username,
+                        score: recordsUtils[score.record_type].format(score.score),
+                    })}`;
                 })
                 .join(" — ");
 
             ctx.utils.sendChatMessage(
-                i18next.t("command.records.allRecords", {
-                    languageFlag: i18next.t(`lib.language.${language}.flag`),
-                    gameMode: i18next.t(`lib.mode.${mode}`),
+                t("command.records.allRecords", {
+                    languageFlag: t(`lib.language.${language}.flag`),
+                    gameMode: t(`lib.mode.${mode}`),
                     records,
                 })
             );
@@ -150,16 +172,16 @@ const currentGameScoresCommand = c({
     handler: (ctx) => {
         const targetPlayerName = ctx.normalizedMessage.slice(ctx.usedAlias.length + 2);
         if (ctx.room.roomState.gameData!.step.value !== "round") {
-            ctx.utils.sendChatMessage(i18next.t("error.roomState.noGameInProgress"));
+            ctx.utils.sendChatMessage(t("error.roomState.noGameInProgress"));
             return;
         }
 
         function sendResults(username: string, playerStats: PlayerGameScores) {
             const scores = BirdBotUtils.getFormattedPlayerScores(playerStats);
             if (scores.length > 0) {
-                ctx.utils.sendChatMessage(i18next.t("command.currentGameScore.result", { username, scores }));
+                ctx.utils.sendChatMessage(t("command.currentGameScore.result", { username, scores }));
             } else {
-                ctx.utils.sendChatMessage(i18next.t("command.currentGameScore.noScores", { username }));
+                ctx.utils.sendChatMessage(t("command.currentGameScore.noScores", { username }));
             }
         }
 
@@ -170,28 +192,28 @@ const currentGameScoresCommand = c({
                 const playerStats = roomMetadata.scoresByGamerId[bestMatch.id];
 
                 if (playerStats === undefined) {
-                    ctx.utils.sendChatMessage(i18next.t("error.404.playerStats"));
+                    ctx.utils.sendChatMessage(t("error.404.playerStats"));
                     return;
                 }
                 sendResults(bestMatch.identity.nickname, playerStats);
             } else {
-                ctx.utils.sendChatMessage(i18next.t("error.404.player"));
+                ctx.utils.sendChatMessage(t("error.404.player"));
             }
         } else {
             const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
             if (!currentPlayer) {
-                ctx.utils.sendChatMessage(i18next.t("error.404.currentPlayer"));
+                ctx.utils.sendChatMessage(t("error.404.currentPlayer"));
                 return;
             }
             const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
             const playerStats = roomMetadata.scoresByGamerId[currentPlayer.gamerId];
             if (playerStats === undefined) {
-                ctx.utils.sendChatMessage(i18next.t("error.404.playerStats"));
+                ctx.utils.sendChatMessage(t("error.404.playerStats"));
                 return;
             }
             const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === currentPlayer.gamerId);
             if (gamer === undefined) {
-                ctx.utils.sendChatMessage(i18next.t("error.404.gamer"));
+                ctx.utils.sendChatMessage(t("error.404.gamer"));
                 return;
             }
             sendResults(gamer.identity.nickname, playerStats);
@@ -206,16 +228,16 @@ const startGameCommand = c({
     exampleUsage: "/sn",
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
-            ctx.utils.sendChatMessage(i18next.t("error.roomState.notInPregame"));
+            ctx.utils.sendChatMessage(t("error.roomState.notInPregame"));
             return;
         }
         if (ctx.room.roomState.gameData!.players.length < 2) {
-            ctx.utils.sendChatMessage(i18next.t("error.roomState.notEnoughPlayers"));
+            ctx.utils.sendChatMessage(t("error.roomState.notEnoughPlayers"));
             return;
         }
         const startGameMessage = ctx.bot.networkAdapter.getStartGameMessage();
         ctx.room.ws!.send(startGameMessage);
-        ctx.utils.sendChatMessage(i18next.t("command.startGame.starting"));
+        ctx.utils.sendChatMessage(t("command.startGame.starting"));
     },
 }) satisfies Command;
 
@@ -227,7 +249,7 @@ const setGameModeCommand = c({
     roomCreatorRequired: true,
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
-            ctx.utils.sendChatMessage(i18next.t("error.roomState.cannotSetMode"));
+            ctx.utils.sendChatMessage(t("error.roomState.cannotSetMode"));
             return;
         }
         const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(ctx.args.concat(ctx.params), modesEnumSchema);
@@ -235,22 +257,22 @@ const setGameModeCommand = c({
             const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
             if (roomMetadata.gameMode === targetGameMode) {
                 ctx.utils.sendChatMessage(
-                    i18next.t("command.setGameMode.alreadySet", {
-                        gameMode: i18next.t(`lib.mode.${targetGameMode}`),
+                    t("command.setGameMode.alreadySet", {
+                        gameMode: t(`lib.mode.${targetGameMode}`),
                     })
                 );
                 return;
             }
             ctx.utils.sendChatMessage(
-                i18next.t("command.setGameMode.setting", {
-                    gameMode: i18next.t(`lib.mode.${targetGameMode}`),
+                t("command.setGameMode.setting", {
+                    gameMode: t(`lib.mode.${targetGameMode}`),
                 })
             );
             const targetGameModeRules = birdbotModeRules[targetGameMode];
 
             BirdBotUtils.setRoomGameMode(ctx, targetGameModeRules);
         } else {
-            ctx.utils.sendChatMessage(i18next.t("error.invalid.gameMode"));
+            ctx.utils.sendChatMessage(t("error.invalid.gameMode"));
         }
     },
 }) satisfies Command;
@@ -263,7 +285,7 @@ const setRoomLanguageCommand = c({
     roomCreatorRequired: true,
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
-            ctx.utils.sendChatMessage(i18next.t("error.roomState.cannotSetLanguage"));
+            ctx.utils.sendChatMessage(t("error.roomState.cannotSetLanguage"));
             return;
         }
 
@@ -272,20 +294,20 @@ const setRoomLanguageCommand = c({
         if (targetLanguage) {
             if (ctx.room.roomState.gameData!.rules.dictionaryId === targetLanguage) {
                 ctx.utils.sendChatMessage(
-                    i18next.t("error.notSupported.language", {
-                        language: i18next.t(`lib.language.${targetLanguage}.name`),
+                    t("error.notSupported.language", {
+                        language: t(`lib.language.${targetLanguage}.name`),
                     })
                 );
                 return;
             }
             ctx.utils.sendChatMessage(
-                i18next.t("command.setRoomLanguage.setting", {
-                    language: i18next.t(`lib.language.${targetLanguage}.name`),
+                t("command.setRoomLanguage.setting", {
+                    language: t(`lib.language.${targetLanguage}.name`),
                 })
             );
             BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", birdbotLanguageToDictionaryId[targetLanguage]);
         } else {
-            ctx.utils.sendChatMessage(i18next.t("error.invalid.language"));
+            ctx.utils.sendChatMessage(t("error.invalid.language"));
         }
     },
 }) satisfies Command;
@@ -302,29 +324,39 @@ const searchWordsCommand = c({
         const nonSensicalSearchRecords: BirdBotRecordType[] = ["no_death", "word", "time"];
         if (allParamRecords.some((record) => nonSensicalSearchRecords.includes(record))) {
             ctx.utils.sendChatMessage(
-                i18next.t("error.searchWords.nonsensicalRecordSearch", {
-                    records: allParamRecords.map((record) => i18next.t(`lib.recordType.${record}`)).join(", "),
+                t("error.searchWords.nonsensicalRecordSearch", {
+                    records: allParamRecords.map((record) => t(`lib.recordType.${record}`)).join(", "),
                 })
             );
             return;
         }
 
         if (allParamRecords.includes("previous_syllable")) {
-            ctx.utils.sendChatMessage(i18next.t("command.searchWords.previousSyllableHint", { recordType: i18next.t("lib.recordType.previous_syllable") }));
+            ctx.utils.sendChatMessage(
+                t("command.searchWords.previousSyllableHint", { recordType: t("lib.recordType.previous_syllable") })
+            );
             return;
         }
         if (allParamRecords.includes("alpha")) {
-            ctx.utils.sendChatMessage(i18next.t("command.searchWords.alphaHint", { recordType: i18next.t("lib.recordType.alpha") }));
+            ctx.utils.sendChatMessage(t("command.searchWords.alphaHint", { recordType: t("lib.recordType.alpha") }));
             return;
         }
 
-        const requestedFilterRecords = Utilitary.getUniqueStrings(allParamRecords.filter((record) => filterWordsModeRecords.includes(record as any)) as (typeof filterWordsModeRecords)[number][]);
-        const requestedSortRecords = Utilitary.getUniqueStrings(allParamRecords.filter((record) => sortWordsModeRecords.includes(record as any)) as (typeof sortWordsModeRecords)[number][]);
+        const requestedFilterRecords = Utilitary.getUniqueStrings(
+            allParamRecords.filter((record) =>
+                filterWordsModeRecords.includes(record as any)
+            ) as (typeof filterWordsModeRecords)[number][]
+        );
+        const requestedSortRecords = Utilitary.getUniqueStrings(
+            allParamRecords.filter((record) =>
+                sortWordsModeRecords.includes(record as any)
+            ) as (typeof sortWordsModeRecords)[number][]
+        );
         if (requestedSortRecords.length > 1) {
             ctx.utils.sendChatMessage(
-                i18next.t("error.searchWords.multipleSortRecords", {
-                    sortRecords: sortWordsModeRecords.map((record) => i18next.t(`lib.recordType.${record}`)).join(", "),
-                    filterRecords: filterWordsModeRecords.map((record) => i18next.t(`lib.recordType.${record}`)).join(", "),
+                t("error.searchWords.multipleSortRecords", {
+                    sortRecords: sortWordsModeRecords.map((record) => t(`lib.recordType.${record}`)).join(", "),
+                    filterRecords: filterWordsModeRecords.map((record) => t(`lib.recordType.${record}`)).join(", "),
                 })
             );
             return;
@@ -336,7 +368,7 @@ const searchWordsCommand = c({
         } else {
             const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
             if (!birdbotSupportedDictionaryIds.includes(roomDictionaryId as any)) {
-                ctx.utils.sendChatMessage(i18next.t("error.notSupported.language", { language: roomDictionaryId }));
+                ctx.utils.sendChatMessage(t("error.notSupported.language", { language: roomDictionaryId }));
                 return;
             }
             const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
@@ -347,7 +379,7 @@ const searchWordsCommand = c({
         try {
             dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
         } catch (e) {
-            ctx.utils.sendChatMessage(i18next.t("error.404.dictionaryResource"));
+            ctx.utils.sendChatMessage(t("error.404.dictionaryResource"));
             return;
         }
         let searchList: string[];
@@ -358,13 +390,13 @@ const searchWordsCommand = c({
             searchList = dictionaryResource.metadata.topSnWords.map((obj) => obj.word);
         } else if (requestedSortRecords.includes("multi_syllable")) {
             if (ctx.args.length > 1) {
-                ctx.utils.sendChatMessage(i18next.t("error.searchWords.mustProvideOneSyllable"));
+                ctx.utils.sendChatMessage(t("error.searchWords.mustProvideOneSyllable"));
                 return;
             }
             const syllable = ctx.args[0];
             const syllCount = dictionaryResource.metadata.syllablesCount[syllable];
             if (syllCount === undefined) {
-                ctx.utils.sendChatMessage(i18next.t("error.404.syllableNotExists"));
+                ctx.utils.sendChatMessage(t("error.404.syllableNotExists"));
                 return;
             }
             targetMsSyllable = syllable;
@@ -379,7 +411,7 @@ const searchWordsCommand = c({
                 const reg = new RegExp(arg);
                 regexes.push(reg);
             } catch (e) {
-                ctx.utils.sendChatMessage(i18next.t("error.invalid.regex", { regex: arg }));
+                ctx.utils.sendChatMessage(t("error.invalid.regex", { regex: arg }));
                 return;
             }
         }
@@ -478,14 +510,14 @@ const searchWordsCommand = c({
         const targetRecordsString =
             requestedFilterRecords.length || requestedSortRecords.length
                 ? `${requestedFilterRecords
-                      .map((record) => i18next.t(`lib.recordType.${record}`))
-                      .concat(requestedSortRecords.map((record) => i18next.t(`lib.recordType.${record}`)))
+                      .map((record) => t(`lib.recordType.${record}`))
+                      .concat(requestedSortRecords.map((record) => t(`lib.recordType.${record}`)))
                       .join(", ")}: `
                 : "";
 
         if (cutResults.length > 0) {
             ctx.utils.sendChatMessage(
-                i18next.t("command.searchWords.result", {
+                t("command.searchWords.result", {
                     recordTypes: targetRecordsString,
                     resultCount: foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount,
                     hiddenCount: moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount,
@@ -494,7 +526,7 @@ const searchWordsCommand = c({
             );
         } else {
             ctx.utils.sendChatMessage(
-                i18next.t("command.searchWords.noResults", {
+                t("command.searchWords.noResults", {
                     recordTypes: targetRecordsString,
                     resultCount: foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount,
                     hiddenCount: moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount,
@@ -533,13 +565,15 @@ const playerProfileCommand = c({
 
         try {
             const playerDataRequest = await BirdBotUtils.getJsonFromApi(
-                `/player-profile?name=${encodeURIComponent(targetUsername)}${targetLanguage ? `&language=${targetLanguage}` : ""}${targetMode ? `&mode=${targetMode}` : ""}`
+                `/player-profile?name=${encodeURIComponent(targetUsername)}${
+                    targetLanguage ? `&language=${targetLanguage}` : ""
+                }${targetMode ? `&mode=${targetMode}` : ""}`
             );
             if (!playerDataRequest.ok) {
                 if (playerDataRequest.status === 404) {
-                    ctx.utils.sendChatMessage(i18next.t("error.404.player"));
+                    ctx.utils.sendChatMessage(t("error.404.player"));
                 } else {
-                    ctx.utils.sendChatMessage(i18next.t("error.api.inaccessible"));
+                    ctx.utils.sendChatMessage(t("error.api.inaccessible"));
                 }
                 return;
             }
@@ -550,7 +584,7 @@ const playerProfileCommand = c({
                 path: "BirdBotCommands.ts",
                 error: e,
             });
-            ctx.utils.sendChatMessage(i18next.t("error.api.inaccessible"));
+            ctx.utils.sendChatMessage(t("error.api.inaccessible"));
             return;
         }
 
@@ -563,13 +597,13 @@ const playerProfileCommand = c({
         }
 
         const messageParams = {
-            languageFlag: i18next.t(`lib.language.${playerData.language}.flag`),
-            gameMode: i18next.t(`lib.mode.${playerData.mode}`),
+            languageFlag: t(`lib.language.${playerData.language}.flag`),
+            gameMode: t(`lib.mode.${playerData.mode}`),
             playerUsername: playerData.playerUsername,
         };
 
         if (playerData.records.length === 0) {
-            ctx.utils.sendChatMessage(i18next.t("command.playerProfile.noRecords", messageParams));
+            ctx.utils.sendChatMessage(t("command.playerProfile.noRecords", messageParams));
             return;
         }
 
@@ -577,12 +611,12 @@ const playerProfileCommand = c({
             .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
             .map((record) => {
                 const r = recordsUtils[record.record_type];
-                return `${i18next.t(`lib.recordType.${record.record_type}`)}: ${r.format(record.score)}`;
+                return `${t(`lib.recordType.${record.record_type}`)}: ${r.format(record.score)}`;
             })
             .join(" — ");
 
         ctx.utils.sendChatMessage(
-            i18next.t("command.playerProfile.result", {
+            t("command.playerProfile.result", {
                 ...messageParams,
                 records,
             })
@@ -610,7 +644,7 @@ const rareSyllablesCommand = c({
         const targetWord = ctx.args[0];
 
         if (!targetWord?.length) {
-            ctx.utils.sendChatMessage(i18next.t("error.invalidParams.mustProvideWord"));
+            ctx.utils.sendChatMessage(t("error.invalidParams.mustProvideWord"));
             return;
         }
 
@@ -626,33 +660,40 @@ const rareSyllablesCommand = c({
         const dictionaryWords = dictionaryResource.resource;
 
         if (!dictionaryWords.includes(targetWord)) {
-            ctx.utils.sendChatMessage(i18next.t("error.404.word"));
+            ctx.utils.sendChatMessage(t("error.404.word"));
             return;
         }
 
         const wordSyllables = BirdBotUtils.splitWordIntoSyllables(targetWord);
         const rareSyllables: { syllable: string; count: number }[] = [];
 
-        for (const syllable in wordSyllables) {
-            const syllableCount = wordSyllables[syllable];
+        const dictionarySyllables = dictionaryResource.metadata.syllablesCount;
 
-            if (syllableCount < 9) {
-                rareSyllables.push({ syllable, count: syllableCount });
+        for (const syllable in wordSyllables) {
+            const syllableCountInWord = dictionarySyllables[syllable];
+
+            if (!syllableCountInWord) {
+                ctx.utils.sendChatMessage(t("command.rareSyllables.errorSyllableNotInDictionary", { syllable }));
+                return;
+            }
+
+            if (syllableCountInWord < 9) {
+                rareSyllables.push({ syllable, count: syllableCountInWord });
             }
         }
 
         if (rareSyllables.length) {
             ctx.utils.sendChatMessage(
-                i18next.t("command.rareSyllables.result", {
-                    languageFlag: i18next.t(`lib.language.${targetLanguage}.flag`),
+                t("command.rareSyllables.result", {
+                    languageFlag: t(`lib.language.${targetLanguage}.flag`),
                     word: targetWord,
                     rareSyllables: rareSyllables.map((s) => `${s.syllable}: ${s.count}`).join(", "),
                 })
             );
         } else {
             ctx.utils.sendChatMessage(
-                i18next.t("command.rareSyllables.noneFound", {
-                    languageFlag: i18next.t(`lib.language.${targetLanguage}.flag`),
+                t("command.rareSyllables.noneFound", {
+                    languageFlag: t(`lib.language.${targetLanguage}.flag`),
                     word: targetWord,
                 })
             );
@@ -671,7 +712,7 @@ const broadcastCommand = c({
         for (const roomId in ctx.bot.rooms) {
             const room = ctx.bot.rooms[roomId];
             if (room.ws && room.ws.readyState === WebSocket.OPEN) {
-                room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(i18next.t("command.broadcast.message", { message })));
+                room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(t("command.broadcast.message", { message })));
             }
         }
     },
@@ -682,7 +723,7 @@ const discordCommand = c({
     aliases: ["discord"],
     usageDesc: "/discord",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(i18next.t("command.discord.result", { link: DISCORD_SERVER_LINK }));
+        ctx.utils.sendChatMessage(t("command.discord.result", { link: DISCORD_SERVER_LINK }));
     },
 }) satisfies Command;
 
@@ -691,7 +732,7 @@ const githubCommand = c({
     aliases: ["github"],
     usageDesc: "/github",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(i18next.t("command.github.result", { link: GITHUB_REPO_LINK }));
+        ctx.utils.sendChatMessage(t("command.github.result", { link: GITHUB_REPO_LINK }));
     },
 }) satisfies Command;
 
@@ -700,7 +741,7 @@ const donateCommand = c({
     aliases: ["donate"],
     usageDesc: "/donate",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(i18next.t("command.donate.result", { link: PAYPAL_DONATE_LINK }));
+        ctx.utils.sendChatMessage(t("command.donate.result", { link: PAYPAL_DONATE_LINK }));
     },
 }) satisfies Command;
 
@@ -709,7 +750,7 @@ const websiteCommand = c({
     aliases: ["website"],
     usageDesc: "/website",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(i18next.t("command.website.result", { link: WEBSITE_LINK }));
+        ctx.utils.sendChatMessage(t("command.website.result", { link: WEBSITE_LINK }));
     },
 }) satisfies Command;
 
@@ -720,7 +761,7 @@ const uptimeCommand = c({
     handler: (ctx) => {
         const uptimeMs = process.uptime() * 1000;
         const uptimeString = Utilitary.formatTime(uptimeMs);
-        ctx.utils.sendChatMessage(i18next.t("command.uptime.result", { uptime: uptimeString }));
+        ctx.utils.sendChatMessage(t("command.uptime.result", { uptime: uptimeString }));
     },
 }) satisfies Command;
 
@@ -729,16 +770,17 @@ const modUserCommand = c({
     aliases: ["mod"],
     roomCreatorRequired: true,
     usageDesc: "/mod [username]",
+    exampleUsage: "/mod dfuzer",
     handler: (ctx) => {
         const username = ctx.normalizedTextAfterCommand;
         if (!username) {
-            ctx.utils.sendChatMessage(i18next.t("error.invalidParams.noUsername"));
+            ctx.utils.sendChatMessage(t("error.invalidParams.noUsername"));
             return;
         }
 
         const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.gamers);
         if (!gamer) {
-            ctx.utils.sendChatMessage(i18next.t("error.404.player"));
+            ctx.utils.sendChatMessage(t("error.404.player"));
             return;
         }
 
@@ -750,7 +792,7 @@ const modUserCommand = c({
             role,
         });
 
-        ctx.utils.sendChatMessage(i18next.t("command.modUser.modding", { username: gamer.identity.nickname }));
+        ctx.utils.sendChatMessage(t("command.modUser.modding", { username: gamer.identity.nickname }));
 
         ctx.room.ws.send(message);
     },
@@ -764,13 +806,13 @@ const unmodUserCommand = c({
     handler: (ctx) => {
         const username = ctx.normalizedTextAfterCommand;
         if (!username) {
-            ctx.utils.sendChatMessage(i18next.t("error.invalidParams.noUsername"));
+            ctx.utils.sendChatMessage(t("error.invalidParams.noUsername"));
             return;
         }
 
         const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.gamers);
         if (!gamer) {
-            ctx.utils.sendChatMessage(i18next.t("error.404.player"));
+            ctx.utils.sendChatMessage(t("error.404.player"));
             return;
         }
 
@@ -782,7 +824,7 @@ const unmodUserCommand = c({
             role,
         });
 
-        ctx.utils.sendChatMessage(i18next.t("command.unmodUser.unmodding", { username: gamer.identity.nickname }));
+        ctx.utils.sendChatMessage(t("command.unmodUser.unmodding", { username: gamer.identity.nickname }));
 
         ctx.room.ws.send(message);
     },
@@ -798,7 +840,7 @@ const privateRoomCommand = c({
         const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
             accessMode: "private",
         });
-        ctx.utils.sendChatMessage(i18next.t("command.privateRoom.setting"));
+        ctx.utils.sendChatMessage(t("command.privateRoom.setting"));
         ctx.room.ws.send(message);
     },
 }) satisfies Command;
@@ -813,7 +855,7 @@ const publicRoomCommand = c({
         const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
             accessMode: "public",
         });
-        ctx.utils.sendChatMessage(i18next.t("command.publicRoom.setting"));
+        ctx.utils.sendChatMessage(t("command.publicRoom.setting"));
         ctx.room.ws.send(message);
     },
 }) satisfies Command;
@@ -829,7 +871,7 @@ const destroyAllRoomsCommand = c({
             const room = ctx.bot.rooms[roomId];
 
             if (room.ws && room.ws.readyState === WebSocket.OPEN) {
-                room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(i18next.t("command.destroyAllRooms.message")));
+                room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(t("command.destroyAllRooms.message")));
             }
 
             Utilitary.destroyRoom(ctx.bot.rawBot, room);
@@ -846,11 +888,13 @@ const showAllRoomsCommand = c({
     handler: (ctx) => {
         const roomsList = Object.values(ctx.bot.rooms)
             .map((room) => {
-                return `${room.constantRoomData.roomCode}: ${room.roomState.gameData?.step.value ?? "gameData unknown"}`;
+                return `${room.constantRoomData.roomCode}: ${
+                    room.roomState.gameData?.step.value ?? "gameData unknown"
+                }`;
             })
             .join(" - ");
 
-        ctx.utils.sendChatMessage(i18next.t("command.showAllRooms.result", { roomsList }));
+        ctx.utils.sendChatMessage(t("command.showAllRooms.result", { roomsList }));
     },
 }) satisfies Command;
 
@@ -861,15 +905,20 @@ const createRoomCommand = c({
     handler: (ctx) => {
         const gamer = ctx.gamer;
         if (!gamer.identity.name) {
-            ctx.utils.sendChatMessage(i18next.t("error.platform.mustBeLoggedIn"));
+            ctx.utils.sendChatMessage(t("error.platform.mustBeLoggedIn"));
             return;
         }
         const allArguments = ctx.args.concat(ctx.params);
         const targetLanguage = BirdBotUtils.findValueInAliasesObject(allArguments, languageAliases);
         const targetMode = BirdBotUtils.findTargetItemInZodEnum(allArguments, modesEnumSchema);
 
-        if (targetLanguage !== null && !birdbotSupportedDictionaryIds.includes(birdbotLanguageToDictionaryId[targetLanguage] as any)) {
-            ctx.utils.sendChatMessage(i18next.t("error.notSupported.language", { language: i18next.t(`lib.language.${targetLanguage}.name`) }));
+        if (
+            targetLanguage !== null &&
+            !birdbotSupportedDictionaryIds.includes(birdbotLanguageToDictionaryId[targetLanguage] as any)
+        ) {
+            ctx.utils.sendChatMessage(
+                t("error.notSupported.language", { language: t(`lib.language.${targetLanguage}.name`) })
+            );
             return;
         }
 
@@ -882,7 +931,9 @@ const createRoomCommand = c({
             roomCreatorUsername: gamer.identity.name,
             callback: (roomCode) => {
                 if (ctx.room.isHealthy()) {
-                    ctx.room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(i18next.t("command.createRoom.roomCreated", { roomCode })));
+                    ctx.room.ws.send(
+                        ctx.bot.networkAdapter.getSendChatMessage(t("command.createRoom.roomCreated", { roomCode }))
+                    );
                 }
             },
         });
