@@ -5,11 +5,6 @@ import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";
 import PlayersPageSwitchModeButtons from "./PlayersPageSwitchModeButtons";
 
-export interface IPlayerCardDataExperience extends IPlayerScoreCommonProps {
-    experience: number;
-    experienceNeededForNextLevel: number;
-}
-
 export interface IPlayerCardDataRecords extends IPlayerScoreCommonProps {
     recordsCount: number;
 }
@@ -20,32 +15,33 @@ export interface IPlayerCardDataPP extends IPlayerScoreCommonProps {
 
 export type PlayersPageData =
     | {
-          sortMode: "experience";
-          data: IPlayerCardDataExperience[];
+          mode: "xp";
+          data: IPlayerScoreCommonProps[];
       }
     | {
-          sortMode: "records";
+          mode: "records";
           data: IPlayerCardDataRecords[];
       }
     | {
-          sortMode: "pp";
+          mode: "pp";
           data: IPlayerCardDataPP[];
       };
 
 export default function PlayersPage({ pageData }: { pageData: PlayersPageData }) {
+    console.log(pageData);
     const firstThreeScores = pageData.data.slice(0, 3);
     const otherScores = pageData.data.slice(3);
 
-    if (pageData.sortMode === sortModeEnumSchema.Values.experience) {
+    if (pageData.mode === sortModeEnumSchema.Values.xp) {
         const rows = otherScores.map((player, i) => {
-            const p = player as IPlayerCardDataExperience;
+            const p = player as IPlayerScoreCommonProps;
             return (
                 <PlayerRow
                     key={i}
                     PlayerRowContentSection={
                         <div>
                             <p className="text-sm text-neutral-600">
-                                Level <span className="font-bold text-neutral-950">{p.level}</span>
+                                Level <span className="font-bold text-neutral-950">{p.xp.level}</span>
                             </p>
                         </div>
                     }
@@ -55,7 +51,7 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
         });
 
         const cards = firstThreeScores.map((player, i) => {
-            const p = player as IPlayerCardDataExperience;
+            const p = player as IPlayerScoreCommonProps;
             return (
                 <PlayerCard
                     key={i}
@@ -64,17 +60,17 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
                         <div className="h-[2rem] space-y-1">
                             <div className="flex items-center justify-between text-sm font-medium text-neutral-600">
                                 <p>
-                                    Level <span className="text-neutral-950">{player.level}</span>
+                                    Level <span className="text-neutral-950">{player.xp.level}</span>
                                 </p>
                                 <p className="text-xs font-normal">
-                                    {p.experience} / {p.experienceNeededForNextLevel} xp
+                                    {p.xp.currentLevelXp} / {p.xp.totalLevelXp} xp
                                 </p>
                             </div>
                             <div className="h-2 rounded bg-neutral-100">
                                 <div
                                     className="bg-primary-500 h-2 rounded"
                                     style={{
-                                        width: `${((p.experience / p.experienceNeededForNextLevel) * 100).toFixed(5)}%`,
+                                        width: `${p.xp.percentageToNextLevel.toFixed(5)}%`,
                                     }}
                                 ></div>
                             </div>
@@ -85,13 +81,9 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
         });
 
         return (
-            <RecordsListLayout
-                Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.sortMode} />}
-                Rows={rows}
-                Cards={cards}
-            />
+            <RecordsListLayout Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />} Rows={rows} Cards={cards} />
         );
-    } else if (pageData.sortMode === sortModeEnumSchema.Values.pp) {
+    } else if (pageData.mode === sortModeEnumSchema.Values.pp) {
         const rows = otherScores.map((player, i) => {
             const p = player as IPlayerCardDataPP;
             return (
@@ -129,11 +121,7 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
         });
 
         return (
-            <RecordsListLayout
-                Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.sortMode} />}
-                Rows={rows}
-                Cards={cards}
-            />
+            <RecordsListLayout Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />} Rows={rows} Cards={cards} />
         );
     } else {
         const rows = otherScores.map((player, i) => {
@@ -173,11 +161,7 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
         });
 
         return (
-            <RecordsListLayout
-                Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.sortMode} />}
-                Rows={rows}
-                Cards={cards}
-            />
+            <RecordsListLayout Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />} Rows={rows} Cards={cards} />
         );
     }
 }

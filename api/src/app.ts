@@ -6,6 +6,7 @@ import { addPlayersRouteHandler } from "./routes/addPlayers.route";
 import { addWordRouteHandler } from "./routes/addWord.route";
 import { getBestScoresForCategoryRouteHandler } from "./routes/getBestScoresForCategory.route";
 import { getDiscordUserIdRouteHandler } from "./routes/getDiscordUserId.route";
+import { getLeaderboardRouteHandler } from "./routes/getLeaderboard.route";
 import { getPlayerProfileRouteHandler } from "./routes/getPlayerProfile.route";
 import { healthRouteHandler } from "./routes/health.route";
 
@@ -38,5 +39,8 @@ app.get("/health", healthRouteHandler);
 
 // Player profile from username
 app.get("/player-profile", { preHandler: authMiddleware }, getPlayerProfileRouteHandler);
+
+// Get leaderboard
+app.get("/leaderboard", getLeaderboardRouteHandler);
 
 export default app;

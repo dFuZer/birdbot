@@ -17,6 +17,7 @@ export interface IPlayerProfileData {
     ppPerLanguage: Record<LanguageEnum, number>;
     gamesPlayedCount: number;
     recordsCount: number;
+    avatarUrl?: string;
     records: {
         record_type: RecordsEnum;
         score: number;

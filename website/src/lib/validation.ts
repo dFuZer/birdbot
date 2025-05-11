@@ -9,7 +9,7 @@ import {
     type RecordsEnum,
 } from "./records";
 
-export const sortModeEnumSchema = z.enum(["experience", "records", "pp"]);
+export const sortModeEnumSchema = z.enum(["xp", "records", "pp"]);
 export type SortModeEnum = z.infer<typeof sortModeEnumSchema>;
 
 export function isValidRecordParam(record: TSearchParamOption): record is RecordsEnum {
@@ -26,4 +26,12 @@ export function isValidLanguageParam(language: TSearchParamOption): language is 
 
 export function isValidPlayersPageSortParam(sortParam: TSearchParamOption): sortParam is SortModeEnum {
     return sortModeEnumSchema.safeParse(sortParam).success;
+}
+
+export function tryGetNumberFromParam(numberParam: TSearchParamOption): number | undefined {
+    const n = Number(numberParam);
+    if (isNaN(n)) {
+        return undefined;
+    }
+    return n;
 }

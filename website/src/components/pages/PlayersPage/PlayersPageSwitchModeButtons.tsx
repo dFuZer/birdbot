@@ -50,8 +50,8 @@ export default function PlayersPageSwitchModeButtons({ sortMode }: { sortMode: S
                 label="Experience"
                 icon={<AcademicCapIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
                 activeIcon={<AcademicCapIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
-                active={sortMode === sortModeEnumSchema.Values.experience}
-                sortMode={sortModeEnumSchema.Values.experience}
+                active={sortMode === sortModeEnumSchema.Values.xp}
+                sortMode={sortModeEnumSchema.Values.xp}
                 changeSearchParam={changeSearchParam}
             />
             <SwitchButton

@@ -28,6 +28,20 @@ export let getPlayerPreferredCategory = async function ({
     const gameRecaps: { language: PrismaLanguage; mode: PrismaGameMode }[] =
         await prisma.$queryRaw`SELECT g."language", g."mode" FROM game_recap gr INNER JOIN game g ON g.id = gr.game_id WHERE gr.player_id = ${playerId}::UUID;`;
 
+    const playerBestLanguageQuery: { language: PrismaLanguage }[] = await prisma.$queryRaw`
+        SELECT "language"
+        FROM pp_leaderboard
+        WHERE player_id = ${playerId}::uuid
+        ORDER BY pp_sum DESC
+        LIMIT 1
+    `;
+
+    const playerBestLanguage = playerBestLanguageQuery[0]?.language;
+
+    if (playerBestLanguage) {
+        targetLanguage = databaseEnumToLanguageEnumMap[playerBestLanguage];
+    }
+
     type LanguageMode = `${PrismaLanguage}-${PrismaGameMode}`;
 
     const countPerLanguageMode: Partial<Record<LanguageMode, number>> = {};

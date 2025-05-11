@@ -6,13 +6,14 @@ import OptionalImage from "@/components/ui/OptionalImage";
 import { GAME_MODES_DATA, RECORDS_DATA } from "@/lib/records";
 
 export default function PlayerProfilePage({ playerData }: { playerData: IPlayerProfileData }) {
+    console.log(playerData);
     return (
         <div className="flex min-h-screen justify-center px-4 py-6 sm:py-10">
             <div className="relative flex-1 overflow-hidden pb-6 sm:max-w-3xl sm:rounded-xl sm:bg-white/70 sm:shadow-xl">
                 <div className="bg-primary-600 h-25 w-full" />
                 <div className="absolute left-1/2 size-25 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg">
                     <OptionalImage
-                        src={"https://avatars.githubusercontent.com/u/1"}
+                        src={playerData.avatarUrl}
                         commonClasses="h-full w-full"
                         height={150}
                         width={150}

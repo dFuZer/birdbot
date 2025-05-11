@@ -1,8 +1,8 @@
 import RecordsPage, { IScoreData } from "@/components/pages/RecordsPage/RecordsPage";
 import { getFromApi } from "@/lib/fetching";
 import { TSearchParams } from "@/lib/params";
-import { languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "@/lib/records";
-import { isValidGameModeParam, isValidLanguageParam, isValidRecordParam } from "@/lib/validation";
+import { ExperienceData, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "@/lib/records";
+import { isValidGameModeParam, isValidLanguageParam, isValidRecordParam, tryGetNumberFromParam } from "@/lib/validation";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 type IApiResponse = {
     message: string;
-    bestScores: { player_id: string; player_username: string; score: number; rank: number }[];
+    bestScores: { player_id: string; player_username: string; score: number; rank: number; xp: ExperienceData }[];
 };
 
 export default async function Page({ searchParams }: { searchParams: TSearchParams }) {
@@ -26,8 +26,11 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
     const recordParamValue = params.r;
     const selectedRecord = isValidRecordParam(recordParamValue) ? recordParamValue : recordsEnumSchema.Values.word;
 
+    const selectedPage = tryGetNumberFromParam(params.page) || 1;
+    const perPage = tryGetNumberFromParam(params.perPage) || 10;
+
     const data = await getFromApi(
-        `/records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=1&perPage=10`
+        `/records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=${selectedPage}&perPage=${perPage}`
     );
 
     const json: IApiResponse = await data.json();
@@ -36,9 +39,9 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
         return {
             name: record.player_username,
             rank: record.rank,
-            level: 1,
             score: record.score,
             id: record.player_id,
+            xp: record.xp,
         };
     });
 

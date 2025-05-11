@@ -1,5 +1,5 @@
 import { katibehFont } from "@/app/fonts";
-import { ABOUT_LINKS, DISCORD_SERVER_LINK, LINKS, PAYPAL_DONATE_LINK } from "@/lib/links";
+import { ABOUT_LINKS, DISCORD_SERVER_LINK, GITHUB_REPO_LINK, LINKS, PAYPAL_DONATE_LINK } from "@/lib/links";
 import { HeartIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import FooterBlob from "~/public/footerBlob.svg";
@@ -29,11 +29,14 @@ export default function LayoutFooter() {
                     <div className="w-[12rem] sm:w-fit">
                         <h3 className={`${katibehFont.className} mb-4 text-4xl`}>Support us</h3>
                         <div className="flex flex-col">
+                            <Link target="_blank" href={GITHUB_REPO_LINK}>
+                                Star the project on GitHub
+                            </Link>
                             <Link target="_blank" href={DISCORD_SERVER_LINK}>
                                 Join our Discord Server
                             </Link>
                             <Link target="_blank" href={PAYPAL_DONATE_LINK}>
-                                Support us on PayPal
+                                Donate on PayPal
                             </Link>
                         </div>
                     </div>

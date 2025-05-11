@@ -28,7 +28,7 @@ export default function PlayerCard<T extends IPlayerScoreCommonProps>({
                         />
                         <div className="truncate">
                             <p className="truncate font-bold text-nowrap">{playerData.name}</p>
-                            <p className="text-sm text-neutral-600">Level {playerData.level}</p>
+                            <p className="text-sm text-neutral-600">Level {playerData.xp.level}</p>
                         </div>
                     </div>
                 </div>

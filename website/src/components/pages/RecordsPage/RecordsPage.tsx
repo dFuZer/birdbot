@@ -1,5 +1,5 @@
 import ScoreDisplayComponent from "@/components/pages/RecordsPage/RecordsPageScoreDisplayComponent";
-import { type LanguageEnum, type ModesEnum, type RecordsEnum } from "@/lib/records";
+import { ExperienceData, type LanguageEnum, type ModesEnum, type RecordsEnum } from "@/lib/records";
 import PlayerCard from "../common/PlayerCard";
 import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";
@@ -10,7 +10,7 @@ export interface IScoreData {
     name: string;
     avatarUrl?: string;
     rank: number;
-    level: number;
+    xp: ExperienceData;
     score: number;
 }
 

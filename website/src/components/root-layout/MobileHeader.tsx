@@ -1,15 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { LINKS } from "@/lib/links";
-import { Bars3Icon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { atom, useAtom } from "jotai";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createRef, useContext, useEffect } from "react";
 import BirdBotLogo from "~/public/icon.svg";
-import DiscordLoginLink from "./DiscordLoginLink";
 import { PublicEnvironmentVariablesContext } from "../providers/PublicEnvironmentVariablesProvider";
+import DiscordLoginLink from "./DiscordLoginLink";
 
 export const mobileHeaderOpenAtom = atom(false);
 
@@ -66,10 +65,10 @@ export default function MobileHeader() {
                 ))}
             </div>
             <div className="flex-1 px-8">
-                <Button className="flex w-full items-center justify-between gap-4" variant={"outline"}>
+                {/* <Button className="flex w-full items-center justify-between gap-4" variant={"outline"}>
                     <span className="w-2/3 truncate text-left font-light text-neutral-400">Search on the website</span>
                     <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
-                </Button>
+                </Button> */}
             </div>
             {EXPERIMENTAL_FEATURES_ENABLED && <DiscordLoginLink />}
             <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4">

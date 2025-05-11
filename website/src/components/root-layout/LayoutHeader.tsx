@@ -1,12 +1,10 @@
 import { katibehFont } from "@/app/fonts";
-import { Button } from "@/components/ui/button";
+import { EXPERIMENTAL_FEATURES_ENABLED } from "@/lib/env";
 import { LINKS } from "@/lib/links";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import BirdBotLogo from "~/public/icon.svg";
 import DiscordLoginLink from "./DiscordLoginLink";
 import MobileHeader from "./MobileHeader";
-import { EXPERIMENTAL_FEATURES_ENABLED } from "@/lib/env";
 
 export default function LayoutHeader() {
     return (
@@ -29,10 +27,10 @@ export default function LayoutHeader() {
                 </div>
                 <div className="flex items-center gap-4 font-medium">
                     {/* <SunIcon className="h-5 w-5 text-neutral-700" /> */}
-                    <Button className="flex min-w-48 items-center justify-between" variant={"outline"}>
+                    {/* <Button className="flex min-w-48 items-center justify-between" variant={"outline"}>
                         <span className="w-2/3 truncate text-left font-light text-neutral-400">Search on the website</span>
                         <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
-                    </Button>
+                    </Button> */}
                     {EXPERIMENTAL_FEATURES_ENABLED && <DiscordLoginLink />}
                 </div>
             </div>
