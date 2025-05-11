@@ -9,6 +9,7 @@ import type { DictionaryId, DictionaryLessGameRules, Gamer, GameRules } from "..
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
 import { birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
+import { t } from "./BirdBotTexts";
 import {
     BirdBotGameData,
     BirdBotGameMode,
@@ -154,13 +155,15 @@ export default class BirdBotUtils {
 
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         if (gameRecap.wordsCount === 0) {
-            ctx.utils.sendChatMessage(`Oh no, you didn't place any words this game. Better luck next time!`);
+            ctx.utils.sendChatMessage(t("general.playerStats.diedNoWords", { username: gamer.identity.nickname }));
         } else {
             const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByGamerId[gamerId]);
             ctx.utils.sendChatMessage(
-                `${gamer.identity.nickname} died at ${recordsUtils.time.specificScoreDisplayStringGenerator(
-                    timeSurvived
-                )} after placing: ${scores}`
+                t("general.playerStats.died", {
+                    username: gamer.identity.nickname,
+                    time: recordsUtils.time.format(timeSurvived),
+                    scores,
+                })
             );
         }
 
@@ -315,7 +318,9 @@ export default class BirdBotUtils {
                 const isGameModeAlreadySet = roomMetadata.gameMode === (gameModeKey as BirdBotGameMode);
                 if (!isGameModeAlreadySet) {
                     roomMetadata.gameMode = gameModeKey as BirdBotGameMode;
-                    ctx.utils.sendChatMessage(`Game mode set to ${gameModeKey}.`);
+                    ctx.utils.sendChatMessage(
+                        t("general.roomState.gameModeSet", { gameMode: t(`lib.mode.${gameModeKey}`) })
+                    );
                 }
                 foundCorrespondingGameMode = true;
                 break;
@@ -672,40 +677,34 @@ export default class BirdBotUtils {
 
     public static getFormattedPlayerScores = (playerStats: PlayerGameScores) => {
         const scores: [BirdBotRecordType, number, string][] = [
-            ["word", playerStats.words, recordsUtils.word.specificScoreDisplayStringGenerator(playerStats.words)],
-            ["flips", playerStats.flips, recordsUtils.flips.specificScoreDisplayStringGenerator(playerStats.flips)],
+            ["word", playerStats.words, recordsUtils.word.format(playerStats.words)],
+            ["flips", playerStats.flips, recordsUtils.flips.format(playerStats.flips)],
             [
                 "depleted_syllables",
                 playerStats.depletedSyllables,
-                recordsUtils.depleted_syllables.specificScoreDisplayStringGenerator(playerStats.depletedSyllables),
+                recordsUtils.depleted_syllables.format(playerStats.depletedSyllables),
             ],
-            ["alpha", playerStats.alpha, recordsUtils.alpha.specificScoreDisplayStringGenerator(playerStats.alpha)],
+            ["alpha", playerStats.alpha, recordsUtils.alpha.format(playerStats.alpha)],
             [
                 "no_death",
                 playerStats.maxWordsWithoutDeath,
-                recordsUtils.no_death.specificScoreDisplayStringGenerator(playerStats.maxWordsWithoutDeath),
+                recordsUtils.no_death.format(playerStats.maxWordsWithoutDeath),
             ],
             [
                 "multi_syllable",
                 playerStats.multiSyllables,
-                recordsUtils.multi_syllable.specificScoreDisplayStringGenerator(playerStats.multiSyllables),
+                recordsUtils.multi_syllable.format(playerStats.multiSyllables),
             ],
             [
                 "previous_syllable",
                 playerStats.previousSyllableScore,
-                recordsUtils.previous_syllable.specificScoreDisplayStringGenerator(playerStats.previousSyllableScore),
+                recordsUtils.previous_syllable.format(playerStats.previousSyllableScore),
             ],
-            [
-                "hyphen",
-                playerStats.hyphenWords,
-                recordsUtils.hyphen.specificScoreDisplayStringGenerator(playerStats.hyphenWords),
-            ],
+            ["hyphen", playerStats.hyphenWords, recordsUtils.hyphen.format(playerStats.hyphenWords)],
             [
                 "more_than_20_letters",
                 playerStats.moreThan20LettersWords,
-                recordsUtils.more_than_20_letters.specificScoreDisplayStringGenerator(
-                    playerStats.moreThan20LettersWords
-                ),
+                recordsUtils.more_than_20_letters.format(playerStats.moreThan20LettersWords),
             ],
         ];
         return scores

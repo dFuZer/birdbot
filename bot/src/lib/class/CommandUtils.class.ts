@@ -20,7 +20,6 @@ export type CommandHandler = (commandCtx: CommandHandlerCtx) => void;
 
 export type Command = {
     id: string;
-    desc: string;
     usageDesc: string;
     handler: CommandHandler;
     aliases: [string, ...string[]];
@@ -38,7 +37,6 @@ export default class CommandUtils {
     public static createCommandHelper({
         id,
         aliases,
-        desc = CommandUtils.DEFAULT_COMMAND_DESCRIPTION,
         usageDesc = CommandUtils.DEFAULT_COMMAND_USAGE_DESCRIPTION,
         exampleUsage = CommandUtils.DEFAULT_COMMAND_EXAMPLE_USAGE,
         handler,
@@ -46,26 +44,24 @@ export default class CommandUtils {
         roomCreatorRequired = false,
         hidden = false,
     }: {
-        id: Command["id"];
+        id: string;
         aliases: Command["aliases"];
         usageDesc: Command["usageDesc"];
-        desc?: Command["desc"];
         handler: Command["handler"];
         adminRequired?: Command["adminRequired"];
         roomCreatorRequired?: Command["roomCreatorRequired"];
         exampleUsage?: Command["exampleUsage"];
         hidden?: Command["hidden"];
-    }): Command {
+    }) {
         return {
             id,
             aliases,
-            desc,
             usageDesc,
             handler,
             adminRequired,
             roomCreatorRequired,
             exampleUsage,
             hidden,
-        };
+        } satisfies Command;
     }
 }

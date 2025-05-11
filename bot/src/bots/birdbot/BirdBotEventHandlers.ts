@@ -5,6 +5,7 @@ import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
 import type { BotEventHandlers } from "../../lib/types/libEventTypes";
 import { birdbotCommands } from "./BirdBotCommands";
 import { birdbotModeRules, birdbotSupportedDictionaryIds, recordsUtils } from "./BirdBotConstants";
+import { t } from "./BirdBotTexts";
 import type { BirdBotRoomMetadata, BirdbotRoomTargetConfig } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 
@@ -62,11 +63,9 @@ const birdbotEventHandlers: BotEventHandlers = {
             }
             const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, gamer, birdbotCommands);
             if (handleCommandResult === "command-not-found") {
-                ctx.utils.sendChatMessage(`Command not found: ${rawMessage}`);
+                ctx.utils.sendChatMessage(t("eventHandler.chat.commandNotFound", { command: rawMessage }));
             } else if (handleCommandResult === "not-room-creator") {
-                ctx.utils.sendChatMessage(
-                    `You cannot use this command if you are not the room creator. /b to create your room will be available soon.`
-                );
+                ctx.utils.sendChatMessage(t("eventHandler.chat.notRoomCreator"));
             }
         },
         "chatRateLimited": CommonEH.chatRateLimited,
@@ -212,7 +211,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, newFlips, 4);
                             if (passedMilestone) {
                                 turnComments.push(
-                                    `gained ${newFlips} lives (${playerScores.flips}/${roomMetadata.globalScores.flips})`
+                                    t("eventHandler.submit.comments.gainedLives", {
+                                        count: newFlips,
+                                        playerTotal: playerScores.flips,
+                                        globalTotal: roomMetadata.globalScores.flips,
+                                    })
                                 );
                             }
                         }
@@ -232,7 +235,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                                 50
                             );
                             if (passedMilestone) {
-                                turnComments.push(`reached ${newMaxWordsWithoutDeath} words without death`);
+                                turnComments.push(
+                                    t("eventHandler.submit.comments.reachedWordsNoDeath", {
+                                        count: newMaxWordsWithoutDeath,
+                                    })
+                                );
                             }
                         }
 
@@ -241,7 +248,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                             playerScores.moreThan20LettersWords++;
                             roomMetadata.globalScores.moreThan20LettersWords++;
                             turnComments.push(
-                                `placed a long word (${playerScores.moreThan20LettersWords}/${roomMetadata.globalScores.moreThan20LettersWords})`
+                                t("eventHandler.submit.comments.placedLongWord", {
+                                    playerTotal: playerScores.moreThan20LettersWords,
+                                    globalTotal: roomMetadata.globalScores.moreThan20LettersWords,
+                                })
                             );
                             showWord = true;
                         }
@@ -251,7 +261,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                             playerScores.hyphenWords++;
                             roomMetadata.globalScores.hyphenWords++;
                             turnComments.push(
-                                `placed a hyphenated word (${playerScores.hyphenWords}/${roomMetadata.globalScores.hyphenWords})`
+                                t("eventHandler.submit.comments.placedHyphenatedWord", {
+                                    playerTotal: playerScores.hyphenWords,
+                                    globalTotal: roomMetadata.globalScores.hyphenWords,
+                                })
                             );
                             showWord = true;
                         }
@@ -268,9 +281,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const passedMilestone = BirdBotUtils.passedMilestone(oldAlpha, newAlpha, 26);
                             if (passedMilestone) {
                                 turnComments.push(
-                                    `completed an alpha: ${recordsUtils.alpha.specificScoreDisplayStringGenerator(
-                                        newAlpha
-                                    )}`
+                                    t("eventHandler.submit.comments.completedAlpha", {
+                                        alphaString: recordsUtils.alpha.format(newAlpha),
+                                    })
                                 );
                             }
                         }
@@ -283,9 +296,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                                 playerScores.previousSyllableScore++;
                                 roomMetadata.globalScores.previousSyllables++;
                                 turnComments.push(
-                                    `placed a previous syllable: ${previousSyllable.toUpperCase()} (${
-                                        playerScores.previousSyllableScore
-                                    }/${roomMetadata.globalScores.previousSyllables})`
+                                    t("eventHandler.submit.comments.placedPreviousSyllable", {
+                                        syllable: previousSyllable.toUpperCase(),
+                                        playerTotal: playerScores.previousSyllableScore,
+                                        globalTotal: roomMetadata.globalScores.previousSyllables,
+                                    })
                                 );
                                 showWord = true;
                             }
@@ -297,9 +312,13 @@ const birdbotEventHandlers: BotEventHandlers = {
                             playerScores.multiSyllables += multiSyllableGainedPoints;
                             roomMetadata.globalScores.multiSyllables += multiSyllableGainedPoints;
                             turnComments.push(
-                                `gained ${multiSyllableGainedPoints} MS (${currentPrompt.toUpperCase()} x ${
-                                    multiSyllableGainedPoints + 1
-                                }) (${playerScores.multiSyllables}/${roomMetadata.globalScores.multiSyllables})`
+                                t("eventHandler.submit.comments.gainedMultiSyllables", {
+                                    count: multiSyllableGainedPoints,
+                                    prompt: currentPrompt.toUpperCase(),
+                                    multiplier: multiSyllableGainedPoints + 1,
+                                    playerTotal: playerScores.multiSyllables,
+                                    globalTotal: roomMetadata.globalScores.multiSyllables,
+                                })
                             );
                             showWord = true;
                         }
@@ -341,23 +360,29 @@ const birdbotEventHandlers: BotEventHandlers = {
                             playerScores.depletedSyllables += depletedSyllables.length;
                             roomMetadata.globalScores.depletedSyllables += depletedSyllables.length;
                             turnComments.push(
-                                `depleted ${depletedSyllables.length} syllable(s): ${depletedSyllables
-                                    .join(", ")
-                                    .toUpperCase()} (${playerScores.depletedSyllables}/${
-                                    roomMetadata.globalScores.depletedSyllables
-                                })`
+                                t("eventHandler.submit.comments.depletedSyllables", {
+                                    count: depletedSyllables.length,
+                                    syllables: depletedSyllables.join(", ").toUpperCase(),
+                                    playerTotal: playerScores.depletedSyllables,
+                                    globalTotal: roomMetadata.globalScores.depletedSyllables,
+                                })
                             );
                         }
                         if (turnComments.length > 0 && ctx.room.roomState.myGamerId !== currentPlayer.gamerId) {
                             if (showWord) {
                                 ctx.utils.sendChatMessage(
-                                    `${currentGamer.identity.nickname}: (${word.toUpperCase()}) ${turnComments.join(
-                                        " - "
-                                    )}.`
+                                    t("eventHandler.submit.turnCommentWithWord", {
+                                        username: currentGamer.identity.nickname,
+                                        word: word.toUpperCase(),
+                                        comments: turnComments.join(" - "),
+                                    })
                                 );
                             } else {
                                 ctx.utils.sendChatMessage(
-                                    `${currentGamer.identity.nickname}: ${turnComments.join(" - ")}.`
+                                    t("eventHandler.submit.turnCommentWithoutWord", {
+                                        username: currentGamer.identity.nickname,
+                                        comments: turnComments.join(" - "),
+                                    })
                                 );
                             }
                         }
@@ -369,11 +394,9 @@ const birdbotEventHandlers: BotEventHandlers = {
                             birdbotCommands
                         );
                         if (handleCommandResult === "command-not-found") {
-                            ctx.utils.sendChatMessage(`Command not found: ${word}`);
+                            ctx.utils.sendChatMessage(t("eventHandler.chat.commandNotFound", { command: word }));
                         } else if (handleCommandResult === "not-room-creator") {
-                            ctx.utils.sendChatMessage(
-                                `You cannot use this command if you are not the room creator. /b to create your room will be available soon.`
-                            );
+                            ctx.utils.sendChatMessage(t("eventHandler.chat.notRoomCreator"));
                         }
                     }
 
