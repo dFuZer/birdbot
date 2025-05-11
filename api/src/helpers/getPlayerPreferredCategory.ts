@@ -40,6 +40,12 @@ export let getPlayerPreferredCategory = async function ({
 
     if (playerBestLanguage) {
         targetLanguage = databaseEnumToLanguageEnumMap[playerBestLanguage];
+        if (targetLanguage && targetMode) {
+            return {
+                language: targetLanguage as TLanguage,
+                mode: targetMode as TMode,
+            };
+        }
     }
 
     type LanguageMode = `${PrismaLanguage}-${PrismaGameMode}`;

@@ -258,6 +258,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
         previousHandlersCtx.previousGamerId = gameData.players[playerIndex]!.gamerId;
         previousHandlersCtx.previousPrompt = gameData.round.prompt;
         previousHandlersCtx.deadPlayerIds = [] as number[];
+        previousHandlersCtx.lostLifePlayerIds = [] as number[];
 
         do {
             gameData.round.turnIndex++;
@@ -270,6 +271,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
                     for (const player of gameData.players)
                         if (player.justExploded) {
                             player.lives--;
+                            previousHandlersCtx.lostLifePlayerIds.push(player.gamerId);
                             if (player.lives === 0) {
                                 previousHandlersCtx.deadPlayerIds.push(player.gamerId);
                             }

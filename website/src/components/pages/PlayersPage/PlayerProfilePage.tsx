@@ -6,7 +6,6 @@ import OptionalImage from "@/components/ui/OptionalImage";
 import { GAME_MODES_DATA, RECORDS_DATA } from "@/lib/records";
 
 export default function PlayerProfilePage({ playerData }: { playerData: IPlayerProfileData }) {
-    console.log(playerData);
     return (
         <div className="flex min-h-screen justify-center px-4 py-6 sm:py-10">
             <div className="relative flex-1 overflow-hidden pb-6 sm:max-w-3xl sm:rounded-xl sm:bg-white/70 sm:shadow-xl">

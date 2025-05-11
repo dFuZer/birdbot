@@ -128,7 +128,11 @@ const recordsCommand = c({
                     (score) =>
                         `${score.rank}) ${t("general.scorePresentation", {
                             username: score.player_username,
-                            score: recordsUtils[targetRecordType].format(score.score),
+                            score: t(`lib.recordType.${targetRecordType}.score`, {
+                                context: "specific",
+                                count: score.score,
+                                formattedScore: recordsUtils[targetRecordType].format(score.score),
+                            }),
                         })}`
                 )
                 .join(" — ");
@@ -137,7 +141,7 @@ const recordsCommand = c({
                 t("command.records.specificRecord", {
                     languageFlag: t(`lib.language.${language}.flag`),
                     gameMode: t(`lib.mode.${mode}`),
-                    recordType: t(`lib.recordType.${targetRecordType}`),
+                    recordType: t(`lib.recordType.${targetRecordType}.recordName`),
                     records,
                 })
             );
@@ -146,9 +150,12 @@ const recordsCommand = c({
             const records = r.bestScores
                 .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
                 .map((score) => {
-                    return `${t(`lib.recordType.${score.record_type}`)}: ${t("general.scorePresentation", {
+                    return `${t(`lib.recordType.${score.record_type}.recordName`)}: ${t("general.scorePresentation", {
                         username: score.player_username,
-                        score: recordsUtils[score.record_type].format(score.score),
+                        score: t(`lib.recordType.${score.record_type}.score`, {
+                            count: score.score,
+                            formattedScore: recordsUtils[score.record_type].format(score.score),
+                        }),
                     })}`;
                 })
                 .join(" — ");
@@ -325,7 +332,7 @@ const searchWordsCommand = c({
         if (allParamRecords.some((record) => nonSensicalSearchRecords.includes(record))) {
             ctx.utils.sendChatMessage(
                 t("error.searchWords.nonsensicalRecordSearch", {
-                    records: allParamRecords.map((record) => t(`lib.recordType.${record}`)).join(", "),
+                    records: allParamRecords.map((record) => t(`lib.recordType.${record}.recordName`)).join(", "),
                 })
             );
             return;
@@ -333,12 +340,16 @@ const searchWordsCommand = c({
 
         if (allParamRecords.includes("previous_syllable")) {
             ctx.utils.sendChatMessage(
-                t("command.searchWords.previousSyllableHint", { recordType: t("lib.recordType.previous_syllable") })
+                t("command.searchWords.previousSyllableHint", {
+                    recordType: t("lib.recordType.previous_syllable.recordName"),
+                })
             );
             return;
         }
         if (allParamRecords.includes("alpha")) {
-            ctx.utils.sendChatMessage(t("command.searchWords.alphaHint", { recordType: t("lib.recordType.alpha") }));
+            ctx.utils.sendChatMessage(
+                t("command.searchWords.alphaHint", { recordType: t("lib.recordType.alpha.recordName") })
+            );
             return;
         }
 
@@ -355,8 +366,12 @@ const searchWordsCommand = c({
         if (requestedSortRecords.length > 1) {
             ctx.utils.sendChatMessage(
                 t("error.searchWords.multipleSortRecords", {
-                    sortRecords: sortWordsModeRecords.map((record) => t(`lib.recordType.${record}`)).join(", "),
-                    filterRecords: filterWordsModeRecords.map((record) => t(`lib.recordType.${record}`)).join(", "),
+                    sortRecords: sortWordsModeRecords
+                        .map((record) => t(`lib.recordType.${record}.recordName`))
+                        .join(", "),
+                    filterRecords: filterWordsModeRecords
+                        .map((record) => t(`lib.recordType.${record}.recordName`))
+                        .join(", "),
                 })
             );
             return;
@@ -510,8 +525,8 @@ const searchWordsCommand = c({
         const targetRecordsString =
             requestedFilterRecords.length || requestedSortRecords.length
                 ? `${requestedFilterRecords
-                      .map((record) => t(`lib.recordType.${record}`))
-                      .concat(requestedSortRecords.map((record) => t(`lib.recordType.${record}`)))
+                      .map((record) => t(`lib.recordType.${record}.recordName`))
+                      .concat(requestedSortRecords.map((record) => t(`lib.recordType.${record}.recordName`)))
                       .join(", ")}: `
                 : "";
 
@@ -622,7 +637,7 @@ const playerProfileCommand = c({
             .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
             .map((record) => {
                 const r = recordsUtils[record.record_type];
-                return `${t(`lib.recordType.${record.record_type}`)}: ${r.format(record.score)}`;
+                return `${t(`lib.recordType.${record.record_type}.recordName`)}: ${r.format(record.score)}`;
             })
             .join(" — ");
 

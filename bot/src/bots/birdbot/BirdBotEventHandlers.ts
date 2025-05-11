@@ -157,12 +157,20 @@ const birdbotEventHandlers: BotEventHandlers = {
                     const previousGamerId = previousHandlersCtx.previousGamerId as number;
                     const previousPrompt = previousHandlersCtx.previousPrompt as string;
                     const deadPlayerIds = previousHandlersCtx.deadPlayerIds as number[];
+                    const lostLifePlayerIds = previousHandlersCtx.lostLifePlayerIds as number[];
+                    const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
 
+                    for (const lostLifePlayerId of lostLifePlayerIds) {
+                        const playerScores = roomMetadata.scoresByGamerId[lostLifePlayerId];
+                        if (playerScores === undefined) {
+                            throw new Error("Player scores not found");
+                        }
+                        playerScores.currentWordsWithoutDeath = 0;
+                    }
                     for (const deadPlayerId of deadPlayerIds) {
                         BirdBotUtils.handlePlayerDeath(ctx, deadPlayerId);
                     }
 
-                    const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
                     const previousPlayerScores = roomMetadata.scoresByGamerId[previousGamerId];
                     if (previousPlayerScores === undefined) {
                         throw new Error("Previous player scores not found");

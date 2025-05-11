@@ -84,8 +84,6 @@ export default class BirdBotUtils {
                 if (isWordValid(testWord.word)) {
                     this.submitWord({ word: testWord.word, ws, adapter: ctx.bot.networkAdapter });
                     return;
-                } else {
-                    console.log(testWord.word.indexOf(prompt) !== -1, history.indexOf(testWord.word));
                 }
             }
             const foundWord = this.getRandomValidWord({ dictionary: dictionaryResource.resource, isWordValid });
@@ -708,41 +706,28 @@ export default class BirdBotUtils {
     };
 
     public static getFormattedPlayerScores = (playerStats: PlayerGameScores) => {
-        const scores: [BirdBotRecordType, number, string][] = [
-            ["word", playerStats.words, recordsUtils.word.format(playerStats.words)],
-            ["flips", playerStats.flips, recordsUtils.flips.format(playerStats.flips)],
-            [
-                "depleted_syllables",
-                playerStats.depletedSyllables,
-                recordsUtils.depleted_syllables.format(playerStats.depletedSyllables),
-            ],
-            ["alpha", playerStats.alpha, recordsUtils.alpha.format(playerStats.alpha)],
-            [
-                "no_death",
-                playerStats.maxWordsWithoutDeath,
-                recordsUtils.no_death.format(playerStats.maxWordsWithoutDeath),
-            ],
-            [
-                "multi_syllable",
-                playerStats.multiSyllables,
-                recordsUtils.multi_syllable.format(playerStats.multiSyllables),
-            ],
-            [
-                "previous_syllable",
-                playerStats.previousSyllableScore,
-                recordsUtils.previous_syllable.format(playerStats.previousSyllableScore),
-            ],
-            ["hyphen", playerStats.hyphenWords, recordsUtils.hyphen.format(playerStats.hyphenWords)],
-            [
-                "more_than_20_letters",
-                playerStats.moreThan20LettersWords,
-                recordsUtils.more_than_20_letters.format(playerStats.moreThan20LettersWords),
-            ],
-        ];
+        const scores = [
+            ["word", playerStats.words],
+            ["flips", playerStats.flips],
+            ["depleted_syllables", playerStats.depletedSyllables],
+            ["alpha", playerStats.alpha],
+            ["no_death", playerStats.maxWordsWithoutDeath],
+            ["multi_syllable", playerStats.multiSyllables],
+            ["previous_syllable", playerStats.previousSyllableScore],
+            ["hyphen", playerStats.hyphenWords],
+            ["more_than_20_letters", playerStats.moreThan20LettersWords],
+        ] satisfies [BirdBotRecordType, number][];
+
         return scores
             .filter((x) => x[1] !== 0)
             .sort((a, b) => recordsUtils[a[0]].order - recordsUtils[b[0]].order)
-            .map((x) => x[2])
+            .map((x) =>
+                t(`lib.recordType.${x[0]}.score`, {
+                    context: "specific",
+                    count: x[1],
+                    formattedScore: recordsUtils[x[0]].format(x[1]),
+                })
+            )
             .join(" — ");
     };
 

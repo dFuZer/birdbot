@@ -28,7 +28,6 @@ export type PlayersPageData =
       };
 
 export default function PlayersPage({ pageData }: { pageData: PlayersPageData }) {
-    console.log(pageData);
     const firstThreeScores = pageData.data.slice(0, 3);
     const otherScores = pageData.data.slice(3);
 

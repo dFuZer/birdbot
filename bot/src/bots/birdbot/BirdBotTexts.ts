@@ -217,17 +217,84 @@ export const birdbotTextResource = {
                     brpt: { flag: "🇧🇷", name: "Brazilian Portuguese" },
                 } satisfies Record<BirdBotLanguage, { flag: string; name: string }>,
                 recordType: {
-                    word: "Words",
-                    flips: "Flips",
-                    alpha: "Alpha",
-                    time: "Time",
-                    depleted_syllables: "Depleted syllables",
-                    multi_syllable: "Multi-syllables",
-                    previous_syllable: "Previous syllables",
-                    no_death: "No death",
-                    hyphen: "Hyphen words",
-                    more_than_20_letters: "Long words",
-                } satisfies Record<BirdBotRecordType, string>,
+                    word: {
+                        recordName: "Words",
+                        score_one: "{{count}} word",
+                        score_other: "{{count}} words",
+                        score_specific_one: "{{count}} word",
+                        score_specific_other: "{{count}} words",
+                    },
+                    flips: {
+                        recordName: "Flips",
+                        score_one: "{{count}} flip",
+                        score_other: "{{count}} flips",
+                        score_specific_one: "{{count}} flip",
+                        score_specific_other: "{{count}} flips",
+                    },
+                    alpha: {
+                        recordName: "Alpha",
+                        score: "{{formattedScore}}",
+                    },
+                    time: {
+                        recordName: "Time",
+                        score: "{{formattedScore}}",
+                    },
+                    depleted_syllables: {
+                        recordName: "Depleted syllables",
+                        score_one: "{{count}} syllable",
+                        score_other: "{{count}} syllables",
+                        score_specific_one: "{{count}} depleted syllable",
+                        score_specific_other: "{{count}} depleted syllables",
+                    },
+                    multi_syllable: {
+                        recordName: "Multi-syllables",
+                        score_one: "{{count}} MS",
+                        score_other: "{{count}} MS",
+                        score_specific_one: "{{count}} MS",
+                        score_specific_other: "{{count}} MS",
+                    },
+                    previous_syllable: {
+                        recordName: "Previous syllables",
+                        score_one: "{{count}} syllable",
+                        score_other: "{{count}} syllables",
+                        score_specific_one: "{{count}} previous syllable",
+                        score_specific_other: "{{count}} previous syllables",
+                    },
+                    no_death: {
+                        recordName: "No death",
+                        score_one: "{{count}} word",
+                        score_other: "{{count}} words",
+                        score_specific_one: "{{count}} word without death",
+                        score_specific_other: "{{count}} words without death",
+                    },
+                    hyphen: {
+                        recordName: "Hyphenated words",
+                        score_one: "{{count}} word",
+                        score_other: "{{count}} words",
+                        score_specific_one: "{{count}} hyphenated word",
+                        score_specific_other: "{{count}} hyphenated words",
+                    },
+                    more_than_20_letters: {
+                        recordName: "Long words",
+                        score_one: "{{count}} word",
+                        score_other: "{{count}} words",
+                        score_specific_one: "{{count}} long word",
+                        score_specific_other: "{{count}} long words",
+                    },
+                } satisfies Record<
+                    BirdBotRecordType,
+                    | {
+                          recordName: string;
+                          score_one: string;
+                          score_other: string;
+                          score_specific_one: string;
+                          score_specific_other: string;
+                      }
+                    | {
+                          recordName: string;
+                          score: string;
+                      }
+                >,
             },
         },
     },
