@@ -844,7 +844,7 @@ const unmodUserCommand = c({
 
 const privateRoomCommand = c({
     id: "privateRoom",
-    aliases: ["private", "priv"],
+    aliases: ["private", "priv", "pv"],
     usageDesc: "/private",
     adminRequired: true,
     hidden: true,
@@ -859,7 +859,7 @@ const privateRoomCommand = c({
 
 const publicRoomCommand = c({
     id: "publicRoom",
-    aliases: ["public", "pub"],
+    aliases: ["public", "pub", "pb"],
     usageDesc: "/public",
     adminRequired: true,
     hidden: true,
