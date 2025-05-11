@@ -35,7 +35,7 @@ services:
                 condition: service_healthy
         healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
-            interval: 5s
+            interval: 1s
             timeout: 2s
             retries: 20
         environment:
@@ -51,7 +51,7 @@ services:
             - db_data:/var/lib/postgresql/data
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-            interval: 5s
+            interval: 1s
             timeout: 2s
             retries: 20
         environment:
