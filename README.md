@@ -39,9 +39,9 @@
 | Component | Technology |
 |-----------|------------|
 | Database | PostgreSQL |
-| API | Fastify (TypeScript) |
+| API | Fastify (TypeScript) + Prisma |
 | Frontend | Next.js (TypeScript) |
-| Bot | TypeScript + WebSocket |
+| Bot | TypeScript + WebSocket + Rust |
 | Runtime | Docker + Node.js 23.7 (Alpine) |
 
 ## 👨‍💻 Development Guide
