@@ -2,24 +2,23 @@ import { spawn } from "child_process";
 import path from "path";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
-import { BirdBotLanguage, DictionaryMetadata, DictionaryResource } from "./BirdBotTypes";
+import { dataPath, distPath, resourcesPath } from "../../lib/paths";
+import { BirdBotLanguage, CacheableDictionaryMetadata, DictionaryResource } from "./BirdBotTypes";
 
 export async function loadDictionaryMetadata(
     dictionaryId: BirdBotLanguage,
     dictionaryFileName: string
-): Promise<DictionaryMetadata> {
+): Promise<CacheableDictionaryMetadata> {
     return new Promise((resolve, reject) => {
-        const pwd = process.env.PWD as string;
         const timestamp1 = performance.now();
-        const powerHousePath = path.join(pwd, "dist", "bots", "birdbot", "powerhouse", "release", "powerhouse");
-        const dictionaryFilePath = path.join(pwd, "resources", dictionaryFileName);
-        const dataPath = path.join(pwd, ".data");
+        const powerHousePath = path.join(distPath, "bots", "birdbot", "powerhouse", "release", "powerhouse");
+        const dictionaryFilePath = path.join(resourcesPath, dictionaryFileName);
 
         const powerhouseProcess = spawn(powerHousePath, [dictionaryId, dictionaryFilePath, dataPath]);
 
         powerhouseProcess.on("exit", async (code) => {
             if (code === 0) {
-                const dictionaryMetadataFilePath = path.join(pwd, ".data", `${dictionaryId}.bbdm`);
+                const dictionaryMetadataFilePath = path.join(dataPath, `${dictionaryId}.bbdm`);
 
                 const dictionaryMetadataFileContent = await Utilitary.readArrayFromFileAsync(
                     dictionaryMetadataFilePath
@@ -28,7 +27,7 @@ export async function loadDictionaryMetadata(
                 if (!dictionaryMetadataString) {
                     reject(`Could not generate dictionary metadata for ${dictionaryId}`);
                 }
-                const dictionaryMetadata = JSON.parse(dictionaryMetadataString) as DictionaryMetadata;
+                const dictionaryMetadata = JSON.parse(dictionaryMetadataString) as CacheableDictionaryMetadata;
 
                 const timestamp2 = performance.now();
                 Logger.log({
@@ -50,11 +49,9 @@ export async function loadDictionaryResource(
     dictionaryFileName: string
 ): Promise<DictionaryResource> {
     return new Promise((resolve, reject) => {
-        const pwd = process.env.PWD as string;
         const timestamp1 = performance.now();
-        const powerHousePath = path.join(pwd, "dist", "bots", "birdbot", "powerhouse", "release", "powerhouse");
-        const dictionaryFilePath = path.join(pwd, "resources", dictionaryFileName);
-        const dataPath = path.join(pwd, ".data");
+        const powerHousePath = path.join(distPath, "bots", "birdbot", "powerhouse", "release", "powerhouse");
+        const dictionaryFilePath = path.join(resourcesPath, dictionaryFileName);
 
         const powerhouseProcess = spawn(powerHousePath, [dictionaryId, dictionaryFilePath, dataPath]);
 
@@ -62,7 +59,7 @@ export async function loadDictionaryResource(
             if (code === 0) {
                 const timestamp2 = performance.now();
 
-                const dictionaryMetadataFilePath = path.join(pwd, ".data", `${dictionaryId}.bbdm`);
+                const dictionaryMetadataFilePath = path.join(dataPath, `${dictionaryId}.bbdm`);
 
                 const [dictionaryResourceArray, dictionaryMetadataFileContent] = await Promise.all([
                     Utilitary.readArrayFromFileAsync(dictionaryFilePath),
@@ -72,11 +69,16 @@ export async function loadDictionaryResource(
                 if (!dictionaryMetadataString) {
                     reject(`Could not generate dictionary metadata for ${dictionaryId}`);
                 }
-                const dictionaryMetadata = JSON.parse(dictionaryMetadataString) as DictionaryMetadata;
+                const dictionaryMetadata = JSON.parse(dictionaryMetadataString) as CacheableDictionaryMetadata;
 
                 const dictionaryResource: DictionaryResource = {
                     resource: dictionaryResourceArray,
-                    metadata: dictionaryMetadata,
+                    metadata: {
+                        ...dictionaryMetadata,
+                        testWords: [],
+                        language: dictionaryId,
+                        fileName: dictionaryFileName,
+                    },
                 };
                 const timestamp3 = performance.now();
                 Logger.log({

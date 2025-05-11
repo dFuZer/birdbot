@@ -1,10 +1,12 @@
 import { randomUUID } from "crypto";
 import fs, { createReadStream, readFileSync } from "fs";
+import path from "path";
 import readline from "readline";
 import { v5 as uuidv5 } from "uuid";
 import WebSocket from "ws";
 import type NetworkAdapter from "../abstract/NetworkAdapter.abstract.class";
 import { NAMESPACE_UUID } from "../env";
+import { dataPath } from "../paths";
 import type { GameData, Gamer, Player } from "../types/gameTypes";
 import type { BotEventHandler, BotEventPreviousHandlersCtx, EventCtx } from "../types/libEventTypes";
 import type Bot from "./Bot.class";
@@ -31,11 +33,10 @@ export default class Utilitary {
     }
 
     public static readFileInDataFolder(fileName: string): string | null {
-        const dataFolder = "./.data";
-        if (!fs.existsSync(dataFolder)) {
+        if (!fs.existsSync(dataPath)) {
             return null;
         }
-        const filePath = `${dataFolder}/${fileName}`;
+        const filePath = path.join(dataPath, fileName);
         if (!fs.existsSync(filePath)) {
             return null;
         }
@@ -47,11 +48,10 @@ export default class Utilitary {
     }
 
     public static writeFileInDataFolder(fileName: string, content: string) {
-        const dataFolder = "./.data";
-        if (!fs.existsSync(dataFolder)) {
-            fs.mkdirSync(dataFolder);
+        if (!fs.existsSync(dataPath)) {
+            fs.mkdirSync(dataPath);
         }
-        fs.writeFileSync(`${dataFolder}/${fileName}`, content);
+        fs.writeFileSync(path.join(dataPath, fileName), content);
     }
 
     public static sendChatMessage(ws: WebSocket, message: string, adapter: NetworkAdapter) {
@@ -289,12 +289,31 @@ export default class Utilitary {
         return array;
     }
 
+    public static insertionSort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {
+        const n = arr.length;
+        for (let i = 1; i < n; i++) {
+            const currentElement = arr[i];
+            let j = i - 1;
+            while (j >= 0 && compare(arr[j], currentElement) > 0) {
+                arr[j + 1] = arr[j];
+                j--;
+            }
+            arr[j + 1] = currentElement;
+        }
+        return arr;
+    }
+
     public static handleCommandIfExists(
         ctx: EventCtx,
         rawMessage: string,
         gamer: Gamer,
         commands: Command[]
-    ): "no-command-given" | "command-not-found" | "trying-to-handle-command" | "no-command-attempted" | "not-room-creator" {
+    ):
+        | "no-command-given"
+        | "command-not-found"
+        | "trying-to-handle-command"
+        | "no-command-attempted"
+        | "not-room-creator" {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
         const commandPrefixes = ["!", "/", "."];
         if (commandPrefixes.some((prefix) => normalizedMessage.startsWith(prefix))) {
@@ -312,7 +331,12 @@ export default class Utilitary {
             const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
             if (
-                !((command.roomCreatorRequired && ctx.room.constantRoomData.roomCreatorUsername === gamer.identity.name) || ctx.utils.userIsAdmin(gamer.identity.name) || !command.roomCreatorRequired)
+                !(
+                    (command.roomCreatorRequired &&
+                        ctx.room.constantRoomData.roomCreatorUsername === gamer.identity.name) ||
+                    ctx.utils.userIsAdmin(gamer.identity.name) ||
+                    !command.roomCreatorRequired
+                )
             ) {
                 return "not-room-creator";
             }

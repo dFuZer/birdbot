@@ -1,3 +1,5 @@
+import { writeFile } from "fs/promises";
+import path from "path";
 import type WebSocket from "ws";
 import type z from "zod";
 import type NetworkAdapter from "../../lib/abstract/NetworkAdapter.abstract.class";
@@ -5,10 +7,12 @@ import { CommandOrEventCtx } from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
+import { resourcesPath } from "../../lib/paths";
 import type { DictionaryId, DictionaryLessGameRules, Gamer, GameRules } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
 import { birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
+import { loadDictionaryMetadata } from "./BirdBotPowerHouse";
 import { t } from "./BirdBotTexts";
 import {
     BirdBotGameData,
@@ -48,7 +52,6 @@ export default class BirdBotUtils {
         if (currentPlayer.gamerId !== ctx.room.roomState.myGamerId) return;
         const myPlayer = currentPlayer;
         const dictionaryResource = this.getCurrentDictionaryResource(ctx);
-        console.log({ dictionaryResource });
         const history = ctx.room.roomState.wordHistory;
         const prompt = ctx.room.roomState.gameData!.round.prompt;
         const ws = ctx.room.ws!;
@@ -76,6 +79,15 @@ export default class BirdBotUtils {
             });
             this.submitWord({ word: foundWord ?? "💥", ws, adapter: ctx.bot.networkAdapter });
         } else if (mode === "random") {
+            const testList = dictionaryResource.metadata.testWords;
+            for (const testWord of testList) {
+                if (isWordValid(testWord.word)) {
+                    this.submitWord({ word: testWord.word, ws, adapter: ctx.bot.networkAdapter });
+                    return;
+                } else {
+                    console.log(testWord.word.indexOf(prompt) !== -1, history.indexOf(testWord.word));
+                }
+            }
             const foundWord = this.getRandomValidWord({ dictionary: dictionaryResource.resource, isWordValid });
             this.submitWord({ word: foundWord ?? "💥", ws, adapter: ctx.bot.networkAdapter });
         }
@@ -631,7 +643,7 @@ export default class BirdBotUtils {
         return syllables;
     };
 
-    public static getCurrentDictionaryResource = (ctx: EventCtx) => {
+    public static getCurrentRoomLanguage = (ctx: EventCtx) => {
         const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
         const roomLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
         if (!roomLanguage) {
@@ -643,7 +655,27 @@ export default class BirdBotUtils {
                 `Tried to create a room for unsupported dictionary id ${roomDictionaryId}. This should not happen.`
             );
         }
+        return roomLanguage;
+    };
+
+    public static getCurrentDictionaryResource = (ctx: EventCtx) => {
+        const roomLanguage = this.getCurrentRoomLanguage(ctx);
         return ctx.bot.getResource<DictionaryResource>(`dictionary-${roomLanguage}`);
+    };
+
+    public static saveDictionaryResource = async (ctx: EventCtx, roomLanguage: BirdBotLanguage) => {
+        const dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${roomLanguage}`);
+        const dictionaryMetadata = dictionaryResource.metadata;
+
+        Utilitary.insertionSort(dictionaryResource.resource, (a, b) => a.localeCompare(b));
+
+        await writeFile(path.join(resourcesPath, dictionaryMetadata.fileName), dictionaryResource.resource.join("\n"));
+
+        const newDictionaryMetadata = await loadDictionaryMetadata(roomLanguage, dictionaryMetadata.fileName);
+        dictionaryResource.metadata.letterRarityScores = newDictionaryMetadata.letterRarityScores;
+        dictionaryResource.metadata.syllablesCount = newDictionaryMetadata.syllablesCount;
+        dictionaryResource.metadata.topFlipWords = newDictionaryMetadata.topFlipWords;
+        dictionaryResource.metadata.topSnWords = newDictionaryMetadata.topSnWords;
     };
 
     public static setupRoomMetadata = (ctx: EventCtx) => {

@@ -642,7 +642,8 @@ const testCommand = c({
     usageDesc: "/test",
     hidden: true,
     handler: (ctx) => {
-        ctx.room.ws.close();
+        const dict = ctx.bot.getResource<DictionaryResource>(`dictionary-fr`);
+        ctx.utils.sendChatMessage(dict.metadata.testWords.map((x) => x.word).join(" "));
     },
 }) satisfies Command;
 
