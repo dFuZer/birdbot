@@ -1,64 +1,91 @@
-# BirdBot Monorepo
+# 🐦 BirdBot Monorepo
 
-BirdBot is an automated player designed to play BombParty, a game available on the croco.games platform. This monorepo contains all the necessary modules for BirdBot to function.
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-23.7-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-While BirdBot never loses, playing against it offers several advantages for players:
+> An automated player for BombParty on croco.games platform, designed to help players improve their skills through practice and analysis.
 
-*   **Practice:** Focus on improving your own skills against a consistent opponent.
-*   **Track Progress:** Games are saved, allowing you to monitor your improvement and personal bests.
-*   **Research:** Access tools for researching words to improve scores in specific categories.
-*   **Innovative Game Modes:** Experience fun and unique game modes and record categories beyond the classic BombParty.
+## ✨ Features
 
-## Setup
+- 🎯 **Practice Mode**: Train against a consistent, high-performance opponent
+- 📊 **Progress Tracking**: Save and analyze your game history
+- 🔍 **Research Tools**: Access word research tools for specific categories
+- 🎮 **Custom Game Modes**: Experience unique game modes beyond classic BombParty
 
-To get BirdBot up and running:
+## 🚀 Quick Start
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository_url>
-    ```
-2.  **Configure Environment Variables:**
-    Navigate to the root of the cloned repository and rename `.env.example` to `.env`. Modify the environment variables within this file to match your desired configuration.
-3.  **Run the Production Script:**
-    Execute the production setup script:
-    ```bash
-    ./prod.sh
-    ```
-    This script will build and orchestrate the various BirdBot modules using Docker.
+### Production Setup
 
-## Project Stack
+1. **Clone the repository**
+   ```bash
+   git clone <repository_url>
+   ```
 
-This monorepo utilizes the following technologies:
+2. **Configure Environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-*   **Database:** PostgreSQL
-*   **API Module:** Fastify (TypeScript)
-*   **Website Module:** Next.js (TypeScript)
-*   **Bot Module:** TypeScript, using the `ws` npm package.
-*   **Containerization:** All modules run within Docker containers, orchestrated by `docker-compose`, utilizing Node.js 23.7 on Alpine images.
+3. **Launch with Docker**
+   ```bash
+   ./prod.sh
+   ```
 
-## Developer Implementation - Network Adapter
+## 🏗️ Tech Stack
 
-For the bot module to function correctly, developers **must implement the `NetworkAdapter` class**. A working implementation of this class is **gitignored** to prevent cheating on the croco.games platform, in accordance with the wishes of the croco.games team. Implementing the `NetworkAdapter` involves reverse-engineering the croco.games protocol.
+| Component | Technology |
+|-----------|------------|
+| Database | PostgreSQL |
+| API | Fastify (TypeScript) |
+| Frontend | Next.js (TypeScript) |
+| Bot | TypeScript + WebSocket |
+| Runtime | Docker + Node.js 23.7 (Alpine) |
 
-## Development Setup (Individual Modules)
+## 👨‍💻 Development Guide
 
-It is possible to run each module individually during development:
+### Prerequisites
 
-1.  **Open Database Port:**
-    Run the following script to expose the database on port 5432:
-    ```bash
-    ./launch-open-db.sh
-    ```
-2.  **Add .env Files:**
-    Create `.env` files within the `api`, `bot`, and `website` module directories, adding the necessary environment variables for each module.
-3.  **Run Modules:**
-    *   For the `api` and `website` modules:
-        ```bash
-        npm run dev
-        ```
-    *   For the `bot` module:
-        ```bash
-        npm run u
-        ```
-        This command runs the gitignored `index.unstable.ts` script, allowing developers to test bot scripts without affecting version control. Developers will need to create this file, using `index.example.ts` as a guide.
+For development:
+- Docker (for PostgreSQL)
+- Node.js v23.7+
+- Rust 1.86+
 
+For production:
+- Docker
+
+### Development Setup
+
+1. **Start Development Database**
+   ```bash
+   ./launch-open-db.sh
+   ```
+
+2. **Configure Module Environments**
+   - Create `.env` files in `api/`, `bot/`, and `website/` directories
+   - Use provided example files as templates
+
+3. **Run Individual Modules**
+
+   **API & Website:**
+   ```bash
+   npm run dev
+   ```
+
+   **Bot Module:**
+   ```bash
+   ./build_birdbot_powerhouse.sh
+   npm run u
+   ```
+
+### Important Note for Developers
+
+The `NetworkAdapter` class implementation is intentionally gitignored to comply with croco.games platform policies. Developers must implement this class by reverse-engineering the croco.games protocol. Use `index.example.ts` as a reference for creating your `index.unstable.ts` file.
+
+---
+
+<div align="center">
+Made with ❤️ for the BombParty community
+</div>
