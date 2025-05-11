@@ -22,7 +22,6 @@ import {
     sortWordsModeRecords,
     WEBSITE_LINK,
 } from "./BirdBotConstants";
-import { t } from "./BirdBotTexts";
 import {
     BirdBotGameMode,
     BirdBotLanguage,
@@ -36,6 +35,7 @@ import BirdBotUtils, {
     type ApiResponseAllRecords,
     type ApiResponseBestScoresSpecificRecord,
 } from "./BirdBotUtils.class";
+import { l, t } from "./texts/BirdBotTextUtils";
 
 const c = CommandUtils.createCommandHelper;
 
@@ -50,21 +50,24 @@ const helpCommand = c({
                 .filter((command) => !command.adminRequired)
                 .map((c) => `/${c.aliases[0]}`)
                 .join(" - ");
-            ctx.utils.sendChatMessage(t("command.help.list", { commandList: commandFirstAliases }));
+            ctx.utils.sendChatMessage(t("command.help.list", { commandList: commandFirstAliases, lng: l(ctx) }));
             return;
         }
         const requestedCommand = ctx.args[0]!;
         const command = birdbotCommands.find((c) => c.aliases.includes(requestedCommand));
         if (!command) {
-            ctx.utils.sendChatMessage(t("eventHandler.chat.commandNotFound", { command: requestedCommand }));
+            ctx.utils.sendChatMessage(
+                t("eventHandler.chat.commandNotFound", { command: requestedCommand, lng: l(ctx) })
+            );
             return;
         }
         ctx.utils.sendChatMessage(
             t("command.help.details", {
                 commandName: command.aliases[0],
-                description: t(`command.${command.id}.description`),
+                description: t(`command.${command.id}.description`, { lng: l(ctx) }),
                 usage: command.usageDesc,
                 example: command.exampleUsage,
+                lng: l(ctx),
             })
         );
     },
@@ -132,7 +135,9 @@ const recordsCommand = c({
                                 context: "specific",
                                 count: score.score,
                                 formattedScore: recordsUtils[targetRecordType].format(score.score),
+                                lng: l(ctx),
                             }),
+                            lng: l(ctx),
                         })}`
                 )
                 .join(" — ");
@@ -143,6 +148,7 @@ const recordsCommand = c({
                     gameMode: t(`lib.mode.${mode}`),
                     recordType: t(`lib.recordType.${targetRecordType}.recordName`),
                     records,
+                    lng: l(ctx),
                 })
             );
         } else {
@@ -155,7 +161,9 @@ const recordsCommand = c({
                         score: t(`lib.recordType.${score.record_type}.score`, {
                             count: score.score,
                             formattedScore: recordsUtils[score.record_type].format(score.score),
+                            lng: l(ctx),
                         }),
+                        lng: l(ctx),
                     })}`;
                 })
                 .join(" — ");
@@ -165,6 +173,7 @@ const recordsCommand = c({
                     languageFlag: t(`lib.language.${language}.flag`),
                     gameMode: t(`lib.mode.${mode}`),
                     records,
+                    lng: l(ctx),
                 })
             );
         }
@@ -184,11 +193,11 @@ const currentGameScoresCommand = c({
         }
 
         function sendResults(username: string, playerStats: PlayerGameScores) {
-            const scores = BirdBotUtils.getFormattedPlayerScores(playerStats);
+            const scores = BirdBotUtils.getFormattedPlayerScores(playerStats, l(ctx));
             if (scores.length > 0) {
-                ctx.utils.sendChatMessage(t("command.currentGameScore.result", { username, scores }));
+                ctx.utils.sendChatMessage(t("command.currentGameScore.result", { username, scores, lng: l(ctx) }));
             } else {
-                ctx.utils.sendChatMessage(t("command.currentGameScore.noScores", { username }));
+                ctx.utils.sendChatMessage(t("command.currentGameScore.noScores", { username, lng: l(ctx) }));
             }
         }
 
@@ -265,21 +274,23 @@ const setGameModeCommand = c({
             if (roomMetadata.gameMode === targetGameMode) {
                 ctx.utils.sendChatMessage(
                     t("command.setGameMode.alreadySet", {
-                        gameMode: t(`lib.mode.${targetGameMode}`),
+                        gameMode: t(`lib.mode.${targetGameMode}`, { lng: l(ctx) }),
+                        lng: l(ctx),
                     })
                 );
                 return;
             }
             ctx.utils.sendChatMessage(
                 t("command.setGameMode.setting", {
-                    gameMode: t(`lib.mode.${targetGameMode}`),
+                    gameMode: t(`lib.mode.${targetGameMode}`, { lng: l(ctx) }),
+                    lng: l(ctx),
                 })
             );
             const targetGameModeRules = birdbotModeRules[targetGameMode];
 
             BirdBotUtils.setRoomGameMode(ctx, targetGameModeRules);
         } else {
-            ctx.utils.sendChatMessage(t("error.invalid.gameMode"));
+            ctx.utils.sendChatMessage(t("error.invalid.gameMode", { lng: l(ctx) }));
         }
     },
 }) satisfies Command;
@@ -302,14 +313,16 @@ const setRoomLanguageCommand = c({
             if (ctx.room.roomState.gameData!.rules.dictionaryId === targetLanguage) {
                 ctx.utils.sendChatMessage(
                     t("error.notSupported.language", {
-                        language: t(`lib.language.${targetLanguage}.name`),
+                        language: t(`lib.language.${targetLanguage}.name`, { lng: l(ctx) }),
+                        lng: l(ctx),
                     })
                 );
                 return;
             }
             ctx.utils.sendChatMessage(
                 t("command.setRoomLanguage.setting", {
-                    language: t(`lib.language.${targetLanguage}.name`),
+                    language: t(`lib.language.${targetLanguage}.name`, { lng: l(ctx) }),
+                    lng: l(ctx),
                 })
             );
             BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", birdbotLanguageToDictionaryId[targetLanguage]);
@@ -332,7 +345,10 @@ const searchWordsCommand = c({
         if (allParamRecords.some((record) => nonSensicalSearchRecords.includes(record))) {
             ctx.utils.sendChatMessage(
                 t("error.searchWords.nonsensicalRecordSearch", {
-                    records: allParamRecords.map((record) => t(`lib.recordType.${record}.recordName`)).join(", "),
+                    records: allParamRecords
+                        .map((record) => t(`lib.recordType.${record}.recordName`, { lng: l(ctx) }))
+                        .join(", "),
+                    lng: l(ctx),
                 })
             );
             return;
@@ -341,14 +357,18 @@ const searchWordsCommand = c({
         if (allParamRecords.includes("previous_syllable")) {
             ctx.utils.sendChatMessage(
                 t("command.searchWords.previousSyllableHint", {
-                    recordType: t("lib.recordType.previous_syllable.recordName"),
+                    recordType: t("lib.recordType.previous_syllable.recordName", { lng: l(ctx) }),
+                    lng: l(ctx),
                 })
             );
             return;
         }
         if (allParamRecords.includes("alpha")) {
             ctx.utils.sendChatMessage(
-                t("command.searchWords.alphaHint", { recordType: t("lib.recordType.alpha.recordName") })
+                t("command.searchWords.alphaHint", {
+                    recordType: t("lib.recordType.alpha.recordName", { lng: l(ctx) }),
+                    lng: l(ctx),
+                })
             );
             return;
         }
@@ -367,11 +387,12 @@ const searchWordsCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.searchWords.multipleSortRecords", {
                     sortRecords: sortWordsModeRecords
-                        .map((record) => t(`lib.recordType.${record}.recordName`))
+                        .map((record) => t(`lib.recordType.${record}.recordName`, { lng: l(ctx) }))
                         .join(", "),
                     filterRecords: filterWordsModeRecords
-                        .map((record) => t(`lib.recordType.${record}.recordName`))
+                        .map((record) => t(`lib.recordType.${record}.recordName`, { lng: l(ctx) }))
                         .join(", "),
+                    lng: l(ctx),
                 })
             );
             return;
@@ -383,7 +404,12 @@ const searchWordsCommand = c({
         } else {
             const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
             if (!birdbotSupportedDictionaryIds.includes(roomDictionaryId as any)) {
-                ctx.utils.sendChatMessage(t("error.notSupported.language", { language: roomDictionaryId }));
+                ctx.utils.sendChatMessage(
+                    t("error.notSupported.language", {
+                        language: roomDictionaryId,
+                        lng: l(ctx),
+                    })
+                );
                 return;
             }
             const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
@@ -394,7 +420,7 @@ const searchWordsCommand = c({
         try {
             dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
         } catch (e) {
-            ctx.utils.sendChatMessage(t("error.404.dictionaryResource"));
+            ctx.utils.sendChatMessage(t("error.404.dictionaryResource", { lng: l(ctx) }));
             return;
         }
         let searchList: string[];
@@ -405,7 +431,7 @@ const searchWordsCommand = c({
             searchList = dictionaryResource.metadata.topSnWords.map((obj) => obj[0]);
         } else if (requestedSortRecords.includes("multi_syllable")) {
             if (ctx.args.length > 1) {
-                ctx.utils.sendChatMessage(t("error.searchWords.mustProvideOneSyllable"));
+                ctx.utils.sendChatMessage(t("error.searchWords.mustProvideOneSyllable", { lng: l(ctx) }));
                 return;
             }
             const syllable = ctx.args[0];
@@ -426,7 +452,7 @@ const searchWordsCommand = c({
                 const reg = new RegExp(arg);
                 regexes.push(reg);
             } catch (e) {
-                ctx.utils.sendChatMessage(t("error.invalid.regex", { regex: arg }));
+                ctx.utils.sendChatMessage(t("error.invalid.regex", { regex: arg, lng: l(ctx) }));
                 return;
             }
         }
@@ -537,6 +563,7 @@ const searchWordsCommand = c({
                     resultCount: foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount,
                     hiddenCount: moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount,
                     wordsList: cutResults.join(" ").toUpperCase(),
+                    lng: l(ctx),
                 })
             );
         } else {
@@ -545,6 +572,7 @@ const searchWordsCommand = c({
                     recordTypes: targetRecordsString,
                     resultCount: foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount,
                     hiddenCount: moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount,
+                    lng: l(ctx),
                 })
             );
         }
@@ -626,6 +654,7 @@ const playerProfileCommand = c({
             languageFlag: t(`lib.language.${playerData.language}.flag`),
             gameMode: t(`lib.mode.${playerData.mode}`),
             playerUsername: playerData.playerUsername,
+            lng: l(ctx),
         };
 
         if (playerData.records.length === 0) {
@@ -700,7 +729,9 @@ const rareSyllablesCommand = c({
             const syllableCountInWord = dictionarySyllables[syllable];
 
             if (!syllableCountInWord) {
-                ctx.utils.sendChatMessage(t("command.rareSyllables.errorSyllableNotInDictionary", { syllable }));
+                ctx.utils.sendChatMessage(
+                    t("command.rareSyllables.errorSyllableNotInDictionary", { syllable, lng: l(ctx) })
+                );
                 return;
             }
 
@@ -715,6 +746,7 @@ const rareSyllablesCommand = c({
                     languageFlag: t(`lib.language.${targetLanguage}.flag`),
                     word: targetWord,
                     rareSyllables: rareSyllables.map((s) => `${s.syllable}: ${s.count}`).join(", "),
+                    lng: l(ctx),
                 })
             );
         } else {
@@ -722,6 +754,7 @@ const rareSyllablesCommand = c({
                 t("command.rareSyllables.noneFound", {
                     languageFlag: t(`lib.language.${targetLanguage}.flag`),
                     word: targetWord,
+                    lng: l(ctx),
                 })
             );
         }
@@ -739,7 +772,9 @@ const broadcastCommand = c({
         for (const roomId in ctx.bot.rooms) {
             const room = ctx.bot.rooms[roomId];
             if (room.ws && room.ws.readyState === WebSocket.OPEN) {
-                room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(t("command.broadcast.message", { message })));
+                room.ws.send(
+                    ctx.bot.networkAdapter.getSendChatMessage(t("command.broadcast.message", { message, lng: l(ctx) }))
+                );
             }
         }
     },
@@ -750,7 +785,7 @@ const discordCommand = c({
     aliases: ["discord"],
     usageDesc: "/discord",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(t("command.discord.result", { link: DISCORD_SERVER_LINK }));
+        ctx.utils.sendChatMessage(t("command.discord.result", { link: DISCORD_SERVER_LINK, lng: l(ctx) }));
     },
 }) satisfies Command;
 
@@ -759,7 +794,7 @@ const githubCommand = c({
     aliases: ["github"],
     usageDesc: "/github",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(t("command.github.result", { link: GITHUB_REPO_LINK }));
+        ctx.utils.sendChatMessage(t("command.github.result", { link: GITHUB_REPO_LINK, lng: l(ctx) }));
     },
 }) satisfies Command;
 
@@ -768,7 +803,7 @@ const donateCommand = c({
     aliases: ["donate"],
     usageDesc: "/donate",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(t("command.donate.result", { link: PAYPAL_DONATE_LINK }));
+        ctx.utils.sendChatMessage(t("command.donate.result", { link: PAYPAL_DONATE_LINK, lng: l(ctx) }));
     },
 }) satisfies Command;
 
@@ -777,7 +812,7 @@ const websiteCommand = c({
     aliases: ["website"],
     usageDesc: "/website",
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(t("command.website.result", { link: WEBSITE_LINK }));
+        ctx.utils.sendChatMessage(t("command.website.result", { link: WEBSITE_LINK, lng: l(ctx) }));
     },
 }) satisfies Command;
 
@@ -788,7 +823,7 @@ const uptimeCommand = c({
     handler: (ctx) => {
         const uptimeMs = process.uptime() * 1000;
         const uptimeString = Utilitary.formatTime(uptimeMs);
-        ctx.utils.sendChatMessage(t("command.uptime.result", { uptime: uptimeString }));
+        ctx.utils.sendChatMessage(t("command.uptime.result", { uptime: uptimeString, lng: l(ctx) }));
     },
 }) satisfies Command;
 
@@ -819,7 +854,7 @@ const modUserCommand = c({
             role,
         });
 
-        ctx.utils.sendChatMessage(t("command.modUser.modding", { username: gamer.identity.nickname }));
+        ctx.utils.sendChatMessage(t("command.modUser.modding", { username: gamer.identity.nickname, lng: l(ctx) }));
 
         ctx.room.ws.send(message);
     },
@@ -851,7 +886,7 @@ const unmodUserCommand = c({
             role,
         });
 
-        ctx.utils.sendChatMessage(t("command.unmodUser.unmodding", { username: gamer.identity.nickname }));
+        ctx.utils.sendChatMessage(t("command.unmodUser.unmodding", { username: gamer.identity.nickname, lng: l(ctx) }));
 
         ctx.room.ws.send(message);
     },
@@ -921,7 +956,7 @@ const showAllRoomsCommand = c({
             })
             .join(" - ");
 
-        ctx.utils.sendChatMessage(t("command.showAllRooms.result", { roomsList }));
+        ctx.utils.sendChatMessage(t("command.showAllRooms.result", { roomsList, lng: l(ctx) }));
     },
 }) satisfies Command;
 
@@ -944,7 +979,10 @@ const createRoomCommand = c({
             !birdbotSupportedDictionaryIds.includes(birdbotLanguageToDictionaryId[targetLanguage] as any)
         ) {
             ctx.utils.sendChatMessage(
-                t("error.notSupported.language", { language: t(`lib.language.${targetLanguage}.name`) })
+                t("error.notSupported.language", {
+                    language: t(`lib.language.${targetLanguage}.name`, { lng: l(ctx) }),
+                    lng: l(ctx),
+                })
             );
             return;
         }
@@ -959,7 +997,9 @@ const createRoomCommand = c({
             callback: (roomCode) => {
                 if (ctx.room.isHealthy()) {
                     ctx.room.ws.send(
-                        ctx.bot.networkAdapter.getSendChatMessage(t("command.createRoom.roomCreated", { roomCode }))
+                        ctx.bot.networkAdapter.getSendChatMessage(
+                            t("command.createRoom.roomCreated", { roomCode, lng: l(ctx) })
+                        )
                     );
                 }
             },

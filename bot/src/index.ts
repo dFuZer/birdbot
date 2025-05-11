@@ -1,8 +1,11 @@
+import i18next from "i18next";
 import BirdBot from "./bots/birdbot/BirdBot.class";
 import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import { DictionaryResource } from "./bots/birdbot/BirdBotTypes";
+import { birdbotTextResource } from "./bots/birdbot/texts/BirdBotTextUtils";
 import Logger from "./lib/class/Logger.class";
 import Utilitary from "./lib/class/Utilitary.class";
+
 // @ts-ignore
 import WorkingNetworkAdapter from "./lib/class/private/WorkingNetworkAdapter.class";
 
@@ -42,6 +45,15 @@ async function start() {
     bot.resourceManager.set<DictionaryResource>(`dictionary-de`, germanDictionaryResource);
     bot.resourceManager.set<DictionaryResource>(`dictionary-it`, italianDictionaryResource);
     bot.resourceManager.set<DictionaryResource>(`dictionary-brpt`, portugueseDictionaryResource);
+
+    await i18next.init({
+        lng: "en",
+        fallbackLng: "en",
+        interpolation: {
+            escapeValue: false,
+        },
+        resources: birdbotTextResource,
+    });
 
     await bot.init({ adminAccountUsernames: admins });
 

@@ -13,7 +13,6 @@ import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes"
 import { birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
 import { loadDictionaryMetadata } from "./BirdBotPowerHouse";
-import { t } from "./BirdBotTexts";
 import {
     BirdBotGameData,
     BirdBotGameMode,
@@ -27,6 +26,7 @@ import {
     DictionaryResource,
     PlayerGameScores,
 } from "./BirdBotTypes";
+import { l, t } from "./texts/BirdBotTextUtils";
 
 export type ApiResponseAllRecords = {
     message: string;
@@ -165,14 +165,17 @@ export default class BirdBotUtils {
 
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         if (gameRecap.wordsCount === 0) {
-            ctx.utils.sendChatMessage(t("general.playerStats.diedNoWords", { username: gamer.identity.nickname }));
+            ctx.utils.sendChatMessage(
+                t("general.playerStats.diedNoWords", { username: gamer.identity.nickname, lng: l(ctx) })
+            );
         } else {
-            const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByGamerId[gamerId]);
+            const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByGamerId[gamerId], l(ctx));
             ctx.utils.sendChatMessage(
                 t("general.playerStats.died", {
                     username: gamer.identity.nickname,
                     time: recordsUtils.time.format(timeSurvived),
                     scores,
+                    lng: l(ctx),
                 })
             );
         }
@@ -329,7 +332,10 @@ export default class BirdBotUtils {
                 if (!isGameModeAlreadySet) {
                     roomMetadata.gameMode = gameModeKey as BirdBotGameMode;
                     ctx.utils.sendChatMessage(
-                        t("general.roomState.gameModeSet", { gameMode: t(`lib.mode.${gameModeKey}`) })
+                        t("general.roomState.gameModeSet", {
+                            gameMode: t(`lib.mode.${gameModeKey}`, { lng: l(ctx) }),
+                            lng: l(ctx),
+                        })
                     );
                 }
                 foundCorrespondingGameMode = true;
@@ -705,7 +711,7 @@ export default class BirdBotUtils {
         }
     };
 
-    public static getFormattedPlayerScores = (playerStats: PlayerGameScores) => {
+    public static getFormattedPlayerScores = (playerStats: PlayerGameScores, lng: BirdBotLanguage) => {
         const scores = [
             ["word", playerStats.words],
             ["flips", playerStats.flips],
@@ -726,6 +732,7 @@ export default class BirdBotUtils {
                     context: "specific",
                     count: x[1],
                     formattedScore: recordsUtils[x[0]].format(x[1]),
+                    lng,
                 })
             )
             .join(" — ");
