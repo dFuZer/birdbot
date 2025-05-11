@@ -1,7 +1,7 @@
 import { type RouteHandlerMethod } from "fastify";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
-import { calculateXpFromGameRecap } from "../helpers/calculateXpFromGame";
+import { calculateXpFromGameRecap } from "../helpers/xp";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
 import { gameRecap } from "../schemas/game.zod";

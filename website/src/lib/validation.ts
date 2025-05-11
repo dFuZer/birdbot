@@ -1,4 +1,4 @@
-import { SearchParamOption } from "@/lib/params";
+import { TSearchParamOption } from "@/lib/params";
 import { z } from "zod";
 import {
     languageEnumSchema,
@@ -9,21 +9,29 @@ import {
     type RecordsEnum,
 } from "./records";
 
-export const sortModeEnumSchema = z.enum(["experience", "records"]);
+export const sortModeEnumSchema = z.enum(["xp", "records", "pp"]);
 export type SortModeEnum = z.infer<typeof sortModeEnumSchema>;
 
-export function isValidRecordParam(record: SearchParamOption): record is RecordsEnum {
+export function isValidRecordParam(record: TSearchParamOption): record is RecordsEnum {
     return recordsEnumSchema.safeParse(record).success;
 }
 
-export function isValidGameModeParam(mode: SearchParamOption): mode is ModesEnum {
+export function isValidGameModeParam(mode: TSearchParamOption): mode is ModesEnum {
     return modesEnumSchema.safeParse(mode).success;
 }
 
-export function isValidLanguageParam(language: SearchParamOption): language is LanguageEnum {
+export function isValidLanguageParam(language: TSearchParamOption): language is LanguageEnum {
     return languageEnumSchema.safeParse(language).success;
 }
 
-export function isValidPlayersPageSortParam(sortParam: SearchParamOption): sortParam is SortModeEnum {
+export function isValidPlayersPageSortParam(sortParam: TSearchParamOption): sortParam is SortModeEnum {
     return sortModeEnumSchema.safeParse(sortParam).success;
+}
+
+export function tryGetNumberFromParam(numberParam: TSearchParamOption): number | undefined {
+    const n = Number(numberParam);
+    if (isNaN(n)) {
+        return undefined;
+    }
+    return n;
 }

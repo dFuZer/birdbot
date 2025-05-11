@@ -520,10 +520,21 @@ const playerProfileCommand: Command = c({
             xp: number;
             language: BirdBotLanguage;
             mode: BirdBotGameMode;
+            pp: number;
+            ppRank: number;
+            gamesPlayedCount: number;
+            recordsCount: number;
             records: {
                 record_type: BirdBotRecordType;
                 score: number;
                 rank: number;
+            }[];
+            bestPerformances: {
+                record_type: BirdBotRecordType;
+                score: number;
+                pp: number;
+                weighted_pp: number;
+                mode: BirdBotGameMode;
             }[];
         };
 

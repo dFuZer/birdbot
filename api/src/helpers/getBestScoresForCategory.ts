@@ -8,6 +8,7 @@ import {
     modeEnumToDatabaseEnumMap,
     recordEnumToDatabaseFieldMap,
 } from "./maps";
+import { getLevelDataFromXp } from "./xp";
 
 export default async function getBestScoresForCategory(params: z.infer<typeof getRecords>) {
     const { mode, lang } = params;
@@ -21,11 +22,14 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             player_username: string;
             score: number;
             record_type: GameRecapRecordField;
+            xp: number;
         }[];
 
         const bestScores: Results = await prisma.$queryRaw`
-            SELECT player_id, player_username, score, record_type
-            FROM leaderboard
+            SELECT l.player_id, l.player_username, l.score, l.record_type, p.xp
+            FROM leaderboard l
+            INNER JOIN player p
+            ON l.player_id = p.id
             WHERE "mode" = ${enumMode}::"game_mode"
             AND "language" = ${enumLang}::"language"
             AND rank = 1
@@ -34,9 +38,10 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
         return bestScores.map((score) => ({
             ...score,
             record_type: databaseFieldToRecordEnumMap[score.record_type],
+            xp: getLevelDataFromXp(score.xp),
         }));
     } else {
-        const { record, page, perPage } = params;
+        const { record, page = 1, perPage = 10 } = params;
         const enumRecord = recordEnumToDatabaseFieldMap[record as TRecord];
 
         type Results = {
@@ -44,11 +49,14 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             player_username: string;
             score: number;
             rank: number;
+            xp: number;
         }[];
 
         const bestScores: Results = await prisma.$queryRaw`
-            SELECT player_id, player_username, score, rank
-            FROM leaderboard
+            SELECT l.player_id, l.player_username, l.score, l.rank, p.xp
+            FROM leaderboard l
+            INNER JOIN player p
+            ON l.player_id = p.id
             WHERE "mode" = ${enumMode}::"game_mode"
             AND "language" = ${enumLang}::"language"
             AND "record_type" = ${enumRecord}
@@ -57,6 +65,9 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             OFFSET ${(page - 1) * perPage}
         `;
 
-        return bestScores;
+        return bestScores.map((score) => ({
+            ...score,
+            xp: getLevelDataFromXp(score.xp),
+        }));
     }
 }

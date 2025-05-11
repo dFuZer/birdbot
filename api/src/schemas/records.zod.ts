@@ -28,8 +28,8 @@ let getRecords = z
         lang: languageEnumSchema,
         mode: modeEnumSchema,
         record: recordsEnumSchema,
-        page: numericString,
-        perPage: numericString,
+        page: numericString.optional(),
+        perPage: numericString.optional(),
     })
     .or(
         z.object({

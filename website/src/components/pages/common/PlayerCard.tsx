@@ -1,7 +1,8 @@
 import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
-import OptionalImage from "@/components/ui/OptionalAvatar";
+import OptionalImage from "@/components/ui/OptionalImage";
 import { getTrophyGraphicByRank } from "@/components/ui/TrophyGraphic";
 import getPlaceStringFromRank from "@/lib/stringGenerators";
+import Link from "next/link";
 
 export default function PlayerCard<T extends IPlayerScoreCommonProps>({
     playerData,
@@ -11,7 +12,8 @@ export default function PlayerCard<T extends IPlayerScoreCommonProps>({
     PlayerCardContentSection: React.ReactNode;
 }) {
     return (
-        <div
+        <Link
+            href={`/players/${playerData.id}`}
             className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${playerData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}
         >
             <div className="flex items-center gap-8">
@@ -26,7 +28,7 @@ export default function PlayerCard<T extends IPlayerScoreCommonProps>({
                         />
                         <div className="truncate">
                             <p className="truncate font-bold text-nowrap">{playerData.name}</p>
-                            <p className="text-sm text-neutral-600">Level {playerData.level}</p>
+                            <p className="text-sm text-neutral-600">Level {playerData.xp.level}</p>
                         </div>
                     </div>
                 </div>
@@ -38,6 +40,6 @@ export default function PlayerCard<T extends IPlayerScoreCommonProps>({
                 <div className="h-[1px] flex-1 bg-neutral-200"></div>
             </div>
             {PlayerCardContentSection}
-        </div>
+        </Link>
     );
 }

@@ -3,7 +3,6 @@ import { z } from "zod";
 import findPlayerByUsername from "../helpers/findPlayerByUsername";
 import { getPlayerPreferredCategory } from "../helpers/getPlayerPreferredCategory";
 import getPlayerProfile from "../helpers/getPlayerProfile";
-import { databaseFieldToRecordEnumMap, GameRecapRecordField } from "../helpers/maps";
 import prisma from "../prisma";
 import { languageEnumSchema, modeEnumSchema } from "../schemas/records.zod";
 
@@ -70,12 +69,8 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
     }
 
     const finalProfileData = {
-        foundUsername: "name" in parsedData.data && foundUsername ? foundUsername : profileData.playerUsername,
         ...profileData,
-        records: profileData.records.map((record) => ({
-            ...record,
-            record_type: databaseFieldToRecordEnumMap[record.record_type as GameRecapRecordField],
-        })),
+        foundUsername: "name" in parsedData.data && foundUsername ? foundUsername : profileData.playerUsername,
     };
 
     return res.status(200).send(finalProfileData);

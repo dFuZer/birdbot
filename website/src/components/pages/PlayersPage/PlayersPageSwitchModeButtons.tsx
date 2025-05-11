@@ -1,54 +1,75 @@
 "use client";
 
+import useChangeSearchParam from "@/components/hooks/useChangeSearchParam";
 import { Button } from "@/components/ui/button";
 import { sortModeEnumSchema, type SortModeEnum } from "@/lib/validation";
-import { AcademicCapIcon as AcademicCapIconOutline, TrophyIcon as TrophyIconOutline } from "@heroicons/react/24/outline";
-import { AcademicCapIcon as AcademicCapIconSolid, TrophyIcon as TrophyIconSolid } from "@heroicons/react/24/solid";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import {
+    AcademicCapIcon as AcademicCapIconOutline,
+    SparklesIcon as SparklesIconOutline,
+    TrophyIcon as TrophyIconOutline,
+} from "@heroicons/react/24/outline";
+import {
+    AcademicCapIcon as AcademicCapIconSolid,
+    SparklesIcon as SparklesIconSolid,
+    TrophyIcon as TrophyIconSolid,
+} from "@heroicons/react/24/solid";
 
-export default function PlayersPageSwitchModeButtons() {
-    const router = useRouter();
-    const searchParams = useSearchParams();
+function SwitchButton({
+    label,
+    icon,
+    activeIcon,
+    active,
+    sortMode,
+    changeSearchParam,
+}: {
+    label: string;
+    icon: React.ReactNode;
+    activeIcon: React.ReactNode;
+    active: boolean;
+    sortMode: SortModeEnum;
+    changeSearchParam: (key: string, value: string) => void;
+}) {
+    return (
+        <Button
+            className={`transition-colors duration-250 sm:w-40 ${active ? "" : "bg-neutral-50"}`}
+            variant={active ? "primary" : "ghost"}
+            onClick={() => changeSearchParam("sort", sortMode)}
+        >
+            {active ? activeIcon : icon}
+            {label}
+        </Button>
+    );
+}
 
-    const currentSortMode = useMemo<SortModeEnum>(() => {
-        const sort = searchParams.get("sort");
-        if (sort === sortModeEnumSchema.Values.experience || sort === sortModeEnumSchema.Values.records) {
-            return sort;
-        }
-        return sortModeEnumSchema.Values.experience;
-    }, [searchParams]);
-
-    function onChangeMode(mode: SortModeEnum) {
-        router.push(`/players?sort=${mode}`);
-    }
+export default function PlayersPageSwitchModeButtons({ sortMode }: { sortMode: SortModeEnum }) {
+    const changeSearchParam = useChangeSearchParam();
 
     return (
         <div className="grid grid-cols-2 gap-3 sm:flex">
-            <Button
-                className={`!px-8 transition-colors duration-250 ${currentSortMode === sortModeEnumSchema.Values.experience ? "" : "bg-neutral-50"}`}
-                variant={currentSortMode === sortModeEnumSchema.Values.experience ? "primary" : "ghost"}
-                onClick={() => onChangeMode(sortModeEnumSchema.Values.experience)}
-            >
-                {currentSortMode === sortModeEnumSchema.Values.experience ? (
-                    <AcademicCapIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />
-                ) : (
-                    <AcademicCapIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />
-                )}
-                Experience
-            </Button>
-            <Button
-                className={`!px-8 transition-colors duration-250 ${currentSortMode === sortModeEnumSchema.Values.records ? "" : "bg-neutral-50"}`}
-                variant={currentSortMode === sortModeEnumSchema.Values.records ? "primary" : "ghost"}
-                onClick={() => onChangeMode(sortModeEnumSchema.Values.records)}
-            >
-                {currentSortMode === sortModeEnumSchema.Values.records ? (
-                    <TrophyIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />
-                ) : (
-                    <TrophyIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />
-                )}
-                Records
-            </Button>
+            <SwitchButton
+                label="Experience"
+                icon={<AcademicCapIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
+                activeIcon={<AcademicCapIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
+                active={sortMode === sortModeEnumSchema.Values.xp}
+                sortMode={sortModeEnumSchema.Values.xp}
+                changeSearchParam={changeSearchParam}
+            />
+            <SwitchButton
+                label="Records"
+                icon={<TrophyIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
+                activeIcon={<TrophyIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
+                active={sortMode === sortModeEnumSchema.Values.records}
+                sortMode={sortModeEnumSchema.Values.records}
+                changeSearchParam={changeSearchParam}
+            />
+            <SwitchButton
+                label="PP"
+                icon={<SparklesIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
+                activeIcon={<SparklesIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
+                active={sortMode === sortModeEnumSchema.Values.pp}
+                sortMode={sortModeEnumSchema.Values.pp}
+                changeSearchParam={changeSearchParam}
+            />
         </div>
     );
 }

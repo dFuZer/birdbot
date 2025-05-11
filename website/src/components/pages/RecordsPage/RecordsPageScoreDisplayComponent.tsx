@@ -24,9 +24,17 @@ type ScoreDisplayProps = {
     recordType: RecordsEnum;
 };
 
+function Sm({ children }: { children: React.ReactNode }) {
+    return <span className="text-sm font-normal text-neutral-500">{children}</span>;
+}
+
+function Md({ children }: { children: React.ReactNode }) {
+    return <span className="text-md font-bold text-neutral-950">{children}</span>;
+}
+
 export default function ScoreDisplayComponent({ score, recordType }: ScoreDisplayProps) {
     if (recordType === recordsEnumSchema.Values.time) {
-        return <div>{getTimeDisplayFromMilliseconds(score)}</div>;
+        return <Md>{getTimeDisplayFromMilliseconds(score)}</Md>;
     }
     if (
         [
@@ -37,19 +45,39 @@ export default function ScoreDisplayComponent({ score, recordType }: ScoreDispla
             recordsEnumSchema.Values.no_death,
         ].includes(recordType)
     ) {
-        return <div>{score} words</div>;
+        return (
+            <Md>
+                {score} <Sm>words</Sm>
+            </Md>
+        );
     }
     if ([recordsEnumSchema.Values.depleted_syllables as string].includes(recordType)) {
-        return <div>{score} syllables</div>;
+        return (
+            <Md>
+                {score} <Sm>syllables</Sm>
+            </Md>
+        );
     }
     if ([recordsEnumSchema.Values.hyphen as string, recordsEnumSchema.Values.more_than_20_letters].includes(recordType)) {
-        return <div>{score} letters</div>;
+        return (
+            <Md>
+                {score} <Sm>letters</Sm>
+            </Md>
+        );
     }
     if (recordsEnumSchema.Values.alpha === recordType) {
-        return <div>{getAlphaDisplay(score)}</div>;
+        return <Md>{getAlphaDisplay(score)}</Md>;
     }
     if (recordsEnumSchema.Values.flips === recordType) {
-        return <div>{score} flips</div>;
+        return (
+            <Md>
+                {score} <Sm>flips</Sm>
+            </Md>
+        );
     }
-    return <div>{score} points</div>;
+    return (
+        <Md>
+            {score} <Sm>points</Sm>
+        </Md>
+    );
 }

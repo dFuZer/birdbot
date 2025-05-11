@@ -10,14 +10,14 @@ export default function SupportPage() {
             <p className="mt-2 text-sm font-medium">
                 First of all, thank you so much for considering ways to support me and the project.
             </p>
-            <h2 className="mt-10 text-xl font-semibold">1. Donations</h2>
+            <h2 className="mt-10 text-xl font-semibold">1. Star us on GitHub</h2>
             <p className="mt-2">
-                If you want to support the project financially, you can do so by <strong>donating to the project</strong>. This
-                helps me cover the server costs of the project.
+                To support us you can also <strong>star the repository on GitHub</strong>. Similar to joining the Discord server,
+                this gives the project more credibility.
             </p>
-            <Link target="_blank" href={PAYPAL_DONATE_LINK} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
-                <SiPaypal className="fill-white" />
-                <span>Donate to BirdBot</span>
+            <Link target="_blank" href={GITHUB_REPO_LINK} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
+                <SiGithub className="fill-white" />
+                <span>Star us on GitHub</span>
             </Link>
             <h2 className="mt-10 text-xl font-semibold">2. Join the Discord server</h2>
             <p className="mt-2">
@@ -32,14 +32,14 @@ export default function SupportPage() {
                 <SiDiscord className="fill-white" />
                 <span>Join us on Discord</span>
             </Link>
-            <h2 className="mt-10 text-xl font-semibold">3. Star us on GitHub</h2>
+            <h2 className="mt-10 text-xl font-semibold">3. Donate</h2>
             <p className="mt-2">
-                To support us you can also <strong>star the repository on GitHub</strong>. Similar to joining the Discord server,
-                this gives the project more credibility.
+                If you want to support the project financially, you can do so by <strong>donating to the project</strong>. This
+                helps me cover the server costs of the project.
             </p>
-            <Link target="_blank" href={GITHUB_REPO_LINK} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
-                <SiGithub className="fill-white" />
-                <span>Star us on GitHub</span>
+            <Link target="_blank" href={PAYPAL_DONATE_LINK} className={buttonVariants({ variant: "primary", className: "mt-4" })}>
+                <SiPaypal className="fill-white" />
+                <span>Donate to BirdBot</span>
             </Link>
         </div>
     );

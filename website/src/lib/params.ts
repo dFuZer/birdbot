@@ -1,3 +1,3 @@
-export type TSearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+export type TSearchParams = Promise<{ [key: string]: TSearchParamOption }>;
 
-export type SearchParamOption = string | string[] | undefined;
+export type TSearchParamOption = string | string[] | undefined;
