@@ -3,6 +3,7 @@ import prisma from "../prisma";
 export default async function findPlayerByUsername(username: string) {
     type Result = { player_id: string; username: string }[];
 
+    const exactAccountNameMatchPlayersQuery = prisma.$queryRaw<Result>`SELECT p.id as player_id, p.account_name as username FROM player p WHERE p.account_name ILIKE ${username};`;
     const latestExactMatchPlayersQuery = prisma.$queryRaw<Result>`SELECT plu.player_id, plu.username FROM player_latest_username plu WHERE plu.username ILIKE ${username};`;
     const latestStartWithPlayersQuery = prisma.$queryRaw<Result>`SELECT plu.player_id, plu.username FROM player_latest_username plu WHERE plu.username ILIKE ${username} || '%';`;
     const latestContainsPlayersQuery = prisma.$queryRaw<Result>`SELECT plu.player_id, plu.username FROM player_latest_username plu WHERE plu.username ILIKE '%' || ${username} || '%';`;
@@ -11,6 +12,7 @@ export default async function findPlayerByUsername(username: string) {
     const anyContainsPlayersQuery = prisma.$queryRaw<Result>`SELECT pu.player_id, pu.username FROM player_username pu INNER JOIN player p ON p.id = pu.player_id WHERE pu.username ILIKE '%' || ${username} || '%';`;
 
     const [
+        exactAccountNameMatchPlayers,
         latestExactMatchPlayers,
         latestStartWithPlayers,
         latestContainsPlayers,
@@ -18,6 +20,7 @@ export default async function findPlayerByUsername(username: string) {
         anyStartWithPlayers,
         anyContainsPlayers,
     ] = await Promise.all([
+        exactAccountNameMatchPlayersQuery,
         latestExactMatchPlayersQuery,
         latestStartWithPlayersQuery,
         latestContainsPlayersQuery,
@@ -28,7 +31,10 @@ export default async function findPlayerByUsername(username: string) {
 
     let bestArray;
 
-    if (latestExactMatchPlayers.length) {
+    if (exactAccountNameMatchPlayers.length) {
+        // Exact match on account name
+        bestArray = exactAccountNameMatchPlayers;
+    } else if (latestExactMatchPlayers.length) {
         // Exact match on latest username
         bestArray = latestExactMatchPlayers;
     } else if (latestStartWithPlayers.length) {
