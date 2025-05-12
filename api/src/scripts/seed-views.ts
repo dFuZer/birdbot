@@ -1,10 +1,12 @@
 import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
+dotenv.config();
 
 async function seed() {
-    let prisma = new PrismaClient();
-    await prisma.$connect();
+  let prisma = new PrismaClient();
+  await prisma.$connect();
 
-    await prisma.$executeRaw`
+  await prisma.$executeRaw`
         create or replace view player_latest_username as
             (with un as (
                 select p.id as player_id, pu.username as player_username, row_number() over (partition by pu.player_id order by pu.created_at desc) as recency_rank
@@ -16,7 +18,7 @@ async function seed() {
         )
     `;
 
-    await prisma.$executeRaw`
+  await prisma.$executeRaw`
         CREATE MATERIALIZED VIEW IF NOT EXISTS leaderboard AS (
             WITH all_scores AS (
                 SELECT DISTINCT
@@ -179,7 +181,7 @@ async function seed() {
         );
     `;
 
-    await prisma.$executeRaw`
+  await prisma.$executeRaw`
         CREATE MATERIALIZED VIEW IF NOT EXISTS pp_leaderboard AS (
             WITH ct AS (
                 SELECT

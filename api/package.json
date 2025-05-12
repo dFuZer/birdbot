@@ -1,32 +1,35 @@
 {
-    "name": "api",
-    "scripts": {
-        "db:deploy": "npx prisma migrate deploy",
-        "dev:build": "tsc -w",
-        "dev:run": "nodemon --delay 100ms --watch dist dist/index.js",
-        "dev": "npm run build && concurrently npm:dev:*",
-        "build": "npx prisma generate && tsc",
-        "start": "node dist/index.js",
-        "sample": "node dist/scripts/add-sample-data.js",
-        "seed": "node dist/scripts/seed.js",
-        "reset-seed": "npm run build && npx prisma db push --force-reset && npm run seed",
-        "reset-seed-sample": "npm run build && npx prisma db push --force-reset && npm run seed && npm run sample"
-    },
-    "peerDependencies": {
-        "typescript": "^5.8.2"
-    },
-    "dependencies": {
-        "@prisma/client": "^6.5.0",
-        "@types/node": "^22.13.14",
-        "concurrently": "^9.1.2",
-        "dotenv": "^16.5.0",
-        "fastify": "^5.3.2",
-        "node-cron": "^3.0.3",
-        "nodemon": "^3.1.9",
-        "prisma": "^6.5.0",
-        "zod": "^3.24.1"
-    },
-    "devDependencies": {
-        "@types/node-cron": "^3.0.11"
-    }
+  "name": "api",
+  "scripts": {
+    "__comment_0": "Development scripts",
+    "dev:build": "tsc -w",
+    "dev:run": "nodemon --delay 100ms --watch dist dist/index.js",
+    "__comment_1": "Project scripts",
+    "dev": "npm run build && concurrently npm:dev:*",
+    "build": "npx prisma generate && tsc",
+    "start": "npm run db:deploy && npm run db:seed && node dist/index.js",
+    "__comment_2": "Database scripts",
+    "db:deploy": "npx prisma migrate deploy",
+    "db:sample": "node dist/scripts/add-sample-data.js",
+    "db:seed": "node dist/scripts/seed-views.js",
+    "db:reset": "npm run build && npx prisma db push --force-reset && npm run db:seed",
+    "db:reset-sample": "npm run build && npx prisma db push --force-reset && npm run db:seed && npm run db:sample"
+  },
+  "peerDependencies": {
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.5.0",
+    "@types/node": "^22.13.14",
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.5.0",
+    "fastify": "^5.3.2",
+    "node-cron": "^3.0.3",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.5.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node-cron": "^3.0.11"
+  }
 }
