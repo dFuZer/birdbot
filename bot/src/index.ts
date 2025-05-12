@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import BirdBot from "./bots/birdbot/BirdBot.class";
+import { birdbotPeriodicTasks } from "./bots/birdbot/BirdbotPeriodicTasks";
 import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import { DictionaryResource } from "./bots/birdbot/BirdBotTypes";
 import { birdbotTextResource } from "./bots/birdbot/texts/BirdBotTextUtils";
@@ -45,6 +46,7 @@ async function start() {
   const AdapterClass = await tryGetNetworkAdapter();
   const bot = new BirdBot({
     networkAdapter: new AdapterClass(),
+    periodicTasks: birdbotPeriodicTasks,
   });
   const admins = Utilitary.readArrayFromFile("./admins.example.txt");
   Logger.log({
@@ -120,6 +122,8 @@ async function start() {
       birdbotGameMode: "regular",
     },
   });
+
+  await bot.startPeriodicTasks();
 }
 
 start();

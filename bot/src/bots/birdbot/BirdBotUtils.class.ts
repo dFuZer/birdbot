@@ -852,6 +852,7 @@ export default class BirdBotUtils {
       multiSyllables: 0,
       depletedSyllables: 0,
     };
+    roomMetadata.hostLeftIteration = 0;
     this.initializeScoresForAllPlayers(ctx);
     const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
     roomMetadata.remainingSyllables = Object.assign(
