@@ -21,7 +21,7 @@ export default function PlayerProfilePageLanguageSelector({
                 <button className="flex w-fit items-center rounded-full border border-neutral-300 bg-white px-3">
                     <FrenchFlag className="my-1 h-4 w-4" />
                     <span className="ml-2 text-sm font-bold">{LANGUAGES_DATA[language].shortDisplayName}</span>
-                    {ppPerLanguage[language] && (
+                    {ppPerLanguage[language] !== undefined && (
                         <>
                             <div className="mx-2 h-full w-[1px] bg-neutral-300" />
                             <span className="text-sm font-bold">{ppPerLanguage[language]} pp</span>
