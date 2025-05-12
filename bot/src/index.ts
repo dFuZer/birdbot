@@ -3,9 +3,9 @@ import BirdBot from "./bots/birdbot/BirdBot.class";
 import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import { DictionaryResource } from "./bots/birdbot/BirdBotTypes";
 import { birdbotTextResource } from "./bots/birdbot/texts/BirdBotTextUtils";
+import AbstractNetworkAdapter from "./lib/abstract/AbstractNetworkAdapter.class";
 import Logger from "./lib/class/Logger.class";
 import Utilitary from "./lib/class/Utilitary.class";
-import AbstractNetworkAdapter from "./lib/abstract/AbstractNetworkAdapter.class";
 
 async function tryGetNetworkAdapter() {
   try {
@@ -14,10 +14,8 @@ async function tryGetNetworkAdapter() {
       "./lib/class/private/NetworkAdapter.class"
     )) as any;
     try {
-      console.log(module.default);
       const instance = new module.default();
       instance.getJoinMessage();
-      instance.readRoundData(new ArrayBuffer(0));
       return module.default as new () => AbstractNetworkAdapter;
     } catch (e) {
       Logger.error({
@@ -26,6 +24,7 @@ async function tryGetNetworkAdapter() {
           "Found an implementation of the NetworkAdapter class, but it is not working properly.\n" +
           "Are you sure you implemented all the class methods correctly?.",
       });
+      console.error(e);
       process.exit(1);
     }
   } catch (e) {
