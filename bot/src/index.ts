@@ -30,7 +30,6 @@ async function tryGetNetworkAdapter() {
             process.exit(1);
         }
     } catch (e) {
-        console.log(e);
         Logger.error({
             path: "index.ts",
             message:
