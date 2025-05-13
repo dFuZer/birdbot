@@ -26,7 +26,7 @@ export default class BirdBot extends Bot {
         roomCreatorUsername: string | null;
         callback?: (roomCode: string) => void;
     }) {
-        super.createRoom({
+        await super.createRoom({
             roomCreatorUsername,
             targetConfig,
             callback,

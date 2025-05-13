@@ -1,6 +1,16 @@
 import { type PeriodicTask } from "../../lib/class/Bot.class";
+import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
-import { BirdBotRoomMetadata } from "./BirdBotTypes";
+import BirdBot from "./BirdBot.class";
+import {
+    birdbotLanguageToDictionaryId,
+    dictionaryIdToBirdbotLanguage,
+    mainRoomLanguages,
+} from "./BirdBotConstants";
+import {
+    BirdBotRoomMetadata,
+    BirdBotSupportedDictionaryId,
+} from "./BirdBotTypes";
 
 export const birdbotPeriodicTasks: PeriodicTask[] = [
     {
@@ -35,6 +45,54 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     // Host is present, reset the counter
                     roomMetadata.hostLeftIteration = 0;
                 }
+            }
+        },
+    },
+    {
+        intervalInMs: 5000,
+        timeout: undefined,
+        fn: async (ctx) => {
+            const bot = ctx.bot as BirdBot;
+            const currentMainRoomLanguages = Object.entries(bot.rooms)
+                .filter(([roomId, room]) => {
+                    return room.constantRoomData.roomCreatorUsername === null;
+                })
+                .map(([roomId, room]) => {
+                    return room.roomState.gameData?.rules.dictionaryId;
+                })
+                .filter(
+                    (lang) =>
+                        lang !== undefined &&
+                        lang in dictionaryIdToBirdbotLanguage
+                )
+                .map(
+                    (lang) =>
+                        dictionaryIdToBirdbotLanguage[
+                            lang as BirdBotSupportedDictionaryId
+                        ]
+                );
+
+            const missingMainRoomLanguages = mainRoomLanguages.filter(
+                (language) => {
+                    return !currentMainRoomLanguages.includes(language);
+                }
+            );
+            if (missingMainRoomLanguages[0]) {
+                Logger.log({
+                    message: `Creating main room for language ${missingMainRoomLanguages[0]}`,
+                    path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
+                });
+                await bot.createRoom({
+                    roomCreatorUsername: null,
+                    targetConfig: {
+                        dictionaryId:
+                            birdbotLanguageToDictionaryId[
+                                missingMainRoomLanguages[0]
+                            ],
+                        gameMode: "survival",
+                        birdbotGameMode: "regular",
+                    },
+                });
             }
         },
     },
