@@ -1,3 +1,4 @@
+import { crocoDomain } from "../../../lib/constants/gameConstants";
 import { ResourceText } from "./englishTexts";
 
 export const spanishTexts = {
@@ -56,8 +57,7 @@ export const spanishTexts = {
                 "$t(error.intro) Tienes que proporcionar una palabra para usar este comando.",
         },
         platform: {
-            mustBeLoggedIn:
-                '$t(intro) Tienes que estar conectado a Croco.games para usar este comando. Para conectarte, ve a la página principal https://croco.games/ y haz clic en "Iniciar sesión" si tienes una cuenta o "Nueva cuenta" si no tienes.',
+            mustBeLoggedIn: `$t(intro) Tienes que estar conectado a Croco.games para usar este comando. Para conectarte, ve a la página principal https://${crocoDomain}/ y haz clic en "Iniciar sesión" si tienes una cuenta o "Nueva cuenta" si no tienes.`,
         },
     },
     command: {
@@ -169,9 +169,8 @@ export const spanishTexts = {
         },
         createRoom: {
             description: "Crea una sala.",
-            roomCreated: "Sala creada: https://croco.games/{{roomCode}}",
-            roomAlreadyExists:
-                "Ya eres el propietario de una sala: https://croco.games/{{roomCode}}",
+            roomCreated: `Sala creada: https://${crocoDomain}/{{roomCode}}`,
+            roomAlreadyExists: `Ya eres el propietario de una sala: https://${crocoDomain}/{{roomCode}}`,
             roomBeingCreated:
                 "La sala está siendo creada, por favor, espera un poco...",
             unknownError:

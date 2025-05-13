@@ -96,4 +96,37 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
             }
         },
     },
+    {
+        intervalInMs: 1000 * 3,
+        timeout: undefined,
+        fn: (ctx) => {
+            const { bot } = ctx;
+            const rooms = Object.values(bot.rooms);
+            for (const room of rooms) {
+                room.roomState.unansweredPings++;
+                if (room.roomState.unansweredPings >= 4) {
+                    Logger.log({
+                        message: `Room ${room.id} appears to be dead. Destroying...`,
+                        path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
+                    });
+                    Utilitary.destroyRoom(bot, room);
+                    continue;
+                }
+
+                const ws = room.ws;
+                if (!ws || ws.readyState !== WebSocket.OPEN) continue;
+                ws.listeners("pong").forEach((listener) => {
+                    ws.off("pong", listener as any);
+                });
+                ws.once("pong", () => {
+                    // Logger.log({
+                    //     message: `Room ${room.id} received pong. Resetting unanswered pings counter.`,
+                    //     path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
+                    // });
+                    room.roomState.unansweredPings = 0;
+                });
+                ws.ping();
+            }
+        },
+    },
 ];

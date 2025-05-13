@@ -1,3 +1,4 @@
+import { crocoDomain } from "../../../lib/constants/gameConstants";
 import {
     BirdBotGameMode,
     BirdBotLanguage,
@@ -59,8 +60,7 @@ export const englishTexts = {
                 "$t(error.intro) You must provide a word to use this command.",
         },
         platform: {
-            mustBeLoggedIn:
-                '$t(intro) You must be logged in to Croco.games to use this command. To log in, go to the home page at https://croco.games/ and click "Log in" if you have an account or "New account" if you don\'t.',
+            mustBeLoggedIn: `$t(intro) You must be logged in to Croco.games to use this command. To log in, go to the home page at https://${crocoDomain}/ and click "Log in" if you have an account or "New account" if you don\'t.`,
         },
     },
     command: {
@@ -171,11 +171,10 @@ export const englishTexts = {
         },
         createRoom: {
             description: "Creates a room.",
-            roomCreated: "Room created: https://croco.games/{{roomCode}}",
+            roomCreated: `Room created: https://${crocoDomain}/{{roomCode}}`,
             roomBeingCreated:
                 "$t(error.intro) Room is being created, please wait...",
-            roomAlreadyExists:
-                "$t(error.intro) You are already the owner of a room: https://croco.games/{{code}}",
+            roomAlreadyExists: `$t(error.intro) You are already the owner of a room: https://${crocoDomain}/{{code}}`,
             unknownError:
                 "$t(error.intro) An unknown error occurred while creating the room. Please try again later.",
         },

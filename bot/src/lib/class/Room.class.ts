@@ -11,6 +11,7 @@ export type RoomState = {
     currentTurnIndex: number;
     myGamerId: number;
     metadata: RoomMetadata;
+    unansweredPings: number;
 };
 
 export type ConstantRoomData = {
@@ -58,11 +59,15 @@ export default class Room {
             myGamerId: -1,
             wordHistory: [],
             metadata: {},
+            unansweredPings: 0,
         };
     }
 
     public async init({ sessionSecret }: { sessionSecret: string }) {
-        const joinRoomResponse = await Utilitary.postJson<{ code: string; nodeHost: string }>("/api/rooms/join", {
+        const joinRoomResponse = await Utilitary.postJson<{
+            code: string;
+            nodeHost: string;
+        }>("/api/rooms/join", {
             secret: sessionSecret,
             gameId: "bombParty",
             code: this.constantRoomData.roomCode,

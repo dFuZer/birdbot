@@ -1,6 +1,7 @@
 import { type Server } from "http";
 import WebSocket from "ws";
 import type AbstractNetworkAdapter from "../abstract/AbstractNetworkAdapter.class";
+import { crocoDomain } from "../constants/gameConstants";
 import type { BotEventHandlers } from "../types/libEventTypes";
 import Logger from "./Logger.class";
 import ResourceManager from "./ResourceManager.class";
@@ -145,9 +146,12 @@ export default class Bot {
         callback?: (roomCode: string) => void;
         errorCallback?: () => void;
     }) {
-        const ws = new WebSocket(`wss://croco.games/api/websocket`, {
-            perMessageDeflate: false,
-        });
+        let ws: WebSocket = new WebSocket(
+            `wss://${crocoDomain}/api/websocket`,
+            {
+                perMessageDeflate: false,
+            }
+        );
 
         const onOpen = () => {
             let msg = this.networkAdapter.getCreateRoomMessage({
@@ -172,10 +176,26 @@ export default class Bot {
                 callback?.(data.roomCode);
             } else if (data.eventType === "bye") {
                 errorCallback?.();
+
+                // The bye message may indicate that the session is not valid anymore.
+                Logger.log({
+                    message:
+                        "Session may be invalid. Trying to reinitialize it.",
+                    path: "Bot.class.ts",
+                });
+                this.botData?.session.init();
             }
         };
 
         ws.on("open", onOpen);
         ws.on("message", onMessage);
+        ws.on("error", (error) => {
+            Logger.error({
+                message: `Error creating room websocket.`,
+                path: "Bot.class.ts",
+                error,
+            });
+            errorCallback?.();
+        });
     }
 }
