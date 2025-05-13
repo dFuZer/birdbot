@@ -6,7 +6,6 @@ import { ArrowPathIcon, ClockIcon, UserGroupIcon } from "@heroicons/react/24/out
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import FrenchFlag from "~/public/frenchFlag.svg";
-import { BirdBotLanguage } from "../../../../../bot/src/bots/birdbot/BirdBotTypes";
 
 export interface IRoom {
     roomName: string;
@@ -71,7 +70,7 @@ const fetchRooms = async () => {
     }
     type IRoomResponse = {
         roomId: string;
-        roomLanguage: BirdBotLanguage | "UNKNOWN";
+        roomLanguage: LanguageEnum | "UNKNOWN";
         playerCount: number;
         gameTime: number | "NOT-IN-GAME";
         roomCode: string;
