@@ -15,6 +15,7 @@ export function postToApi(url: string, body: any, method: "POST" | "PUT" | "DELE
         method,
         headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${API_KEY}`,
         },
         body: JSON.stringify(body),
     });

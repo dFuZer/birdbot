@@ -3,6 +3,7 @@ import BirdBot from "./BirdBot.class";
 import { dictionaryIdToBirdbotLanguage } from "./BirdBotConstants";
 import { API_KEY } from "./BirdBotEnv";
 import {
+    BirdBotLanguage,
     BirdBotRoomMetadata,
     BirdBotSupportedDictionaryId,
 } from "./BirdBotTypes";
@@ -44,6 +45,16 @@ function birdBotServerHandler(
     }
 
     if (pathName === "/room-list") {
+        type IRoom = {
+            roomId: string;
+            roomLanguage: BirdBotLanguage | "UNKNOWN";
+            playerCount: number;
+            gameTime: number | "NOT-IN-GAME";
+            roomCode: string;
+            roomName: string;
+            wordCount: number;
+        };
+
         const roomList = Object.entries(bot.rooms).map(([roomId, room]) => {
             const roomDictionaryId =
                 room.roomState.gameData?.rules.dictionaryId;
@@ -83,7 +94,7 @@ function birdBotServerHandler(
                 roomCode,
                 roomName,
                 wordCount,
-            };
+            } satisfies IRoom;
         });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.write(JSON.stringify(roomList));
