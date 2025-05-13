@@ -138,10 +138,12 @@ export default class Bot {
         roomCreatorUsername,
         targetConfig,
         callback,
+        errorCallback,
     }: {
         targetConfig: RoomTargetConfig;
         roomCreatorUsername: string | null;
         callback?: (roomCode: string) => void;
+        errorCallback?: () => void;
     }) {
         const ws = new WebSocket(`wss://croco.games/api/websocket`, {
             perMessageDeflate: false,
@@ -158,6 +160,8 @@ export default class Bot {
         const onMessage = (message: Buffer) => {
             const data =
                 this.networkAdapter.readCentralMessageBaseData(message);
+
+            console.log({ data });
             if (data.eventType === "roomReady") {
                 this.joinRoom({
                     roomCode: data.roomCode,
@@ -166,6 +170,8 @@ export default class Bot {
                 });
                 ws.close();
                 callback?.(data.roomCode);
+            } else if (data.eventType === "bye") {
+                errorCallback?.();
             }
         };
 
