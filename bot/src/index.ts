@@ -117,7 +117,18 @@ async function start() {
         resources: birdbotTextResource,
     });
 
-    await bot.init({ adminAccountUsernames: admins });
+    while (true) {
+        try {
+            await bot.init({ adminAccountUsernames: admins });
+            break;
+        } catch (e) {
+            Logger.error({
+                message: `Error while initializing bot. Retrying in 1 second...`,
+                path: "index.unstable.ts",
+            });
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+    }
 
     await bot.createRoom({
         roomCreatorUsername: null,

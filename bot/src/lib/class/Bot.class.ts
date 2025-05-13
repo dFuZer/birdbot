@@ -165,7 +165,6 @@ export default class Bot {
             const data =
                 this.networkAdapter.readCentralMessageBaseData(message);
 
-            console.log({ data });
             if (data.eventType === "roomReady") {
                 this.joinRoom({
                     roomCode: data.roomCode,
