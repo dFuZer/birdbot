@@ -24,6 +24,7 @@ services:
                 condition: service_healthy
         volumes:
             - ./bot/resources:/app/resources
+        restart: always
         environment:
             API_URL: ${API_URL}
             API_KEY: ${API_KEY}
