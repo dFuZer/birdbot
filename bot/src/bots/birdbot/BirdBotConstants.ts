@@ -144,12 +144,6 @@ export const recordsEnumSchema = z.enum([
 
 export const defaultLanguage = "en" satisfies BirdBotLanguage;
 export const defaultMode = "regular" satisfies BirdBotGameMode;
-export const mainRoomLanguages = [
-    "en",
-    "fr",
-    "es",
-    "brpt",
-] satisfies BirdBotLanguage[];
 
 export const languageAliases = {
     fr: ["french", "fr", "francais", "français", "fra"],

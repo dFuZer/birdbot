@@ -5,7 +5,6 @@ import BirdBot from "./BirdBot.class";
 import {
     birdbotLanguageToDictionaryId,
     dictionaryIdToBirdbotLanguage,
-    mainRoomLanguages,
 } from "./BirdBotConstants";
 import {
     BirdBotRoomMetadata,
@@ -72,7 +71,7 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                         ]
                 );
 
-            const missingMainRoomLanguages = mainRoomLanguages.filter(
+            const missingMainRoomLanguages = bot.mainRoomLanguages.filter(
                 (language) => {
                     return !currentMainRoomLanguages.includes(language);
                 }

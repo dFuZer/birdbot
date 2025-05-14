@@ -3,7 +3,10 @@ import BirdBot from "./bots/birdbot/BirdBot.class";
 import { birdbotPeriodicTasks } from "./bots/birdbot/BirdbotPeriodicTasks";
 import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import getBirdBotHttpServer from "./bots/birdbot/BirdBotServer";
-import { DictionaryResource } from "./bots/birdbot/BirdBotTypes";
+import {
+    BirdBotLanguage,
+    DictionaryResource,
+} from "./bots/birdbot/BirdBotTypes";
 import { birdbotTextResource } from "./bots/birdbot/texts/BirdBotTextUtils";
 import AbstractNetworkAdapter from "./lib/abstract/AbstractNetworkAdapter.class";
 import Logger from "./lib/class/Logger.class";
@@ -43,37 +46,43 @@ async function tryGetNetworkAdapter() {
 }
 
 async function start() {
-    const AdapterClass = await tryGetNetworkAdapter();
+    const NetworkAdapterClass = await tryGetNetworkAdapter();
+    const launchLanguages = [
+        "fr",
+        "en",
+        "es",
+        "brpt",
+    ] satisfies BirdBotLanguage[];
     const bot = new BirdBot({
-        networkAdapter: new AdapterClass(),
+        networkAdapter: new NetworkAdapterClass(),
         periodicTasks: birdbotPeriodicTasks,
+        mainRoomLanguages: launchLanguages,
     });
     bot.initServer({
         app: getBirdBotHttpServer(bot),
         port: 3001,
     });
-    const admins = Utilitary.readArrayFromFile("./admins.example.txt");
+    let admins: string[];
+    try {
+        admins = Utilitary.readArrayFromFile("./admins.txt");
+    } catch (e) {
+        admins = [];
+        Logger.error({
+            message: `No admins.txt file found. Running the bot with no admins.`,
+            path: "index.unstable.ts",
+        });
+    }
     Logger.log({
         message: `Starting bot with admins: ${admins.join(", ")}`,
         path: "index.unstable.ts",
     });
 
     const s1 = performance.now();
-    const [
-        frenchDictionaryResource,
-        englishDictionaryResource,
-        spanishDictionaryResource,
-        germanDictionaryResource,
-        italianDictionaryResource,
-        portugueseDictionaryResource,
-    ] = await Promise.all([
-        loadDictionaryResource("fr", "fr.dictionary.txt"),
-        loadDictionaryResource("en", "en.dictionary.txt"),
-        loadDictionaryResource("es", "es.dictionary.txt"),
-        loadDictionaryResource("de", "de.dictionary.txt"),
-        loadDictionaryResource("it", "it.dictionary.txt"),
-        loadDictionaryResource("brpt", "brpt.dictionary.txt"),
-    ]);
+    const loadedResources = await Promise.all(
+        launchLanguages.map((lang) =>
+            loadDictionaryResource(lang, `${lang}.dictionary.txt`)
+        )
+    );
     const s2 = performance.now();
     Logger.log({
         message: `Time taken to load 6 dictionaries in parallel: ${(
@@ -82,30 +91,12 @@ async function start() {
         path: "index.unstable.ts",
     });
 
-    bot.resourceManager.set<DictionaryResource>(
-        `dictionary-fr`,
-        frenchDictionaryResource
-    );
-    bot.resourceManager.set<DictionaryResource>(
-        `dictionary-en`,
-        englishDictionaryResource
-    );
-    bot.resourceManager.set<DictionaryResource>(
-        `dictionary-es`,
-        spanishDictionaryResource
-    );
-    bot.resourceManager.set<DictionaryResource>(
-        `dictionary-de`,
-        germanDictionaryResource
-    );
-    bot.resourceManager.set<DictionaryResource>(
-        `dictionary-it`,
-        italianDictionaryResource
-    );
-    bot.resourceManager.set<DictionaryResource>(
-        `dictionary-brpt`,
-        portugueseDictionaryResource
-    );
+    loadedResources.forEach((resource) => {
+        bot.resourceManager.set<DictionaryResource>(
+            `dictionary-${resource.metadata.language}`,
+            resource
+        );
+    });
 
     await i18next.init({
         lng: "en",
