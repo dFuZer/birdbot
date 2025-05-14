@@ -99,7 +99,7 @@ export default class BirdBotUtils {
                 isWordValid,
             });
             this.submitWord({
-                word: foundWord ?? "💥",
+                word: foundWord ?? "/suicide",
                 ws,
                 adapter: ctx.bot.networkAdapter,
             });
@@ -120,7 +120,7 @@ export default class BirdBotUtils {
                 isWordValid,
             });
             this.submitWord({
-                word: foundWord ?? "💥",
+                word: foundWord ?? "/suicide",
                 ws,
                 adapter: ctx.bot.networkAdapter,
             });
