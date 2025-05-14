@@ -109,7 +109,11 @@ export const englishTexts = {
         },
         playerProfile: {
             description: "Shows the player profile of a given player.",
-            result: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}",
+            noUsernameNotConnected:
+                "You must be connected to Croco.games to check your own profile. If you want to check the profile of someone else, use the /p [username] syntax.",
+            resultMode:
+                "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}",
+            result: "[{{languageFlag}}] {{playerUsername}}: Rank #{{rank}} with {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, level {{level}}. Top 5 performances: {{topPerformances}}",
             noRecords:
                 "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: Player has no records in this category",
         },

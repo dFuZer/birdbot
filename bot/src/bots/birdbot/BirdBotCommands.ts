@@ -29,6 +29,7 @@ import {
     BirdBotRoomMetadata,
     BirdBotSupportedDictionaryId,
     DictionaryResource,
+    ExperienceData,
     PlayerGameScores,
 } from "./BirdBotTypes";
 import BirdBotUtils, {
@@ -756,6 +757,7 @@ const playerProfileCommand = c({
     usageDesc: "/p (username) (-language -mode)",
     exampleUsage: "/p - /p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
     handler: async (ctx) => {
+        console.log(ctx.args, ctx.gamer.identity.name);
         const targetUsername =
             ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.identity.name;
         if (!targetUsername) {
@@ -764,6 +766,8 @@ const playerProfileCommand = c({
             );
             return;
         }
+
+        console.log(" sadf");
         const targetLanguage = BirdBotUtils.findValueInAliasesObject(
             ctx.params,
             languageAliases
@@ -778,7 +782,7 @@ const playerProfileCommand = c({
             playerAccountName: string;
             playerUsername: string;
             foundUsername: string;
-            xp: number;
+            xp: ExperienceData;
             language: BirdBotLanguage;
             mode: BirdBotGameMode;
             pp: number;
@@ -835,40 +839,82 @@ const playerProfileCommand = c({
             return;
         }
 
-        const messageParams = {
-            languageFlag: t(`lib.language.${playerData.language}.flag`),
-            gameMode: t(`lib.mode.${playerData.mode}`),
-            playerUsername: playerData.playerUsername,
-            lng: l(ctx),
-        };
+        if (targetMode !== null) {
+            const messageParams = {
+                languageFlag: t(`lib.language.${playerData.language}.flag`),
+                gameMode: t(`lib.mode.${playerData.mode}`),
+                playerUsername: playerData.playerUsername,
+                lng: l(ctx),
+            };
 
-        if (playerData.records.length === 0) {
+            if (playerData.records.length === 0) {
+                ctx.utils.sendChatMessage(
+                    t("command.playerProfile.noRecords", messageParams)
+                );
+                return;
+            }
+
+            const records = playerData.records
+                .sort(
+                    (a, b) =>
+                        recordsUtils[a.record_type].order -
+                        recordsUtils[b.record_type].order
+                )
+                .map((record) => {
+                    const r = recordsUtils[record.record_type];
+                    return `${t(
+                        `lib.recordType.${record.record_type}.recordName`
+                    )}: ${r.format(record.score)}`;
+                })
+                .join(" — ");
+
             ctx.utils.sendChatMessage(
-                t("command.playerProfile.noRecords", messageParams)
+                t("command.playerProfile.resultMode", {
+                    ...messageParams,
+                    records,
+                })
             );
-            return;
+        } else {
+            // result: "[{{languageFlag}}] {{playerUsername}} : Rang #{{rank}} avec {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, niveau {{level}}. Top 3 performances : {{top3Performances}}",
+
+            ctx.utils.sendChatMessage(
+                t("command.playerProfile.result", {
+                    languageFlag: t(`lib.language.${playerData.language}.flag`),
+                    playerUsername: playerData.playerUsername,
+                    rank: playerData.ppRank,
+                    pp: playerData.pp,
+                    currentLevelXp: playerData.xp.currentLevelXp,
+                    totalLevelXp: playerData.xp.totalLevelXp,
+                    level: playerData.xp.level,
+                    topPerformances: playerData.bestPerformances
+                        .sort((a, b) => b.pp - a.pp)
+                        .map((performance) => {
+                            return (
+                                (performance.mode !== "regular"
+                                    ? `[${t(`lib.mode.${performance.mode}`, {
+                                          lng: l(ctx),
+                                      })}] `
+                                    : "") +
+                                t(
+                                    `lib.recordType.${performance.record_type}.score`,
+                                    {
+                                        context: "specific",
+                                        count: performance.score,
+                                        formattedScore: recordsUtils[
+                                            performance.record_type
+                                        ].format(performance.score),
+                                        lng: l(ctx),
+                                    }
+                                ) +
+                                ` (+${performance.pp}pp)`
+                            );
+                        })
+                        .slice(0, 5)
+                        .join(" — "),
+                    lng: l(ctx),
+                })
+            );
         }
-
-        const records = playerData.records
-            .sort(
-                (a, b) =>
-                    recordsUtils[a.record_type].order -
-                    recordsUtils[b.record_type].order
-            )
-            .map((record) => {
-                const r = recordsUtils[record.record_type];
-                return `${t(
-                    `lib.recordType.${record.record_type}.recordName`
-                )}: ${r.format(record.score)}`;
-            })
-            .join(" — ");
-
-        ctx.utils.sendChatMessage(
-            t("command.playerProfile.result", {
-                ...messageParams,
-                records,
-            })
-        );
     },
 }) satisfies Command;
 

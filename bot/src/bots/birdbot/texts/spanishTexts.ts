@@ -105,8 +105,12 @@ export const spanishTexts = {
                 "En lugar de filtrar palabras para el record {{recordType}}, puedes proporcionar varias regex. Ejemplo: /c ^E FA, si E es la letra alpha actual y FA es la sílaba actual.",
         },
         playerProfile: {
+            noUsernameNotConnected:
+                "Debes estar conectado a Croco.games para ver tu propio perfil. Si quieres ver el perfil de otro jugador, usa la sintaxis /p [nombre de usuario].",
             description: "Muestra el perfil de un jugador.",
-            result: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}",
+            resultMode:
+                "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}",
+            result: "[{{languageFlag}}] {{playerUsername}}: Rango #{{rank}} con {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, nivel {{level}}. Top 5 actuaciones: {{topPerformances}}",
             noRecords:
                 "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: No hay records en esta categoría",
         },
