@@ -361,7 +361,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                         }
 
                         // More than 20 letters score
-                        if (word.length > 20) {
+                        if (word.length >= 20) {
                             playerScores.moreThan20LettersWords++;
                             roomMetadata.globalScores.moreThan20LettersWords++;
                             turnComments.push(
