@@ -184,8 +184,10 @@ export const frenchTexts = {
     general: {
         playerStats: {
             diedNoWords:
-                "Oh non, {{username}} est mort sans placer aucun mot cette partie. Bonne chance la prochaine fois !",
-            died: "{{username}} est mort à {{time}} après avoir placé : {{scores}}",
+                "{{username}} est mort sans placer aucun mot cette partie. Bonne chance pour la prochaine fois !",
+            diedLevelUp:
+                "{{username}} est mort à {{time}} — +{{gainedXp}}xp, {{oldCurrentLevelXp}}/{{oldTotalLevelXp}}xp niveau {{oldLevel}} -> {{newCurrentLevelXp}}/{{newTotalLevelXp}}xp niveau {{newLevel}} — Scores: {{scores}}",
+            died: "{{username}} est mort à {{time}} — +{{gainedXp}}xp — Scores: {{scores}}",
         },
         roomState: {
             gameModeSet: "Mode de jeu changé à {{gameMode}}.",

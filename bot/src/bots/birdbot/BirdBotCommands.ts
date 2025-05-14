@@ -753,10 +753,17 @@ const searchWordsCommand = c({
 const playerProfileCommand = c({
     id: "playerProfile",
     aliases: ["profile", "p"],
-    usageDesc: "/p [username] (-language -mode)",
-    exampleUsage: "/p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
+    usageDesc: "/p (username) (-language -mode)",
+    exampleUsage: "/p - /p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
     handler: async (ctx) => {
-        const targetUsername = ctx.args.join(" ");
+        const targetUsername =
+            ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.identity.name;
+        if (!targetUsername) {
+            ctx.utils.sendChatMessage(
+                t("command.playerProfile.noUsernameNotConnected")
+            );
+            return;
+        }
         const targetLanguage = BirdBotUtils.findValueInAliasesObject(
             ctx.params,
             languageAliases

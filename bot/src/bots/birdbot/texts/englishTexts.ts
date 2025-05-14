@@ -185,8 +185,10 @@ export const englishTexts = {
     general: {
         playerStats: {
             diedNoWords:
-                "Oh no, {{username}} died without placing any words this game. Better luck next time!",
-            died: "{{username}} died at {{time}} after placing: {{scores}}",
+                "Oh no, {{username}} you died without placing any words this game. Better luck next time!",
+            diedLevelUp:
+                "{{username}} died at {{time}} — +{{gainedXp}}xp, {{oldCurrentLevelXp}}/{{oldTotalLevelXp}}xp level {{oldLevel}} -> {{newCurrentLevelXp}}/{{newTotalLevelXp}}xp level {{newLevel}} — Scores: {{scores}}",
+            died: "{{username}} died at {{time}} — +{{gainedXp}}xp — Scores: {{scores}}",
         },
         roomState: {
             gameModeSet: "Game mode set to {{gameMode}}.",

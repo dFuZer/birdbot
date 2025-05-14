@@ -1,3 +1,11 @@
+export type ExperienceData = {
+    xp: number;
+    level: number;
+    currentLevelXp: number;
+    totalLevelXp: number;
+    percentageToNextLevel: number;
+};
+
 export function calculateXpFromGameRecap(gameRecap: {
     time: number;
     wordsCount: number;
@@ -55,6 +63,9 @@ export function getLevelDataFromXp(xp: number) {
         level: levelFromXp(xp),
         currentLevelXp: xp - currentLevelTotalXp,
         totalLevelXp: nextLevelTotalXp - currentLevelTotalXp,
-        percentageToNextLevel: ((xp - currentLevelTotalXp) / (nextLevelTotalXp - currentLevelTotalXp)) * 100,
+        percentageToNextLevel:
+            ((xp - currentLevelTotalXp) /
+                (nextLevelTotalXp - currentLevelTotalXp)) *
+            100,
     };
 }

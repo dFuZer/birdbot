@@ -182,9 +182,11 @@ export const spanishTexts = {
     },
     general: {
         playerStats: {
+            diedLevelUp:
+                "{{username}} murió a las {{time}} — +{{gainedXp}}xp, {{oldCurrentLevelXp}}/{{oldTotalLevelXp}}xp nivel {{oldLevel}} -> {{newCurrentLevelXp}}/{{newTotalLevelXp}}xp nivel {{newLevel}} — Puntuaciones: {{scores}}",
+            died: "{{username}} murió a las {{time}} — Puntuaciones: {{scores}}",
             diedNoWords:
-                "¡Oh no, {{username}} ha muerto sin colocar ninguna palabra en esta partida. ¡Buena suerte la próxima vez!",
-            died: "{{username}} ha muerto a las {{time}} después de colocar: {{scores}}",
+                "{{username}} murió sin colocar ninguna palabra en esta partida. ¡Buena suerte la próxima vez!",
         },
         roomState: {
             gameModeSet: "Modo de juego cambiado a {{gameMode}}.",

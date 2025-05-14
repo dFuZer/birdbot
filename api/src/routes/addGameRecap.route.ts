@@ -1,13 +1,23 @@
 import { type RouteHandlerMethod } from "fastify";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
-import { calculateXpFromGameRecap } from "../helpers/xp";
+import {
+    calculateXpFromGameRecap,
+    ExperienceData,
+    getLevelDataFromXp,
+} from "../helpers/xp";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
 import { gameRecap } from "../schemas/game.zod";
 
-export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, res) {
-    Logger.log({ message: "-- addGameRecap route handler --", path: "addGameRecap.route.ts" });
+export let addGameRecapRouteHandler: RouteHandlerMethod = async function (
+    req,
+    res
+) {
+    Logger.log({
+        message: "-- addGameRecap route handler --",
+        path: "addGameRecap.route.ts",
+    });
     let requestJson = req.body;
     let parsed = gameRecap.safeParse(requestJson);
     if (!parsed.success) {
@@ -19,14 +29,21 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
         });
         return res.status(400).send({ message: "Invalid input!" });
     }
-    Logger.log({ message: `Trying to add game recap`, path: "addGameRecap.route.ts", json: { parsed: parsed.data } });
+    Logger.log({
+        message: `Trying to add game recap`,
+        path: "addGameRecap.route.ts",
+        json: { parsed: parsed.data },
+    });
     try {
         const gameRecapData = parsed.data;
         const [game, player] = await Promise.all([
             addGameIfNotExist(gameRecapData.game),
             addPlayerIfNotExist(gameRecapData.player),
         ]);
-        Logger.log({ message: `Inserting game recap`, path: "addGameRecap.route.ts" });
+        Logger.log({
+            message: `Inserting game recap`,
+            path: "addGameRecap.route.ts",
+        });
         await prisma.$executeRaw`
             INSERT INTO game_recap (id,
             game_id,
@@ -65,8 +82,19 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             wordsWithoutDeathCount: gameRecapData.wordsWithoutDeathCount,
             previousSyllablesCount: gameRecapData.previousSyllablesCount,
             multiSyllablesCount: gameRecapData.multiSyllablesCount,
-            listedRecordsTotalCount: gameRecapData.hyphenWordsCount + gameRecapData.moreThan20LettersWordsCount,
+            listedRecordsTotalCount:
+                gameRecapData.hyphenWordsCount +
+                gameRecapData.moreThan20LettersWordsCount,
         });
+
+        const playerXp: { xp: number }[] = await prisma.$queryRaw`
+            SELECT xp FROM player
+            WHERE id = ${player.id}::UUID
+        `;
+        const currentXp = playerXp[0].xp;
+        const currentXpData = getLevelDataFromXp(currentXp);
+        const newXp = currentXp + gainedExperience;
+        const newXpData = getLevelDataFromXp(newXp);
 
         await prisma.$executeRaw`
             UPDATE player
@@ -74,7 +102,13 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             WHERE id = ${player.id}::UUID
         `;
 
-        return res.status(200).send({ message: "Game recap added successfully" });
+        return res.status(200).send({
+            oldXpData: currentXpData,
+            newXpData: newXpData,
+        } satisfies {
+            oldXpData: ExperienceData;
+            newXpData: ExperienceData;
+        });
     } catch (e) {
         Logger.error({
             message: "Failed to add game recap",
