@@ -9,9 +9,9 @@ cd "$BIRDBOT_PATH" || exit 1
 
 git pull origin main
 
-docker-compose build website api bot
+docker compose build website api bot
 
-docker-compose up -d --build website api bot
+docker compose up -d --build website api bot
 
 crontab -l | grep -v 'deploy.sh' | crontab -
 
