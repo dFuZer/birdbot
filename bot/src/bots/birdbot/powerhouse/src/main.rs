@@ -218,16 +218,18 @@ fn generate_dictionary_hash(words: &[String], language: &str) -> String {
 
     // Add language to the hash
     hasher.update(language.as_bytes());
+    println!("Adding to hash: {}", language);
 
     // Add dictionary length
     let total_words = words.len();
     hasher.update(total_words.to_string().as_bytes());
-
+    println!("Adding to hash: {}", total_words);
     // Take 20 words at regular intervals
     for i in 0..20 {
         let index = (total_words as f64 * i as f64 / 20.0).floor() as usize;
         if index < total_words {
             hasher.update(words[index].as_bytes());
+            println!("Adding to hash: {}", words[index]);
         }
     }
 

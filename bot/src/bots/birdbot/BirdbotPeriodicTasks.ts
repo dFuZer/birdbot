@@ -141,10 +141,15 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
             const languages =
                 languageEnumSchema.options satisfies BirdBotLanguage[];
             for (const language of languages) {
-                const dictionaryResource =
-                    ctx.bot.resourceManager.get<DictionaryResource>(
-                        `dictionary-${language}`
-                    );
+                let dictionaryResource: DictionaryResource | undefined;
+                try {
+                    dictionaryResource =
+                        ctx.bot.resourceManager.get<DictionaryResource>(
+                            `dictionary-${language}`
+                        );
+                } catch (e) {
+                    continue;
+                }
                 if (dictionaryResource.metadata.changed) {
                     dictionaryResource.metadata.changed = false;
                     const dictionaryMetadata = dictionaryResource.metadata;
@@ -155,7 +160,7 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     );
 
                     await writeFile(
-                        dictionaryMetadata.fileName,
+                        dictionaryMetadata.resourceFilePath,
                         dictionaryResource.resource.join("\n")
                     );
 
@@ -163,17 +168,17 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                         BirdBotUtils.getDictionaryHash(dictionaryResource);
 
                     await writeFile(
-                        dictionaryMetadata.metadataFileName,
+                        dictionaryMetadata.metadataFilePath,
                         [
                             dictionaryHash,
-                            {
+                            JSON.stringify({
                                 letterRarityScores:
                                     dictionaryMetadata.letterRarityScores,
                                 syllablesCount:
                                     dictionaryMetadata.syllablesCount,
                                 topFlipWords: dictionaryMetadata.topFlipWords,
                                 topSnWords: dictionaryMetadata.topSnWords,
-                            } satisfies CacheableDictionaryMetadata,
+                            } satisfies CacheableDictionaryMetadata),
                         ].join("\n")
                     );
 

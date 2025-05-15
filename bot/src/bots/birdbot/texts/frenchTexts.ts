@@ -194,7 +194,7 @@ export const frenchTexts = {
             died: "{{username}} est mort à {{time}} — +{{gainedXp}}xp — Scores: {{scores}}",
         },
         roomState: {
-            gameModeSet: "Mode de jeu changé à {{gameMode}}.",
+            gameModeSet: "Le mode de jeu est maintenant {{gameMode}}.",
         },
         scorePresentation: "{{username}} avec {{score}}",
     },
@@ -229,7 +229,7 @@ export const frenchTexts = {
         mode: {
             easy: "Facile",
             blitz: "Blitz",
-            regular: "Normal",
+            regular: "Regular",
             sub500: "Sub500",
             sub50: "Sub50",
             freeplay: "Freeplay",

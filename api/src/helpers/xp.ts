@@ -28,7 +28,7 @@ export function calculateXpFromGameRecap(gameRecap: {
     multiSyllablesCount: number;
     listedRecordsTotalCount: number;
 }) {
-    return (
+    return Math.round(
         (Math.max(gameRecap.time / 10000, 10) + // 1 xp per 10 seconds (min 10 xp per game)
             gameRecap.wordsCount * 1 + // 1 xp per word
             gameRecap.flipsCount * 20 + // 20 xp per flip
@@ -38,7 +38,7 @@ export function calculateXpFromGameRecap(gameRecap: {
             gameRecap.previousSyllablesCount * 3 + // 3 xp per previous syllable
             gameRecap.multiSyllablesCount * 3 + // 3 xp per multi syllable
             gameRecap.listedRecordsTotalCount * 2) * // 2 xp per listed record
-        xpPerMode[gameRecap.mode]
+            xpPerMode[gameRecap.mode]
     );
 }
 
@@ -65,18 +65,19 @@ function xpFromLevel(level: number) {
 }
 
 export function getLevelDataFromXp(xp: number) {
-    const currentLevel = levelFromXp(xp);
+    const usedXp = Math.floor(xp);
+    const currentLevel = levelFromXp(usedXp);
     const nextLevel = currentLevel + 1;
     const currentLevelTotalXp = xpFromLevel(currentLevel);
     const nextLevelTotalXp = xpFromLevel(nextLevel);
 
     return {
-        xp,
-        level: levelFromXp(xp),
-        currentLevelXp: xp - currentLevelTotalXp,
+        xp: usedXp,
+        level: levelFromXp(usedXp),
+        currentLevelXp: usedXp - currentLevelTotalXp,
         totalLevelXp: nextLevelTotalXp - currentLevelTotalXp,
         percentageToNextLevel:
-            ((xp - currentLevelTotalXp) /
+            ((usedXp - currentLevelTotalXp) /
                 (nextLevelTotalXp - currentLevelTotalXp)) *
             100,
     };

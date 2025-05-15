@@ -925,8 +925,10 @@ const testCommand = c({
     usageDesc: "/test",
     hidden: true,
     handler: (ctx) => {
-        const rooms = Object.values(ctx.bot.rawBot.rooms).forEach((room) =>
-            room.ws?.close()
+        const resource =
+            ctx.bot.getResource<DictionaryResource>("dictionary-fr");
+        ctx.utils.sendChatMessage(
+            "test words : " + resource.metadata.testWords.join(" ")
         );
     },
 }) satisfies Command;

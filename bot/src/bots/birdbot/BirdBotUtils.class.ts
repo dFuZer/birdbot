@@ -709,54 +709,6 @@ export default class BirdBotUtils {
         return bestWord ? bestWord[0] : null;
     };
 
-    public static getLetterRarityScores = (
-        dictionary: string[],
-        dictionaryId: DictionaryId
-    ) => {
-        const letterRarityScores: Record<string, number> = {};
-        const dictionaryManifest = dictionaryManifests[dictionaryId];
-        // Count letters
-        for (const word of dictionary) {
-            for (const letter of word) {
-                letterRarityScores[letter] =
-                    (letterRarityScores[letter] ?? 0) + 1;
-            }
-        }
-        // Remove letters that are not in the bonus letters
-        for (const letter in letterRarityScores) {
-            if (!dictionaryManifest.bonusLetters.includes(letter)) {
-                delete letterRarityScores[letter];
-            }
-        }
-        // Normalize letter counts
-        let minLetters = Infinity;
-        for (const letter in letterRarityScores) {
-            if (letterRarityScores[letter]! < minLetters) {
-                minLetters = letterRarityScores[letter]!;
-            }
-        }
-        let minScore = Infinity;
-        for (const letter in letterRarityScores) {
-            letterRarityScores[letter] =
-                letterRarityScores[letter]! / minLetters;
-            letterRarityScores[letter] = 1 / letterRarityScores[letter]!;
-            if (letterRarityScores[letter]! < minScore) {
-                minScore = letterRarityScores[letter]!;
-            }
-        }
-        // Normalize scores
-        for (const letter in letterRarityScores) {
-            letterRarityScores[letter] = letterRarityScores[letter]! / minScore;
-            letterRarityScores[letter] = Math.pow(
-                letterRarityScores[letter]!,
-                0.5
-            );
-            letterRarityScores[letter] =
-                Math.round(letterRarityScores[letter]! * 100) / 100;
-        }
-        return letterRarityScores;
-    };
-
     public static initializeScoresForPlayerId = (
         roomMetadata: BirdBotRoomMetadata,
         gamerId: number
@@ -774,18 +726,6 @@ export default class BirdBotUtils {
             hyphenWords: 0,
             moreThan20LettersWords: 0,
         };
-    };
-
-    public static getSyllablesCount = (dictionary: string[]) => {
-        const syllablesCount: Record<string, number> = {};
-        for (const word of dictionary) {
-            const syllables = this.splitWordIntoSyllables(word);
-            for (const syllable in syllables) {
-                syllablesCount[syllable] =
-                    (syllablesCount[syllable] ?? 0) + syllables[syllable];
-            }
-        }
-        return syllablesCount;
     };
 
     public static splitWordIntoValidSubwords = (word: string): string[] => {
@@ -906,6 +846,11 @@ export default class BirdBotUtils {
                 message: `Added word ${word} with score ${flipScore} to top flip words`,
                 path: "BirdBotUtils.class.ts",
             });
+        } else {
+            Logger.log({
+                message: `Word ${word} with score ${flipScore} is not in top flip words`,
+                path: "BirdBotUtils.class.ts",
+            });
         }
         // Update the top sn words
         const snScore = this.evaluateSnWord(
@@ -925,6 +870,11 @@ export default class BirdBotUtils {
             );
             Logger.log({
                 message: `Added word ${word} with score ${snScore} to top sn words`,
+                path: "BirdBotUtils.class.ts",
+            });
+        } else {
+            Logger.log({
+                message: `Word ${word} with score ${snScore} is not in top sn words`,
                 path: "BirdBotUtils.class.ts",
             });
         }
@@ -971,6 +921,7 @@ export default class BirdBotUtils {
         }
         // Update the top flip words
         const topFlipWords = dictionaryResource.metadata.topFlipWords;
+        let deletedFromTopFlipWords = false;
         for (const topFlipWord of topFlipWords) {
             if (topFlipWord[0] === word) {
                 topFlipWords.splice(topFlipWords.indexOf(topFlipWord), 1);
@@ -978,11 +929,24 @@ export default class BirdBotUtils {
                     message: `Deleted word ${word} from top flip words`,
                     path: "BirdBotUtils.class.ts",
                 });
+                deletedFromTopFlipWords = true;
                 break;
             }
         }
+        if (deletedFromTopFlipWords) {
+            Logger.log({
+                message: `Word ${word} was deleted from top flip words`,
+                path: "BirdBotUtils.class.ts",
+            });
+        } else {
+            Logger.log({
+                message: `Word ${word} was not found in top flip words`,
+                path: "BirdBotUtils.class.ts",
+            });
+        }
         // Update the top sn words
         const topSnWords = dictionaryResource.metadata.topSnWords;
+        let deletedFromTopSnWords = false;
         for (const topSnWord of topSnWords) {
             if (topSnWord[0] === word) {
                 topSnWords.splice(topSnWords.indexOf(topSnWord), 1);
@@ -990,8 +954,20 @@ export default class BirdBotUtils {
                     message: `Deleted word ${word} from top sn words`,
                     path: "BirdBotUtils.class.ts",
                 });
+                deletedFromTopSnWords = true;
                 break;
             }
+        }
+        if (deletedFromTopSnWords) {
+            Logger.log({
+                message: `Word ${word} was deleted from top sn words`,
+                path: "BirdBotUtils.class.ts",
+            });
+        } else {
+            Logger.log({
+                message: `Word ${word} was not found in top sn words`,
+                path: "BirdBotUtils.class.ts",
+            });
         }
 
         dictionaryResource.metadata.changed = true;
@@ -1009,6 +985,7 @@ export default class BirdBotUtils {
             const index = Math.floor((dictionaryLength * i) / 20);
             hash.update(dictionaryResource.resource[index]);
         }
+        return hash.digest("hex");
     };
 
     public static setupRoomMetadata = (ctx: EventCtx) => {

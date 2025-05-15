@@ -8,6 +8,7 @@ import {
     CacheableDictionaryMetadata,
     DictionaryResource,
 } from "./BirdBotTypes";
+import BirdBotUtils from "./BirdBotUtils.class";
 
 export async function loadDictionaryMetadata(
     dictionaryId: BirdBotLanguage,
@@ -92,6 +93,13 @@ export async function loadDictionaryResource(
             dataPath,
         ]);
 
+        powerhouseProcess.stderr.on("data", (data) => {
+            Logger.error({
+                message: `Powerhouse process for ${dictionaryId} stderr: ${data}`,
+                path: "BirdBotPowerHouse.ts",
+            });
+        });
+
         powerhouseProcess.on("exit", async (code) => {
             if (code === 0) {
                 const timestamp2 = performance.now();
@@ -125,11 +133,17 @@ export async function loadDictionaryResource(
                         ...dictionaryMetadata,
                         testWords: [],
                         language: dictionaryId,
-                        fileName: dictionaryFileName,
-                        metadataFileName: dictionaryMetadataFilePath,
+                        resourceFilePath: dictionaryFilePath,
+                        metadataFilePath: dictionaryMetadataFilePath,
                         changed: false,
                     },
                 };
+                const dictionaryHash =
+                    BirdBotUtils.getDictionaryHash(dictionaryResource);
+                Logger.log({
+                    message: `I tried to get the hash of the dictionary resource myself for ${dictionaryId} and got ${dictionaryHash}`,
+                    path: "BirdBotPowerHouse.ts",
+                });
                 const timestamp3 = performance.now();
                 Logger.log({
                     message: `${dictionaryId} dictionary: time to generate metadata: ${(
