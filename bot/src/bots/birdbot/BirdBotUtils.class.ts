@@ -1,5 +1,4 @@
-import { writeFile } from "fs/promises";
-import path from "path";
+import { createHash } from "crypto";
 import type WebSocket from "ws";
 import type z from "zod";
 import type AbstractNetworkAdapter from "../../lib/abstract/AbstractNetworkAdapter.class";
@@ -7,7 +6,6 @@ import { CommandOrEventCtx } from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
-import { resourcesPath } from "../../lib/paths";
 import type {
     DictionaryId,
     DictionaryLessGameRules,
@@ -19,12 +17,12 @@ import type {
     EventCtx,
 } from "../../lib/types/libEventTypes";
 import {
+    birdbotLanguageToDictionaryId,
     birdbotModeRules,
     dictionaryIdToBirdbotLanguage,
     recordsUtils,
 } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
-import { loadDictionaryMetadata } from "./BirdBotPowerHouse";
 import {
     BirdBotGameData,
     BirdBotGameMode,
@@ -860,36 +858,157 @@ export default class BirdBotUtils {
         );
     };
 
-    public static saveDictionaryResource = async (
+    public static handleWordAdditionToDictionaryResource = async (
         ctx: EventCtx,
-        roomLanguage: BirdBotLanguage
+        roomLanguage: BirdBotLanguage,
+        word: string
+    ) => {
+        Logger.log({
+            message: `Adding word ${word} to dictionary resource`,
+            path: "BirdBotUtils.class.ts",
+        });
+        const dictionaryResource = ctx.bot.getResource<DictionaryResource>(
+            `dictionary-${roomLanguage}`
+        );
+        dictionaryResource.resource.push(word);
+        // Do not update the letter rarity scores
+        // Update the syllables count
+        const wordSyllables = this.splitWordIntoSyllables(word);
+        for (const syllable in wordSyllables) {
+            dictionaryResource.metadata.syllablesCount[syllable] =
+                (dictionaryResource.metadata.syllablesCount[syllable] ?? 0) +
+                wordSyllables[syllable]!;
+            Logger.log({
+                message: `Updated syllables count for syllable ${syllable} to ${dictionaryResource.metadata.syllablesCount[syllable]}`,
+                path: "BirdBotUtils.class.ts",
+            });
+        }
+        // Update the top flip words
+        const roomDictionaryId = birdbotLanguageToDictionaryId[roomLanguage];
+        const flipScore = this.evaluateFlipWord(
+            word,
+            dictionaryResource.metadata.letterRarityScores,
+            dictionaryManifests[roomDictionaryId].bonusLetters,
+            ""
+        );
+        if (
+            flipScore >
+            dictionaryResource.metadata.topFlipWords[
+                dictionaryResource.metadata.topFlipWords.length - 1
+            ][1]
+        ) {
+            dictionaryResource.metadata.topFlipWords.push([word, flipScore]);
+            Utilitary.insertionSort(
+                dictionaryResource.metadata.topFlipWords,
+                (a, b) => b[1] - a[1]
+            );
+            Logger.log({
+                message: `Added word ${word} with score ${flipScore} to top flip words`,
+                path: "BirdBotUtils.class.ts",
+            });
+        }
+        // Update the top sn words
+        const snScore = this.evaluateSnWord(
+            word,
+            dictionaryResource.metadata.syllablesCount
+        );
+        if (
+            snScore >
+            dictionaryResource.metadata.topSnWords[
+                dictionaryResource.metadata.topSnWords.length - 1
+            ][1]
+        ) {
+            dictionaryResource.metadata.topSnWords.push([word, snScore]);
+            Utilitary.insertionSort(
+                dictionaryResource.metadata.topSnWords,
+                (a, b) => b[1] - a[1]
+            );
+            Logger.log({
+                message: `Added word ${word} with score ${snScore} to top sn words`,
+                path: "BirdBotUtils.class.ts",
+            });
+        }
+        dictionaryResource.metadata.changed = true;
+    };
+
+    public static handleWordRemovalFromDictionaryResource = async (
+        ctx: EventCtx,
+        roomLanguage: BirdBotLanguage,
+        wordIndex: number,
+        word: string
     ) => {
         const dictionaryResource = ctx.bot.getResource<DictionaryResource>(
             `dictionary-${roomLanguage}`
         );
-        const dictionaryMetadata = dictionaryResource.metadata;
+        dictionaryResource.resource.splice(wordIndex, 1);
 
-        Utilitary.insertionSort(dictionaryResource.resource, (a, b) =>
-            a.localeCompare(b)
-        );
+        // Do not update the letter rarity scores
+        // Update the syllables count
+        const wordSyllables = this.splitWordIntoSyllables(word);
+        for (const syllable in wordSyllables) {
+            if (
+                dictionaryResource.metadata.syllablesCount[syllable] ===
+                undefined
+            ) {
+                throw new Error(
+                    `Syllable ${syllable} not found in dictionary resource`
+                );
+            }
+            dictionaryResource.metadata.syllablesCount[syllable] =
+                dictionaryResource.metadata.syllablesCount[syllable]! -
+                wordSyllables[syllable]!;
+            Logger.log({
+                message: `Updated syllables count for syllable ${syllable} to ${dictionaryResource.metadata.syllablesCount[syllable]}`,
+                path: "BirdBotUtils.class.ts",
+            });
+            if (dictionaryResource.metadata.syllablesCount[syllable]! <= 0) {
+                delete dictionaryResource.metadata.syllablesCount[syllable];
+                Logger.log({
+                    message: `Deleted syllable ${syllable} from syllables count as it is now 0`,
+                    path: "BirdBotUtils.class.ts",
+                });
+            }
+        }
+        // Update the top flip words
+        const topFlipWords = dictionaryResource.metadata.topFlipWords;
+        for (const topFlipWord of topFlipWords) {
+            if (topFlipWord[0] === word) {
+                topFlipWords.splice(topFlipWords.indexOf(topFlipWord), 1);
+                Logger.log({
+                    message: `Deleted word ${word} from top flip words`,
+                    path: "BirdBotUtils.class.ts",
+                });
+                break;
+            }
+        }
+        // Update the top sn words
+        const topSnWords = dictionaryResource.metadata.topSnWords;
+        for (const topSnWord of topSnWords) {
+            if (topSnWord[0] === word) {
+                topSnWords.splice(topSnWords.indexOf(topSnWord), 1);
+                Logger.log({
+                    message: `Deleted word ${word} from top sn words`,
+                    path: "BirdBotUtils.class.ts",
+                });
+                break;
+            }
+        }
 
-        await writeFile(
-            path.join(resourcesPath, dictionaryMetadata.fileName),
-            dictionaryResource.resource.join("\n")
-        );
+        dictionaryResource.metadata.changed = true;
+    };
 
-        const newDictionaryMetadata = await loadDictionaryMetadata(
-            roomLanguage,
-            dictionaryMetadata.fileName
-        );
-        dictionaryResource.metadata.letterRarityScores =
-            newDictionaryMetadata.letterRarityScores;
-        dictionaryResource.metadata.syllablesCount =
-            newDictionaryMetadata.syllablesCount;
-        dictionaryResource.metadata.topFlipWords =
-            newDictionaryMetadata.topFlipWords;
-        dictionaryResource.metadata.topSnWords =
-            newDictionaryMetadata.topSnWords;
+    public static getDictionaryHash = (
+        dictionaryResource: DictionaryResource
+    ) => {
+        const hash = createHash("sha256");
+        const dictionaryLanguage = dictionaryResource.metadata.language;
+        const dictionaryLength = dictionaryResource.resource.length;
+        hash.update(dictionaryLanguage);
+        hash.update(dictionaryLength.toString());
+        for (let i = 0; i < 20; i++) {
+            const index = Math.floor((dictionaryLength * i) / 20);
+            hash.update(dictionaryResource.resource[index]);
+        }
     };
 
     public static setupRoomMetadata = (ctx: EventCtx) => {

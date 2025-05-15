@@ -604,12 +604,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                                     ctx.utils.sendChatMessage(
                                         `Unknown word ${word} is valid and was added to the dictionary.`
                                     );
-                                    currentDictionaryResource.resource.push(
-                                        word
-                                    );
-                                    BirdBotUtils.saveDictionaryResource(
+                                    BirdBotUtils.handleWordAdditionToDictionaryResource(
                                         ctx,
-                                        currentRoomLanguage
+                                        currentRoomLanguage,
+                                        word
                                     );
                                 }
                                 currentDictionaryResource.metadata.testWords =
@@ -671,13 +669,12 @@ const birdbotEventHandlers: BotEventHandlers = {
                                         ctx.utils.sendChatMessage(
                                             `Word ${word} is invalid and was removed from the dictionary.`
                                         );
-                                        currentDictionaryResource.resource.splice(
-                                            wordIndex,
-                                            1
-                                        );
-                                        BirdBotUtils.saveDictionaryResource(
+
+                                        BirdBotUtils.handleWordRemovalFromDictionaryResource(
                                             ctx,
-                                            currentRoomLanguage
+                                            currentRoomLanguage,
+                                            wordIndex,
+                                            word
                                         );
                                     }
                                     currentDictionaryResource.metadata.testWords =

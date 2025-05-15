@@ -20,6 +20,8 @@ export type DictionaryMetadata = CacheableDictionaryMetadata & {
     testWords: { word: string; callbackRoomCode: string }[];
     language: BirdBotLanguage;
     fileName: string;
+    metadataFileName: string;
+    changed: boolean;
 };
 
 export type DictionaryResource = Resource<string[], DictionaryMetadata>;

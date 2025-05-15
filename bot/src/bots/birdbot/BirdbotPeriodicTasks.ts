@@ -1,3 +1,4 @@
+import { writeFile } from "fs/promises";
 import { type PeriodicTask } from "../../lib/class/Bot.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
@@ -5,11 +6,16 @@ import BirdBot from "./BirdBot.class";
 import {
     birdbotLanguageToDictionaryId,
     dictionaryIdToBirdbotLanguage,
+    languageEnumSchema,
 } from "./BirdBotConstants";
 import {
+    BirdBotLanguage,
     BirdBotRoomMetadata,
     BirdBotSupportedDictionaryId,
+    CacheableDictionaryMetadata,
+    DictionaryResource,
 } from "./BirdBotTypes";
+import BirdBotUtils from "./BirdBotUtils.class";
 
 export const birdbotPeriodicTasks: PeriodicTask[] = [
     {
@@ -125,6 +131,54 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     room.roomState.unansweredPings = 0;
                 });
                 ws.ping();
+            }
+        },
+    },
+    {
+        intervalInMs: 30 * 1000,
+        timeout: undefined,
+        fn: async (ctx) => {
+            const languages =
+                languageEnumSchema.options satisfies BirdBotLanguage[];
+            for (const language of languages) {
+                const dictionaryResource =
+                    ctx.bot.resourceManager.get<DictionaryResource>(
+                        `dictionary-${language}`
+                    );
+                if (dictionaryResource.metadata.changed) {
+                    dictionaryResource.metadata.changed = false;
+                    const dictionaryMetadata = dictionaryResource.metadata;
+
+                    Utilitary.insertionSort(
+                        dictionaryResource.resource,
+                        (a, b) => a.localeCompare(b)
+                    );
+
+                    await writeFile(
+                        dictionaryMetadata.fileName,
+                        dictionaryResource.resource.join("\n")
+                    );
+
+                    const dictionaryHash =
+                        BirdBotUtils.getDictionaryHash(dictionaryResource);
+
+                    await writeFile(
+                        dictionaryMetadata.metadataFileName,
+                        [
+                            dictionaryHash,
+                            {
+                                letterRarityScores:
+                                    dictionaryMetadata.letterRarityScores,
+                                syllablesCount:
+                                    dictionaryMetadata.syllablesCount,
+                                topFlipWords: dictionaryMetadata.topFlipWords,
+                                topSnWords: dictionaryMetadata.topSnWords,
+                            } satisfies CacheableDictionaryMetadata,
+                        ].join("\n")
+                    );
+
+                    return;
+                }
             }
         },
     },

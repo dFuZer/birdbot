@@ -215,32 +215,21 @@ fn get_top_sn_words(
 
 fn generate_dictionary_hash(words: &[String], language: &str) -> String {
     let mut hasher = Sha256::new();
+
     // Add language to the hash
     hasher.update(language.as_bytes());
 
-    // Sample size for each section (beginning, middle, end)
-    let sample_size = 100;
+    // Add dictionary length
     let total_words = words.len();
-
-    // Sample from beginning
-    for word in words.iter().take(sample_size) {
-        hasher.update(word.as_bytes());
-    }
-
-    // Sample from middle
-    let middle_start = total_words / 2 - sample_size / 2;
-    for word in words.iter().skip(middle_start).take(sample_size) {
-        hasher.update(word.as_bytes());
-    }
-
-    // Sample from end
-    let end_start = total_words.saturating_sub(sample_size);
-    for word in words.iter().skip(end_start) {
-        hasher.update(word.as_bytes());
-    }
-
-    // Add total word count to detect additions/removals
     hasher.update(total_words.to_string().as_bytes());
+
+    // Take 20 words at regular intervals
+    for i in 0..20 {
+        let index = (total_words as f64 * i as f64 / 20.0).floor() as usize;
+        if index < total_words {
+            hasher.update(words[index].as_bytes());
+        }
+    }
 
     format!("{:x}", hasher.finalize())
 }
