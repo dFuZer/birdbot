@@ -38,6 +38,8 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     const { id: playerId } = paramsAwaited;
     const { m: mode, l: language } = searchParamsAwaited;
 
+    console.log(playerId, mode, language);
+
     const selectedLanguage = isValidLanguageParam(language) ? language : null;
     const selectedMode = isValidGameModeParam(mode) ? mode : null;
 

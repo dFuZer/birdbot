@@ -1,10 +1,8 @@
 import prisma from "../prisma";
-import { defaultLanguage, defaultMode, TLanguage, TMode } from "../schemas/records.zod";
+import { defaultLanguage, TLanguage, TMode } from "../schemas/records.zod";
 import {
     databaseEnumToLanguageEnumMap,
     databaseEnumToModeEnumMap,
-    languageEnumToDatabaseEnumMap,
-    modeEnumToDatabaseEnumMap,
     PrismaGameMode,
     PrismaLanguage,
 } from "./maps";
@@ -20,32 +18,38 @@ export let getPlayerPreferredCategory = async function ({
 }): Promise<{ language: TLanguage; mode: TMode }> {
     if (targetLanguage && targetMode) {
         return {
-            language: targetLanguage as TLanguage,
-            mode: targetMode as TMode,
+            language: targetLanguage,
+            mode: targetMode,
         };
     }
 
     const gameRecaps: { language: PrismaLanguage; mode: PrismaGameMode }[] =
         await prisma.$queryRaw`SELECT g."language", g."mode" FROM game_recap gr INNER JOIN game g ON g.id = gr.game_id WHERE gr.player_id = ${playerId}::UUID;`;
 
-    const playerBestLanguageQuery: { language: PrismaLanguage }[] = await prisma.$queryRaw`
+    const playerBestLanguageQuery: { language: PrismaLanguage }[] =
+        await prisma.$queryRaw`
         SELECT "language"
         FROM pp_leaderboard
         WHERE player_id = ${playerId}::uuid
-        ORDER BY pp_sum DESC
+        ORDER BY pp_sum DESC    
         LIMIT 1
     `;
 
     const playerBestLanguage = playerBestLanguageQuery[0]?.language;
 
-    if (playerBestLanguage) {
+    if (playerBestLanguage && !targetLanguage) {
         targetLanguage = databaseEnumToLanguageEnumMap[playerBestLanguage];
-        if (targetLanguage && targetMode) {
-            return {
-                language: targetLanguage as TLanguage,
-                mode: targetMode as TMode,
-            };
-        }
+    }
+
+    if (!targetLanguage) {
+        targetLanguage = defaultLanguage;
+    }
+
+    if (targetLanguage && targetMode) {
+        return {
+            language: targetLanguage,
+            mode: targetMode,
+        };
     }
 
     type LanguageMode = `${PrismaLanguage}-${PrismaGameMode}`;
@@ -55,69 +59,24 @@ export let getPlayerPreferredCategory = async function ({
     for (const recap of gameRecaps) {
         const lang = recap.language;
         const mode = recap.mode;
-        countPerLanguageMode[`${lang}-${mode}`] = (countPerLanguageMode[`${lang}-${mode}`] || 0) + 1;
+        countPerLanguageMode[`${lang}-${mode}`] =
+            (countPerLanguageMode[`${lang}-${mode}`] || 0) + 1;
     }
 
-    if (!targetLanguage && !targetMode) {
-        const preferredLanguageMode = Object.entries(countPerLanguageMode).reduce(
-            (acc, [key, value]) => {
-                return value > acc.value ? { key, value } : acc;
-            },
-            { key: "", value: -1 }
-        ).key;
+    const preferredLanguageMode = Object.entries(countPerLanguageMode).reduce(
+        (acc, [key, value]) => {
+            return value > acc.value ? { key, value } : acc;
+        },
+        { key: "", value: -1 }
+    ).key;
 
-        const [preferredLanguage, preferredMode] = preferredLanguageMode.split("-") as [PrismaLanguage, PrismaGameMode];
+    const [, preferredMode] = preferredLanguageMode.split("-") as [
+        PrismaLanguage,
+        PrismaGameMode
+    ];
 
-        return {
-            language: databaseEnumToLanguageEnumMap[preferredLanguage],
-            mode: databaseEnumToModeEnumMap[preferredMode],
-        };
-    } else if (!targetLanguage && targetMode) {
-        const preferredLanguageMode = Object.entries(countPerLanguageMode)
-            .filter((entry) => entry[0].endsWith(modeEnumToDatabaseEnumMap[targetMode]))
-            .reduce(
-                (acc, [key, value]) => {
-                    return value > acc.value ? { key, value } : acc;
-                },
-                { key: "", value: -1 }
-            ).key;
-
-        if (!preferredLanguageMode) {
-            return {
-                language: defaultLanguage,
-                mode: targetMode,
-            };
-        }
-        const [preferredLanguage, _] = preferredLanguageMode.split("-") as [PrismaLanguage, PrismaGameMode];
-
-        return {
-            language: databaseEnumToLanguageEnumMap[preferredLanguage],
-            mode: targetMode,
-        };
-    } else if (targetLanguage && !targetMode) {
-        const preferredLanguageMode = Object.entries(countPerLanguageMode)
-            .filter((entry) => entry[0].startsWith(languageEnumToDatabaseEnumMap[targetLanguage]))
-            .reduce(
-                (acc, [key, value]) => {
-                    return value > acc.value ? { key, value } : acc;
-                },
-                { key: "", value: -1 }
-            ).key;
-
-        if (!preferredLanguageMode) {
-            return {
-                language: targetLanguage,
-                mode: defaultMode,
-            };
-        }
-
-        const [_, preferredMode] = preferredLanguageMode.split("-") as [PrismaLanguage, PrismaGameMode];
-
-        return {
-            language: targetLanguage,
-            mode: databaseEnumToModeEnumMap[preferredMode],
-        };
-    } else {
-        throw new Error("Should not happen");
-    }
+    return {
+        language: targetLanguage,
+        mode: databaseEnumToModeEnumMap[preferredMode],
+    };
 };
