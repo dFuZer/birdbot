@@ -70,10 +70,7 @@ export let getPlayerPreferredCategory = async function ({
         { key: "", value: -1 }
     ).key;
 
-    const [, preferredMode] = preferredLanguageMode.split("-") as [
-        PrismaLanguage,
-        PrismaGameMode
-    ];
+    const preferredMode = preferredLanguageMode.split("-")[1] as PrismaGameMode;
 
     return {
         language: targetLanguage,
