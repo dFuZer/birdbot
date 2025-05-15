@@ -74,6 +74,7 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (
         `;
 
         const gainedExperience = calculateXpFromGameRecap({
+            mode: gameRecapData.game.mode,
             time: gameRecapData.diedAt - game.started_at.getTime(),
             wordsCount: gameRecapData.wordsCount,
             flipsCount: gameRecapData.flipsCount,
