@@ -187,7 +187,7 @@ export default function FaqPage() {
         <AccordionItem value={question.id} className="rounded-xl bg-neutral-50 shadow-sm" key={question.id}>
             <AccordionPrimitive.Header className="flex">
                 <AccordionPrimitive.Trigger asChild>
-                    <button className="flex w-full items-center gap-2 border-neutral-100 px-6 py-3 font-semibold [&[data-state=closed]>.openIcon]:hidden [&[data-state=open]]:border-b [&[data-state=open]>.closeIcon]:hidden">
+                    <button className="flex w-full items-center gap-2 border-neutral-100 px-6 py-3 text-left font-semibold [&[data-state=closed]>.openIcon]:hidden [&[data-state=open]]:border-b [&[data-state=open]>.closeIcon]:hidden">
                         <PlusCircleIcon className="closeIcon size-5" />
                         <MinusCircleIcon className="openIcon size-5" />
                         <div>{question.trigger}</div>
