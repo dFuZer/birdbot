@@ -3,10 +3,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 async function seed() {
-  let prisma = new PrismaClient();
-  await prisma.$connect();
+    let prisma = new PrismaClient();
+    await prisma.$connect();
 
-  await prisma.$executeRaw`
+    await prisma.$executeRaw`
         create or replace view player_latest_username as
             (with un as (
                 select p.id as player_id, pu.username as player_username, row_number() over (partition by pu.player_id order by pu.created_at desc) as recency_rank
@@ -18,7 +18,7 @@ async function seed() {
         )
     `;
 
-  await prisma.$executeRaw`
+    await prisma.$executeRaw`
         CREATE MATERIALIZED VIEW IF NOT EXISTS leaderboard AS (
             WITH all_scores AS (
                 SELECT DISTINCT
@@ -108,9 +108,9 @@ async function seed() {
                     CASE
                         WHEN "mode" = 'REGULAR'::"game_mode" THEN 1.0::FLOAT
                         WHEN "mode" = 'EASY'::"game_mode" THEN 0.7::FLOAT
-                        WHEN "mode" = 'BLITZ'::"game_mode" THEN 1.7::FLOAT
+                        WHEN "mode" = 'BLITZ'::"game_mode" THEN 2.2::FLOAT
                         WHEN "mode" = 'SUB500'::"game_mode" THEN 1.5::FLOAT
-                        WHEN "mode" = 'SUB50'::"game_mode" THEN 2::FLOAT
+                        WHEN "mode" = 'SUB50'::"game_mode" THEN 2.2::FLOAT
                         WHEN "mode" = 'FREEPLAY'::"game_mode" THEN 0.4::FLOAT
                         ELSE 0
                     END
@@ -181,7 +181,7 @@ async function seed() {
         );
     `;
 
-  await prisma.$executeRaw`
+    await prisma.$executeRaw`
         CREATE MATERIALIZED VIEW IF NOT EXISTS pp_leaderboard AS (
             WITH ct AS (
                 SELECT
