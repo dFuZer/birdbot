@@ -1,7 +1,7 @@
 "use client";
 
 import { katibehFont } from "@/app/fonts";
-import { type LanguageEnum } from "@/lib/records";
+import { LanguageEnum, getTimeDisplayFromMilliseconds } from "@/lib/records";
 import { ArrowPathIcon, ClockIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -19,13 +19,6 @@ export interface IRoom {
 export type IPlayPageData = {
     rooms: IRoom[];
 };
-
-function formatDuration(seconds: number): string {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-}
-
 function RoomCard({ room }: { room: IRoom }) {
     return (
         <Link
@@ -50,7 +43,7 @@ function RoomCard({ room }: { room: IRoom }) {
                     <span>
                         {room.currentGameDuration === "NOT-IN-GAME"
                             ? "Not in game"
-                            : formatDuration(room.currentGameDuration / 1000)}
+                            : getTimeDisplayFromMilliseconds(room.currentGameDuration)}
                     </span>
                 </div>
                 {room.currentGameDuration !== "NOT-IN-GAME" && (
