@@ -120,15 +120,6 @@ async function start() {
         }
     }
 
-    await bot.createRoom({
-        roomCreatorUsername: null,
-        targetConfig: {
-            dictionaryId: "fr",
-            gameMode: "survival",
-            birdbotGameMode: "regular",
-        },
-    });
-
     await bot.startPeriodicTasks();
 
     bot.startServer();

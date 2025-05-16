@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Resource } from "../../lib/class/ResourceManager.class";
-import * as CrocoTypes from "../../lib/types/gameTypes";
+import { RoomTargetConfig } from "../../lib/class/Room.class";
 import { SubmitResultType } from "../../lib/types/gameTypes";
 import type {
     birdbotSupportedDictionaryIds,
@@ -57,10 +57,8 @@ export type GlobalGameScores = {
 };
 
 export type BirdbotRoomTargetConfig = {
-    gameMode: CrocoTypes.GameMode;
-    dictionaryId: CrocoTypes.DictionaryId;
     birdbotGameMode: BirdBotGameMode;
-};
+} & RoomTargetConfig;
 
 export type BirdBotRoomMetadata = {
     gameMode: BirdBotGameMode | "custom";

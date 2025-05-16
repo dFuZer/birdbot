@@ -1336,6 +1336,8 @@ const createRoomCommand = c({
                     ],
                 gameMode: "survival",
                 birdbotGameMode: targetMode ?? defaultMode,
+                isPublic: true,
+                roomName: `🐤 BirdBot x ${gamer.identity.nickname}`,
             },
             roomCreatorUsername: gamer.identity.name,
             callback: (roomCode) => {

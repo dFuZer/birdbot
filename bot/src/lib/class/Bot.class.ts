@@ -157,6 +157,8 @@ export default class Bot {
             let msg = this.networkAdapter.getCreateRoomMessage({
                 dictionaryId: targetConfig.dictionaryId,
                 secret: this.botData!.session.session!.secret,
+                isPublic: targetConfig.isPublic,
+                roomName: targetConfig.roomName,
             });
             ws.send(msg);
         };

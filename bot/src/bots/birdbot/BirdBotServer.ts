@@ -7,7 +7,6 @@ import {
     BirdBotRoomMetadata,
     BirdBotSupportedDictionaryId,
 } from "./BirdBotTypes";
-import { t } from "./texts/BirdBotTextUtils";
 
 function returnUnauthorized(res: ServerResponse) {
     res.writeHead(401, { "Content-Type": "text/plain" });
@@ -72,9 +71,7 @@ function birdBotServerHandler(
                     : "NOT-IN-GAME";
             const roomCode = room.constantRoomData.roomCode;
 
-            const roomName = room.constantRoomData.roomCreatorUsername
-                ? `${room.constantRoomData.roomCreatorUsername} x BirdBot 🐤`
-                : `BirdBot ${t(`lib.language.${roomLanguage}.flag`)}`;
+            const roomName = room.constantRoomData.targetConfig.roomName;
 
             const roomScoresByGamer = (
                 room?.roomState?.metadata as BirdBotRoomMetadata

@@ -23,6 +23,8 @@ export type ConstantRoomData = {
 export type RoomTargetConfig = {
     gameMode: CrocoTypes.GameMode;
     dictionaryId: CrocoTypes.DictionaryId;
+    isPublic: boolean;
+    roomName: string;
     [key: string]: any;
 };
 

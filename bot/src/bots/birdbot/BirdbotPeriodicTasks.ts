@@ -16,6 +16,7 @@ import {
     DictionaryResource,
 } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
+import { t } from "./texts/BirdBotTextUtils";
 
 export const birdbotPeriodicTasks: PeriodicTask[] = [
     {
@@ -96,6 +97,11 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                             ],
                         gameMode: "survival",
                         birdbotGameMode: "regular",
+                        isPublic: true,
+                        roomName: `🐤 BirdBot ${t(
+                            `lib.language.${missingMainRoomLanguages[0]}.flag`,
+                            { lng: "en" }
+                        )}`,
                     },
                 });
             }
