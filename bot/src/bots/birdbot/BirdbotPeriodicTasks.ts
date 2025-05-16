@@ -39,7 +39,10 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                 const host = gamers.find(
                     (gamer) => gamer.identity.name === hostName
                 );
-                if (host === undefined) {
+                if (
+                    (host === undefined || !host.isOnline) &&
+                    room.roomState.gameData?.round.state.value !== "round"
+                ) {
                     // Host left the room
                     roomMetadata.hostLeftIteration++;
                     if (roomMetadata.hostLeftIteration >= 6) {
