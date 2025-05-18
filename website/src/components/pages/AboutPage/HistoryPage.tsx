@@ -14,7 +14,12 @@ export default function HistoryPage() {
             </p>
             <p className="mt-4">As I gained more experience, I rewrote the bot and its website several times.</p>
             <p className="mt-4">
-                The website you are watching is the third iteration of the BirdBot website, made in <strong>2025</strong>.
+                In 2023, I decided to delete the bot because I was tired of maintaininig it and was disillusioned with the state
+                of the website and the community.
+            </p>
+            <p className="mt-4">
+                I am back now in 2025. The website you are watching is the third iteration of the BirdBot website, made in{" "}
+                <strong>2025</strong>.
             </p>
             <p className="mt-4">
                 I hope you enjoy using BirdBot as much as I enjoyed creating it.

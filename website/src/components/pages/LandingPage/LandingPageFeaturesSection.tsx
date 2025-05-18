@@ -1,5 +1,7 @@
-import { AcademicCapIcon, CpuChipIcon, MagnifyingGlassIcon, TrophyIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import { katibehFont } from "@/app/fonts";
+import { DISCORD_SERVER_LINK } from "@/lib/links";
+import { AcademicCapIcon, CpuChipIcon, MagnifyingGlassIcon, TrophyIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 type FeatureCardProps = {
     TitleElement: React.ReactNode;
@@ -42,8 +44,15 @@ const featuresList: FeatureCardProps[] = [
     },
     {
         TitleElement: "Strong Community",
-        DescriptionElement:
-            "Since 2021, we’ve had 20,000 unique players and 2,000 discord members. (Rebuilding our community – be part of it!)",
+        DescriptionElement: (
+            <>
+                Since 2021, we’ve had 20,000 unique players and 2,000 discord members. (Rebuilding our community –{" "}
+                <Link target="_blank" className="text-primary-800 font-bold" href={DISCORD_SERVER_LINK}>
+                    be part of it!
+                </Link>
+                )
+            </>
+        ),
         IconElement: <UserGroupIcon className="h-8 w-8 stroke-[1.5px] text-neutral-950" />,
     },
 ];
