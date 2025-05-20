@@ -52,7 +52,7 @@ const helpCommand = c({
                 t("command.help.list", {
                     commandList: commandFirstAliases,
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -63,7 +63,7 @@ const helpCommand = c({
                 t("eventHandler.chat.commandNotFound", {
                     command: requestedCommand,
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -76,7 +76,7 @@ const helpCommand = c({
                 usage: command.usageDesc,
                 example: command.exampleUsage,
                 lng: l(ctx),
-            }),
+            })
         );
     },
 }) satisfies Command;
@@ -111,7 +111,7 @@ const recordsCommand = c({
                     ctx.utils.sendChatMessage(
                         t("error.api.inaccessible", {
                             lng: l(ctx),
-                        }),
+                        })
                     );
                 return;
             }
@@ -128,7 +128,7 @@ const recordsCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.api.inaccessible", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -155,7 +155,7 @@ const recordsCommand = c({
                                 lng: l(ctx),
                             }),
                             lng: l(ctx),
-                        })}`,
+                        })}`
                 )
                 .join(" — ");
 
@@ -166,7 +166,7 @@ const recordsCommand = c({
                     recordType: t(`lib.recordType.${targetRecordType}.recordName`),
                     records,
                     lng: l(ctx),
-                }),
+                })
             );
         } else {
             const r = responseData as ApiResponseAllRecords;
@@ -191,7 +191,7 @@ const recordsCommand = c({
                     gameMode: t(`lib.mode.${mode}`),
                     records,
                     lng: l(ctx),
-                }),
+                })
             );
         }
     },
@@ -208,7 +208,7 @@ const currentGameScoresCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.roomState.noGameInProgress", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -221,14 +221,14 @@ const currentGameScoresCommand = c({
                         username,
                         scores,
                         lng: l(ctx),
-                    }),
+                    })
                 );
             } else {
                 ctx.utils.sendChatMessage(
                     t("command.currentGameScore.noScores", {
                         username,
                         lng: l(ctx),
-                    }),
+                    })
                 );
             }
         }
@@ -243,7 +243,7 @@ const currentGameScoresCommand = c({
                     ctx.utils.sendChatMessage(
                         t("error.404.playerStats", {
                             lng: l(ctx),
-                        }),
+                        })
                     );
                     return;
                 }
@@ -252,7 +252,7 @@ const currentGameScoresCommand = c({
                 ctx.utils.sendChatMessage(
                     t("error.404.player", {
                         lng: l(ctx),
-                    }),
+                    })
                 );
             }
         } else {
@@ -268,7 +268,7 @@ const currentGameScoresCommand = c({
                     ctx.utils.sendChatMessage(
                         t("error.404.currentPlayer", {
                             lng: l(ctx),
-                        }),
+                        })
                     );
                     return;
                 }
@@ -277,7 +277,7 @@ const currentGameScoresCommand = c({
                     ctx.utils.sendChatMessage(
                         t("error.404.playerStats", {
                             lng: l(ctx),
-                        }),
+                        })
                     );
                     return;
                 }
@@ -286,7 +286,7 @@ const currentGameScoresCommand = c({
                     ctx.utils.sendChatMessage(
                         t("error.404.gamer", {
                             lng: l(ctx),
-                        }),
+                        })
                     );
                     return;
                 }
@@ -306,7 +306,7 @@ const startGameCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.roomState.notInPregame", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -314,7 +314,7 @@ const startGameCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.roomState.notEnoughPlayers", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -323,7 +323,7 @@ const startGameCommand = c({
         ctx.utils.sendChatMessage(
             t("command.startGame.starting", {
                 lng: l(ctx),
-            }),
+            })
         );
     },
 }) satisfies Command;
@@ -339,7 +339,7 @@ const setGameModeCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.roomState.cannotSetMode", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -353,7 +353,7 @@ const setGameModeCommand = c({
                             lng: l(ctx),
                         }),
                         lng: l(ctx),
-                    }),
+                    })
                 );
                 return;
             }
@@ -361,7 +361,7 @@ const setGameModeCommand = c({
                 t("command.setGameMode.setting", {
                     gameMode: t(`lib.mode.${targetGameMode}`, { lng: l(ctx) }),
                     lng: l(ctx),
-                }),
+                })
             );
             const targetGameModeRules = birdbotModeRules[targetGameMode];
 
@@ -383,7 +383,7 @@ const setRoomLanguageCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.roomState.cannotSetLanguage", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -398,7 +398,7 @@ const setRoomLanguageCommand = c({
                             lng: l(ctx),
                         }),
                         lng: l(ctx),
-                    }),
+                    })
                 );
                 return;
             }
@@ -408,14 +408,14 @@ const setRoomLanguageCommand = c({
                         lng: l(ctx),
                     }),
                     lng: l(ctx),
-                }),
+                })
             );
             BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", birdbotLanguageToDictionaryId[targetLanguage]);
         } else {
             ctx.utils.sendChatMessage(
                 t("error.invalid.language", {
                     lng: l(ctx),
-                }),
+                })
             );
         }
     },
@@ -438,11 +438,11 @@ const searchWordsCommand = c({
                         .map((record) =>
                             t(`lib.recordType.${record}.recordName`, {
                                 lng: l(ctx),
-                            }),
+                            })
                         )
                         .join(", "),
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -454,7 +454,7 @@ const searchWordsCommand = c({
                         lng: l(ctx),
                     }),
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -465,20 +465,20 @@ const searchWordsCommand = c({
                         lng: l(ctx),
                     }),
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
 
         const requestedFilterRecords = Utilitary.getUniqueStrings(
             allParamRecords.filter((record) =>
-                filterWordsModeRecords.includes(record as any),
-            ) as (typeof filterWordsModeRecords)[number][],
+                filterWordsModeRecords.includes(record as any)
+            ) as (typeof filterWordsModeRecords)[number][]
         );
         const requestedSortRecords = Utilitary.getUniqueStrings(
             allParamRecords.filter((record) =>
-                sortWordsModeRecords.includes(record as any),
-            ) as (typeof sortWordsModeRecords)[number][],
+                sortWordsModeRecords.includes(record as any)
+            ) as (typeof sortWordsModeRecords)[number][]
         );
         if (requestedSortRecords.length > 1) {
             ctx.utils.sendChatMessage(
@@ -487,18 +487,18 @@ const searchWordsCommand = c({
                         .map((record) =>
                             t(`lib.recordType.${record}.recordName`, {
                                 lng: l(ctx),
-                            }),
+                            })
                         )
                         .join(", "),
                     filterRecords: filterWordsModeRecords
                         .map((record) =>
                             t(`lib.recordType.${record}.recordName`, {
                                 lng: l(ctx),
-                            }),
+                            })
                         )
                         .join(", "),
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -513,7 +513,7 @@ const searchWordsCommand = c({
                     t("error.notSupported.language", {
                         language: roomDictionaryId,
                         lng: l(ctx),
-                    }),
+                    })
                 );
                 return;
             }
@@ -539,7 +539,7 @@ const searchWordsCommand = c({
                 ctx.utils.sendChatMessage(
                     t("error.searchWords.mustProvideOneSyllable", {
                         lng: l(ctx),
-                    }),
+                    })
                 );
                 return;
             }
@@ -549,7 +549,7 @@ const searchWordsCommand = c({
                 ctx.utils.sendChatMessage(
                     t("error.404.syllableNotExists", {
                         lng: l(ctx),
-                    }),
+                    })
                 );
                 return;
             }
@@ -680,7 +680,7 @@ const searchWordsCommand = c({
                     hiddenCount: moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount,
                     wordsList: cutResults.join(" ").toUpperCase(),
                     lng: l(ctx),
-                }),
+                })
             );
         } else {
             ctx.utils.sendChatMessage(
@@ -689,7 +689,7 @@ const searchWordsCommand = c({
                     resultCount: foundMoreThanLimit ? `+${RESULT_LIMIT}` : totalResultsCount,
                     hiddenCount: moreHiddenThanLimit ? `+${RESULT_LIMIT}` : hiddenWordsCount,
                     lng: l(ctx),
-                }),
+                })
             );
         }
     },
@@ -701,18 +701,16 @@ const playerProfileCommand = c({
     usageDesc: "/p (username) (-language -mode)",
     exampleUsage: "/p - /p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
     handler: async (ctx) => {
-        console.log(ctx.args, ctx.gamer.identity.name);
         const targetUsername = ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.identity.name;
         if (!targetUsername) {
             ctx.utils.sendChatMessage(
                 t("command.playerProfile.noUsernameNotConnected", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
 
-        console.log(" sadf");
         const targetLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
         const targetMode = BirdBotUtils.findTargetItemInZodEnum(ctx.params, modesEnumSchema);
 
@@ -748,20 +746,20 @@ const playerProfileCommand = c({
             const playerDataRequest = await BirdBotUtils.getJsonFromApi(
                 `/player-profile?name=${encodeURIComponent(targetUsername)}${
                     targetLanguage ? `&language=${targetLanguage}` : ""
-                }${targetMode ? `&mode=${targetMode}` : ""}`,
+                }${targetMode ? `&mode=${targetMode}` : ""}`
             );
             if (!playerDataRequest.ok) {
                 if (playerDataRequest.status === 404) {
                     ctx.utils.sendChatMessage(
                         t("error.404.player", {
                             lng: l(ctx),
-                        }),
+                        })
                     );
                 } else {
                     ctx.utils.sendChatMessage(
                         t("error.api.inaccessible", {
                             lng: l(ctx),
-                        }),
+                        })
                     );
                 }
                 return;
@@ -776,7 +774,7 @@ const playerProfileCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.api.inaccessible", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -814,7 +812,7 @@ const playerProfileCommand = c({
                 t("command.playerProfile.resultMode", {
                     ...messageParams,
                     records,
-                }),
+                })
             );
         } else {
             // result: "[{{languageFlag}}] {{playerUsername}} : Rang #{{rank}} avec {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, niveau {{level}}. Top 3 performances : {{top3Performances}}",
@@ -849,7 +847,7 @@ const playerProfileCommand = c({
                         .slice(0, 5)
                         .join(" — "),
                     lng: l(ctx),
-                }),
+                })
             );
         }
     },
@@ -879,7 +877,7 @@ const rareSyllablesCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.invalidParams.mustProvideWord", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -899,7 +897,7 @@ const rareSyllablesCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.404.word", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -917,7 +915,7 @@ const rareSyllablesCommand = c({
                     t("command.rareSyllables.errorSyllableNotInDictionary", {
                         syllable,
                         lng: l(ctx),
-                    }),
+                    })
                 );
                 return;
             }
@@ -934,7 +932,7 @@ const rareSyllablesCommand = c({
                     word: targetWord,
                     rareSyllables: rareSyllables.map((s) => `${s.syllable}: ${s.count}`).join(", "),
                     lng: l(ctx),
-                }),
+                })
             );
         } else {
             ctx.utils.sendChatMessage(
@@ -942,7 +940,7 @@ const rareSyllablesCommand = c({
                     languageFlag: t(`lib.language.${targetLanguage}.flag`),
                     word: targetWord,
                     lng: l(ctx),
-                }),
+                })
             );
         }
     },
@@ -974,7 +972,7 @@ const discordCommand = c({
             t("command.discord.result", {
                 link: DISCORD_SERVER_LINK,
                 lng: l(ctx),
-            }),
+            })
         );
     },
 }) satisfies Command;
@@ -997,7 +995,7 @@ const donateCommand = c({
             t("command.donate.result", {
                 link: PAYPAL_DONATE_LINK,
                 lng: l(ctx),
-            }),
+            })
         );
     },
 }) satisfies Command;
@@ -1034,7 +1032,7 @@ const modUserCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.invalidParams.noUsername", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -1044,7 +1042,7 @@ const modUserCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.404.player", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -1061,7 +1059,7 @@ const modUserCommand = c({
             t("command.modUser.modding", {
                 username: gamer.identity.nickname,
                 lng: l(ctx),
-            }),
+            })
         );
 
         ctx.room.ws.send(message);
@@ -1079,7 +1077,7 @@ const unmodUserCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.invalidParams.noUsername", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -1089,7 +1087,7 @@ const unmodUserCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.404.player", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -1106,7 +1104,7 @@ const unmodUserCommand = c({
             t("command.unmodUser.unmodding", {
                 username: gamer.identity.nickname,
                 lng: l(ctx),
-            }),
+            })
         );
 
         ctx.room.ws.send(message);
@@ -1126,7 +1124,7 @@ const privateRoomCommand = c({
         ctx.utils.sendChatMessage(
             t("command.privateRoom.setting", {
                 lng: l(ctx),
-            }),
+            })
         );
         ctx.room.ws.send(message);
     },
@@ -1145,7 +1143,7 @@ const publicRoomCommand = c({
         ctx.utils.sendChatMessage(
             t("command.publicRoom.setting", {
                 lng: l(ctx),
-            }),
+            })
         );
         ctx.room.ws.send(message);
     },
@@ -1166,8 +1164,8 @@ const destroyAllRoomsCommand = c({
                     ctx.bot.networkAdapter.getSendChatMessage(
                         t("command.destroyAllRooms.message", {
                             lng: l(ctx),
-                        }),
-                    ),
+                        })
+                    )
                 );
             }
 
@@ -1204,7 +1202,7 @@ const createRoomCommand = c({
             ctx.utils.sendChatMessage(
                 t("error.platform.mustBeLoggedIn", {
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -1213,7 +1211,7 @@ const createRoomCommand = c({
                 ctx.utils.sendChatMessage(
                     t("command.createRoom.roomBeingCreated", {
                         lng: l(ctx),
-                    }),
+                    })
                 );
                 return;
             }
@@ -1224,7 +1222,7 @@ const createRoomCommand = c({
                         t("command.createRoom.roomAlreadyExists", {
                             code: room.constantRoomData.roomCode,
                             lng: l(ctx),
-                        }),
+                        })
                     );
                     return;
                 }
@@ -1244,7 +1242,7 @@ const createRoomCommand = c({
                         lng: l(ctx),
                     }),
                     lng: l(ctx),
-                }),
+                })
             );
             return;
         }
@@ -1273,8 +1271,8 @@ const createRoomCommand = c({
                             t("command.createRoom.roomCreated", {
                                 roomCode,
                                 lng: l(ctx),
-                            }),
-                        ),
+                            })
+                        )
                     );
                 }
             },
@@ -1285,8 +1283,8 @@ const createRoomCommand = c({
                         ctx.bot.networkAdapter.getSendChatMessage(
                             t("command.createRoom.unknownError", {
                                 lng: l(ctx),
-                            }),
-                        ),
+                            })
+                        )
                     );
                 }
             },

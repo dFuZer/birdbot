@@ -27,8 +27,6 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
         return res.status(400).send({ message: "Invalid params" });
     }
 
-    console.log(parsedData.data);
-
     let searchPlayerId: string | null = null;
     let foundUsername: string | null = null;
 
@@ -74,8 +72,6 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
         ...profileData,
         foundUsername: "name" in parsedData.data && foundUsername ? foundUsername : profileData.playerUsername,
     };
-
-    console.log(finalProfileData);
 
     return res.status(200).send(finalProfileData);
 };
