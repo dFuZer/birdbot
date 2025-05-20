@@ -280,29 +280,36 @@ const currentGameScoresCommand = c({
                 ctx.utils.sendChatMessage(t("error.404.player"));
             }
         } else {
-            const currentPlayer = Utilitary.getCurrentPlayer(
-                ctx.room.roomState.gameData!
-            );
-            if (!currentPlayer) {
-                ctx.utils.sendChatMessage(t("error.404.currentPlayer"));
-                return;
-            }
             const roomMetadata = ctx.room.roomState
                 .metadata as BirdBotRoomMetadata;
-            const playerStats =
-                roomMetadata.scoresByGamerId[currentPlayer.gamerId];
-            if (playerStats === undefined) {
-                ctx.utils.sendChatMessage(t("error.404.playerStats"));
+
+            if (roomMetadata.scoresByGamerId[ctx.gamer.id] !== undefined) {
+                const playerStats = roomMetadata.scoresByGamerId[ctx.gamer.id];
+                sendResults(ctx.gamer.identity.nickname, playerStats);
                 return;
+            } else {
+                const currentPlayer = Utilitary.getCurrentPlayer(
+                    ctx.room.roomState.gameData!
+                );
+                if (!currentPlayer) {
+                    ctx.utils.sendChatMessage(t("error.404.currentPlayer"));
+                    return;
+                }
+                const playerStats =
+                    roomMetadata.scoresByGamerId[currentPlayer.gamerId];
+                if (playerStats === undefined) {
+                    ctx.utils.sendChatMessage(t("error.404.playerStats"));
+                    return;
+                }
+                const gamer = ctx.room.roomState.roomData!.gamers.find(
+                    (gamer) => gamer.id === currentPlayer.gamerId
+                );
+                if (gamer === undefined) {
+                    ctx.utils.sendChatMessage(t("error.404.gamer"));
+                    return;
+                }
+                sendResults(gamer.identity.nickname, playerStats);
             }
-            const gamer = ctx.room.roomState.roomData!.gamers.find(
-                (gamer) => gamer.id === currentPlayer.gamerId
-            );
-            if (gamer === undefined) {
-                ctx.utils.sendChatMessage(t("error.404.gamer"));
-                return;
-            }
-            sendResults(gamer.identity.nickname, playerStats);
         }
     },
 }) satisfies Command;
