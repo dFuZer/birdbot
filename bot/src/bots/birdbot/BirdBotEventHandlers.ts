@@ -75,6 +75,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                     (gamer) => gamer.identity.name === roomOwner
                 );
                 if (!gamer) return;
+                if (gamer.role === "moderator") return;
 
                 const message = ctx.bot.networkAdapter.getSetGamerRoleMessage({
                     gamerId: gamer.id,
@@ -116,7 +117,15 @@ const birdbotEventHandlers: BotEventHandlers = {
                 );
             } else if (handleCommandResult === "not-room-creator") {
                 ctx.utils.sendChatMessage(
-                    t("eventHandler.chat.notRoomCreator")
+                    t("eventHandler.chat.notRoomCreator", {
+                        lng: l(ctx),
+                    })
+                );
+            } else if (handleCommandResult === "not-admin") {
+                ctx.utils.sendChatMessage(
+                    t("eventHandler.chat.notAdmin", {
+                        lng: l(ctx),
+                    })
                 );
             }
         },

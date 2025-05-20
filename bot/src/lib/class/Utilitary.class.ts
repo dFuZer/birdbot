@@ -353,7 +353,8 @@ export default class Utilitary {
         | "command-not-found"
         | "trying-to-handle-command"
         | "no-command-attempted"
-        | "not-room-creator" {
+        | "not-room-creator"
+        | "not-admin" {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
         const commandPrefixes = ["!", "/", "."];
         if (
@@ -377,6 +378,12 @@ export default class Utilitary {
             );
             if (!command) return "command-not-found";
             if (
+                command.adminRequired &&
+                !ctx.utils.userIsAdmin(gamer.identity.name)
+            ) {
+                return "not-admin";
+            }
+            if (
                 !(
                     (command.roomCreatorRequired &&
                         ctx.room.constantRoomData.roomCreatorUsername ===
@@ -387,6 +394,7 @@ export default class Utilitary {
             ) {
                 return "not-room-creator";
             }
+
             Logger.log({
                 message: `Attempting to handle command ${command.id} from message ${rawMessage}`,
                 path: "Utilitary.class.ts",

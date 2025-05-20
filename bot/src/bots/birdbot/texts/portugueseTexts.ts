@@ -202,6 +202,8 @@ export const portugueseTexts = {
             commandNotFound: "Comando não encontrado: {{command}}",
             notRoomCreator:
                 "Você não pode usar este comando se não for o criador da sala. /b para criar sua sala estará disponível em breve.",
+            notAdmin:
+                "Você não pode usar este comando se não for um administrador.",
         },
         submit: {
             turnCommentWithWord: "{{username}}: ({{word}}) {{comments}}.",

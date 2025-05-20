@@ -203,6 +203,8 @@ export const frenchTexts = {
             commandNotFound: "Commande pas trouvée : {{command}}",
             notRoomCreator:
                 "Tu ne peux pas utiliser cette commande si tu n'es pas le créateur du salon. /b pour créer ton salon sera bientôt disponible.",
+            notAdmin:
+                "Tu ne peux pas utiliser cette commande si tu n'es pas un admin.",
         },
         submit: {
             turnCommentWithWord: "{{username}} : ({{word}}) {{comments}}.",

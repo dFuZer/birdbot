@@ -204,6 +204,7 @@ export const englishTexts = {
             commandNotFound: "Command not found: {{command}}",
             notRoomCreator:
                 "You cannot use this command if you are not the room creator. /b to create your room will be available soon.",
+            notAdmin: "You cannot use this command if you are not an admin.",
         },
         submit: {
             turnCommentWithWord: "{{username}}: ({{word}}) {{comments}}.",
