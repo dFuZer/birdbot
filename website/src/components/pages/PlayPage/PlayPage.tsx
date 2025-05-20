@@ -5,7 +5,7 @@ import { LanguageEnum, getTimeDisplayFromMilliseconds } from "@/lib/records";
 import { ArrowPathIcon, ClockIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import FrenchFlag from "~/public/frenchFlag.svg";
+import Flag from "../common/Flag";
 
 export interface IRoom {
     roomName: string;
@@ -28,7 +28,7 @@ function RoomCard({ room }: { room: IRoom }) {
             <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2 truncate">
                     <span>
-                        <FrenchFlag className="h-4 w-4" />
+                        <Flag language={room.language} className="h-4 w-4" />
                     </span>
                     <span className="truncate text-lg font-semibold">{room.roomName}</span>
                 </div>

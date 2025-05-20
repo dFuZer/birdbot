@@ -1,5 +1,6 @@
 import { RouteHandlerMethod } from "fastify";
 import { z } from "zod";
+import { databaseEnumToLanguageEnumMap, PrismaLanguage } from "../helpers/maps";
 import { getLevelDataFromXp } from "../helpers/xp";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
@@ -28,6 +29,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             player_id: string;
             pp_sum: number;
             rank: number;
+            language: PrismaLanguage;
             username: string;
             xp: number;
         }[] = await prisma.$queryRaw`
@@ -35,6 +37,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 ppl.player_id,
                 ppl.pp_sum,
                 plu.username,
+                ppl.language,
                 p.xp,
                 CAST(ROW_NUMBER() OVER (
                 ORDER BY ppl.pp_sum DESC) AS int) AS "rank"
@@ -74,6 +77,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 rank: row.rank,
                 name: row.username,
                 xp: getLevelDataFromXp(row.xp),
+                language: databaseEnumToLanguageEnumMap[row.language],
             })),
         });
     } else if (mode === "xp") {

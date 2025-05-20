@@ -2,6 +2,7 @@ import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
 import PlayersPage from "@/components/pages/PlayersPage/PlayersPage";
 import { getFromApi } from "@/lib/fetching";
 import { TSearchParams } from "@/lib/params";
+import { LanguageEnum } from "@/lib/records";
 import { isValidPlayersPageSortParam, sortModeEnumSchema, tryGetNumberFromParam } from "@/lib/validation";
 import { Metadata } from "next";
 
@@ -16,6 +17,7 @@ export interface IPlayerCardDataRecords extends IPlayerScoreCommonProps {
 
 export interface IPlayerCardDataPP extends IPlayerScoreCommonProps {
     pp: number;
+    language: LanguageEnum;
 }
 
 export type PlayersPageData = { maxPage: number } & (

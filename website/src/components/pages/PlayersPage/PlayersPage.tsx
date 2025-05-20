@@ -1,6 +1,7 @@
 import { IPlayerCardDataPP, IPlayerCardDataRecords, PlayersPageData } from "@/app/players/page";
 import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
 import { sortModeEnumSchema } from "@/lib/validation";
+import Flag from "../common/Flag";
 import PlayerCard from "../common/PlayerCard";
 import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";
@@ -74,9 +75,12 @@ export default function PlayersPage({ pageData, isFirstPage }: { pageData: Playe
                     key={i}
                     PlayerRowContentSection={
                         <div>
-                            <p className="text-sm font-bold text-neutral-950">
-                                {p.pp} <span className="font-normal">pp</span>
-                            </p>
+                            <div className="flex items-center gap-2 text-sm font-bold text-neutral-950">
+                                <Flag language={p.language} className="h-4 w-4" />
+                                <p>
+                                    {p.pp} <span className="font-normal">pp</span>
+                                </p>
+                            </div>
                         </div>
                     }
                     playerData={player}
@@ -92,7 +96,8 @@ export default function PlayersPage({ pageData, isFirstPage }: { pageData: Playe
                     playerData={p}
                     PlayerCardContentSection={
                         <div className="h-[2rem] space-y-1">
-                            <div className="flex items-center justify-center text-sm font-bold text-neutral-950">
+                            <div className="flex items-center justify-center gap-2 text-sm font-bold text-neutral-950">
+                                <Flag language={p.language} className="size-6" />
                                 <p>
                                     {p.pp} <span className="font-normal">pp</span>
                                 </p>
