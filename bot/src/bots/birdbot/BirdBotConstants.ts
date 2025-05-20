@@ -47,8 +47,8 @@ const birdbotBlitzModeRules = {
     ...birdbotRulesBase,
     bombDuration: 3,
     customPromptDifficulty: 1,
-    maxLives: 2,
-    startingLives: 3,
+    maxLives: 3,
+    startingLives: 2,
 } satisfies DictionaryLessGameRules;
 
 const birdbotSub500ModeRules = {
