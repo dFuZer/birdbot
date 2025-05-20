@@ -1,7 +1,9 @@
 import { RouteHandlerMethod } from "fastify";
 import { z } from "zod";
 import { getLevelDataFromXp } from "../helpers/xp";
+import Logger from "../lib/logger";
 import prisma from "../prisma";
+import { numericString } from "../schemas/common.zod";
 
 export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req, res) {
     const query = req.query;
@@ -9,12 +11,13 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
     const parsedQuery = z
         .object({
             mode: z.enum(["xp", "pp", "records"]),
-            page: z.number().optional(),
-            perPage: z.number().optional(),
+            page: numericString.optional(),
+            perPage: numericString.optional(),
         })
         .safeParse(query);
 
     if (!parsedQuery.success) {
+        Logger.error({ message: "Invalid query", path: "getLeaderboard.route.ts", errorType: "zod", error: parsedQuery.error });
         return res.status(400).send({ message: "Invalid query" });
     }
 
@@ -31,9 +34,10 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             SELECT
                 ppl.player_id,
                 ppl.pp_sum,
-                ppl.rank,
                 plu.username,
-                p.xp
+                p.xp,
+                CAST(ROW_NUMBER() OVER (
+                ORDER BY ppl.pp_sum DESC) AS int) AS "rank"
             FROM
                 pp_leaderboard ppl
             INNER JOIN player p
@@ -50,8 +54,20 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 ${(page - 1) * perPage};
         `;
 
+        const totalCount: { count: number }[] = await prisma.$queryRaw`
+            SELECT CAST(COUNT(*) as int) as count
+            FROM pp_leaderboard ppl
+            INNER JOIN player p
+            ON p.id = ppl.player_id
+            INNER JOIN player_latest_username plu
+            ON p.id = plu.player_id
+        `;
+
+        const maxPage = Math.ceil(totalCount[0].count / perPage);
+
         return res.status(200).send({
             mode: "pp",
+            maxPage,
             data: leaderboard.map((row) => ({
                 id: row.player_id,
                 pp: row.pp_sum,
@@ -86,8 +102,18 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 ${(page - 1) * perPage};
         `;
 
+        const totalCount: { count: number }[] = await prisma.$queryRaw`
+            SELECT CAST(COUNT(*) as int) as count
+            FROM player p
+            INNER JOIN player_latest_username plu
+            ON p.id = plu.player_id
+        `;
+
+        const maxPage = Math.ceil(totalCount[0].count / perPage);
+
         return res.status(200).send({
             mode: "xp",
+            maxPage,
             data: leaderboard.map((row) => ({
                 id: row.player_id,
                 xp: getLevelDataFromXp(row.xp),
@@ -138,6 +164,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
 
         return res.status(200).send({
             mode: "records",
+            maxPage: 10,
             data: leaderboard.map((row) => ({
                 id: row.player_id,
                 recordsCount: row.records_count,

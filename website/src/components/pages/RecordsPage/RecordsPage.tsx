@@ -19,11 +19,13 @@ type RecordsPageProps = {
     mode: ModesEnum;
     record: RecordsEnum;
     data: IScoreData[];
+    maxPage: number;
+    isFirstPage: boolean;
 };
 
-export default function RecordsPage({ data, language, mode, record }: RecordsPageProps) {
-    const top3Records = data.slice(0, 3);
-    const otherRecords = data.slice(3);
+export default function RecordsPage({ data, language, mode, record, maxPage, isFirstPage }: RecordsPageProps) {
+    const top3Records = isFirstPage ? data.slice(0, 3) : [];
+    const otherRecords = isFirstPage ? data.slice(3) : data;
 
     const rows = otherRecords.map((recordData, i) => {
         return (
@@ -57,6 +59,7 @@ export default function RecordsPage({ data, language, mode, record }: RecordsPag
 
     return (
         <RecordsListLayout
+            maxPage={maxPage}
             Selectors={
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:flex">
                     <RecordsPageSelectors language={language} mode={mode} record={record} />

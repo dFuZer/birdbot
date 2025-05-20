@@ -35,11 +35,14 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             AND rank = 1
         `;
 
-        return bestScores.map((score) => ({
-            ...score,
-            record_type: databaseFieldToRecordEnumMap[score.record_type],
-            xp: getLevelDataFromXp(score.xp),
-        }));
+        return {
+            bestScores: bestScores.map((score) => ({
+                ...score,
+                record_type: databaseFieldToRecordEnumMap[score.record_type],
+                xp: getLevelDataFromXp(score.xp),
+            })),
+            maxPage: 1,
+        };
     } else {
         const { record, page = 1, perPage = 10 } = params;
         const enumRecord = recordEnumToDatabaseFieldMap[record as TRecord];
@@ -61,13 +64,28 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             AND "language" = ${enumLang}::"language"
             AND "record_type" = ${enumRecord}
             ORDER BY score DESC
-            LIMIT ${perPage}    
+            LIMIT ${perPage}
             OFFSET ${(page - 1) * perPage}
         `;
 
-        return bestScores.map((score) => ({
-            ...score,
-            xp: getLevelDataFromXp(score.xp),
-        }));
+        const totalCount: { count: number }[] = await prisma.$queryRaw`
+            SELECT CAST(COUNT(*) as int) as count
+            FROM leaderboard l
+            INNER JOIN player p
+            ON l.player_id = p.id
+            WHERE "mode" = ${enumMode}::"game_mode"
+            AND "language" = ${enumLang}::"language"
+            AND "record_type" = ${enumRecord}
+        `;
+
+        const maxPage = Math.ceil(totalCount[0].count / perPage);
+
+        return {
+            bestScores: bestScores.map((score) => ({
+                ...score,
+                xp: getLevelDataFromXp(score.xp),
+            })),
+            maxPage,
+        };
     }
 }

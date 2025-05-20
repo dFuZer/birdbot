@@ -1,9 +1,9 @@
 "use client";
 
-import useChangeSearchParam from "@/components/hooks/useChangeSearchParam";
 import LanguageSelect from "@/components/pages/common/LanguageSelect";
 import ModeSelect from "@/components/pages/common/ModeSelect";
 import RecordSelect from "@/components/pages/common/RecordSelect";
+import useChangeSearchParam from "@/lib/hooks/useChangeSearchParam";
 import { type LanguageEnum, type ModesEnum, type RecordsEnum } from "@/lib/records";
 
 type RecordsPageProps = {
@@ -19,15 +19,15 @@ export default function RecordsPageSelectors({ language, mode, record }: Records
         <>
             <div>
                 <p className="mb-1 text-sm font-medium">Language</p>
-                <LanguageSelect language={language} onChangeLanguage={(value) => changeSearchParam("l", value)} />
+                <LanguageSelect language={language} onChangeLanguage={(value) => changeSearchParam({ l: value, page: null })} />
             </div>
             <div>
                 <p className="mb-1 text-sm font-medium">Mode</p>
-                <ModeSelect mode={mode} onChangeMode={(value) => changeSearchParam("m", value)} />
+                <ModeSelect mode={mode} onChangeMode={(value) => changeSearchParam({ m: value, page: null })} />
             </div>
             <div>
                 <p className="mb-1 text-sm font-medium">Record</p>
-                <RecordSelect record={record} onChangeRecord={(value) => changeSearchParam("r", value)} />
+                <RecordSelect record={record} onChangeRecord={(value) => changeSearchParam({ r: value, page: null })} />
             </div>
         </>
     );

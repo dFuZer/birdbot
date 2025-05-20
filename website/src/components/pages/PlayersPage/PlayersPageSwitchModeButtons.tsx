@@ -1,7 +1,7 @@
 "use client";
 
-import useChangeSearchParam from "@/components/hooks/useChangeSearchParam";
 import { Button } from "@/components/ui/button";
+import useChangeSearchParam from "@/lib/hooks/useChangeSearchParam";
 import { sortModeEnumSchema, type SortModeEnum } from "@/lib/validation";
 import {
     AcademicCapIcon as AcademicCapIconOutline,
@@ -19,21 +19,19 @@ function SwitchButton({
     icon,
     activeIcon,
     active,
-    sortMode,
-    changeSearchParam,
+    onClick,
 }: {
     label: string;
     icon: React.ReactNode;
     activeIcon: React.ReactNode;
     active: boolean;
-    sortMode: SortModeEnum;
-    changeSearchParam: (key: string, value: string) => void;
+    onClick: () => void;
 }) {
     return (
         <Button
             className={`transition-colors duration-250 sm:w-40 ${active ? "" : "bg-neutral-50"}`}
             variant={active ? "primary" : "ghost"}
-            onClick={() => changeSearchParam("sort", sortMode)}
+            onClick={onClick}
         >
             {active ? activeIcon : icon}
             {label}
@@ -51,24 +49,21 @@ export default function PlayersPageSwitchModeButtons({ sortMode }: { sortMode: S
                 icon={<SparklesIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
                 activeIcon={<SparklesIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
                 active={sortMode === sortModeEnumSchema.Values.pp}
-                sortMode={sortModeEnumSchema.Values.pp}
-                changeSearchParam={changeSearchParam}
+                onClick={() => changeSearchParam({ sort: "pp", page: null })}
             />
             <SwitchButton
                 label="Experience"
                 icon={<AcademicCapIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
                 activeIcon={<AcademicCapIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
                 active={sortMode === sortModeEnumSchema.Values.xp}
-                sortMode={sortModeEnumSchema.Values.xp}
-                changeSearchParam={changeSearchParam}
+                onClick={() => changeSearchParam({ sort: "xp", page: null })}
             />
             <SwitchButton
                 label="Records"
                 icon={<TrophyIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
                 activeIcon={<TrophyIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
                 active={sortMode === sortModeEnumSchema.Values.records}
-                sortMode={sortModeEnumSchema.Values.records}
-                changeSearchParam={changeSearchParam}
+                onClick={() => changeSearchParam({ sort: "records", page: null })}
             />
         </div>
     );

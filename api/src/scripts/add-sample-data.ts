@@ -147,7 +147,7 @@ let modeArray = Object.values(GameMode);
     await prisma.$connect();
 
     let games = await prisma.game.createManyAndReturn({
-        data: Array.from({ length: 100 }, () => {
+        data: Array.from({ length: 400 }, () => {
             const randomLanguage = languageArray[Math.floor(Math.random() * languageArray.length)];
             const randomMode = modeArray[Math.floor(Math.random() * modeArray.length)];
             // const randomLanguage = Language.FR;
@@ -157,7 +157,7 @@ let modeArray = Object.values(GameMode);
     });
 
     let players = await prisma.player.createManyAndReturn({
-        data: Array.from({ length: 10 }, () => {
+        data: Array.from({ length: 40 }, () => {
             return {
                 account_name: getRandomName(),
             };
@@ -187,7 +187,7 @@ let modeArray = Object.values(GameMode);
         data: randomNewUsernames,
     });
 
-    const newWords = Array.from({ length: 1000 }, () => {
+    const newWords = Array.from({ length: 4000 }, () => {
         const randomGame = games[Math.floor(Math.random() * games.length)];
         const randomPlayer = players[Math.floor(Math.random() * players.length)];
         const randomWord = exampleWords[Math.floor(Math.random() * exampleWords.length)];
@@ -205,7 +205,7 @@ let modeArray = Object.values(GameMode);
         data: newWords,
     });
 
-    const newGameRecaps = Array.from({ length: 200 })
+    const newGameRecaps = Array.from({ length: 400 })
         .map((x, i) => {
             const player = players[Math.floor(Math.random() * players.length)];
             const game = games[i];

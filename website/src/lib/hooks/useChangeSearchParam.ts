@@ -5,13 +5,15 @@ export default function useChangeSearchParam({ scroll = true }: { scroll?: boole
     const searchParams = useSearchParams();
     const pathname = usePathname();
 
-    function changeSearchParam(key: string, value: string | null) {
+    function changeSearchParam(changedParams: Record<string, string | null>) {
         const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
-        if (!value) {
-            currentParams.delete(key);
-        } else {
-            currentParams.set(key, value);
-        }
+        Object.entries(changedParams).forEach(([key, value]) => {
+            if (!value) {
+                currentParams.delete(key);
+            } else {
+                currentParams.set(key, value);
+            }
+        });
         const search = currentParams.toString();
         const query = search ? `?${search}` : "";
 

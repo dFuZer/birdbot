@@ -1,3 +1,4 @@
+import { IPlayerCardDataPP, IPlayerCardDataRecords, PlayersPageData } from "@/app/players/page";
 import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
 import { sortModeEnumSchema } from "@/lib/validation";
 import PlayerCard from "../common/PlayerCard";
@@ -5,31 +6,9 @@ import PlayerRow from "../common/PlayerRow";
 import RecordsListLayout from "../common/RecordListLayout";
 import PlayersPageSwitchModeButtons from "./PlayersPageSwitchModeButtons";
 
-export interface IPlayerCardDataRecords extends IPlayerScoreCommonProps {
-    recordsCount: number;
-}
-
-export interface IPlayerCardDataPP extends IPlayerScoreCommonProps {
-    pp: number;
-}
-
-export type PlayersPageData =
-    | {
-          mode: "xp";
-          data: IPlayerScoreCommonProps[];
-      }
-    | {
-          mode: "records";
-          data: IPlayerCardDataRecords[];
-      }
-    | {
-          mode: "pp";
-          data: IPlayerCardDataPP[];
-      };
-
-export default function PlayersPage({ pageData }: { pageData: PlayersPageData }) {
-    const firstThreeScores = pageData.data.slice(0, 3);
-    const otherScores = pageData.data.slice(3);
+export default function PlayersPage({ pageData, isFirstPage }: { pageData: PlayersPageData; isFirstPage: boolean }) {
+    const firstThreeScores = isFirstPage ? pageData.data.slice(0, 3) : [];
+    const otherScores = isFirstPage ? pageData.data.slice(3) : pageData.data;
 
     if (pageData.mode === sortModeEnumSchema.Values.xp) {
         const rows = otherScores.map((player, i) => {
@@ -80,7 +59,12 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
         });
 
         return (
-            <RecordsListLayout Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />} Rows={rows} Cards={cards} />
+            <RecordsListLayout
+                maxPage={pageData.maxPage}
+                Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />}
+                Rows={rows}
+                Cards={cards}
+            />
         );
     } else if (pageData.mode === sortModeEnumSchema.Values.pp) {
         const rows = otherScores.map((player, i) => {
@@ -120,7 +104,12 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
         });
 
         return (
-            <RecordsListLayout Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />} Rows={rows} Cards={cards} />
+            <RecordsListLayout
+                maxPage={pageData.maxPage}
+                Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />}
+                Rows={rows}
+                Cards={cards}
+            />
         );
     } else {
         const rows = otherScores.map((player, i) => {
@@ -160,7 +149,12 @@ export default function PlayersPage({ pageData }: { pageData: PlayersPageData })
         });
 
         return (
-            <RecordsListLayout Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />} Rows={rows} Cards={cards} />
+            <RecordsListLayout
+                maxPage={pageData.maxPage}
+                Selectors={<PlayersPageSwitchModeButtons sortMode={pageData.mode} />}
+                Rows={rows}
+                Cards={cards}
+            />
         );
     }
 }

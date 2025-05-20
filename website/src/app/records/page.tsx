@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 type IApiResponse = {
     message: string;
     bestScores: { player_id: string; player_username: string; score: number; rank: number; xp: ExperienceData }[];
+    maxPage: number;
 };
 
 export default async function Page({ searchParams }: { searchParams: TSearchParams }) {
@@ -45,5 +46,14 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
         };
     });
 
-    return <RecordsPage data={finalData} language={selectedLanguage} mode={selectedMode} record={selectedRecord} />;
+    return (
+        <RecordsPage
+            data={finalData}
+            language={selectedLanguage}
+            mode={selectedMode}
+            record={selectedRecord}
+            maxPage={json.maxPage}
+            isFirstPage={selectedPage === 1}
+        />
+    );
 }

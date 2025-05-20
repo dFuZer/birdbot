@@ -19,7 +19,7 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
                 playerId: z.string(),
                 language: languageEnumSchema.optional(),
                 mode: modeEnumSchema.optional(),
-            }),
+            })
         )
         .safeParse(requestQuery);
 

@@ -24,7 +24,11 @@ export let getBestScoresForCategoryRouteHandler: RouteHandlerMethod = async func
     try {
         Logger.log({ message: "Fetching best scores for category", path: "getBestScoresForCategory.route.ts" });
         const bestScores = await getBestScoresForCategory(parsed.data);
-        return res.status(200).send({ message: "Best scores fetched successfully!", bestScores });
+        return res.status(200).send({
+            message: "Best scores fetched successfully!",
+            bestScores: bestScores.bestScores,
+            maxPage: bestScores.maxPage,
+        });
     } catch (error) {
         Logger.error({
             message: "Error fetching best scores",

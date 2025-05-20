@@ -1,7 +1,7 @@
 "use client";
 
-import useChangeSearchParam from "@/components/hooks/useChangeSearchParam";
 import { Select, SelectContent, SelectItem } from "@/components/ui/select";
+import useChangeSearchParam from "@/lib/hooks/useChangeSearchParam";
 import { LanguageEnum, LANGUAGES_DATA } from "@/lib/records";
 import { Trigger } from "@radix-ui/react-select";
 import FrenchFlag from "~/public/frenchFlag.svg";
@@ -16,7 +16,7 @@ export default function PlayerProfilePageLanguageSelector({
     const changeSearchParam = useChangeSearchParam({ scroll: false });
 
     return (
-        <Select value={language} onValueChange={(value) => changeSearchParam("l", value)}>
+        <Select value={language} onValueChange={(value) => changeSearchParam({ l: value })}>
             <Trigger asChild>
                 <button className="flex w-fit items-center rounded-full border border-neutral-300 bg-white px-3">
                     <FrenchFlag className="my-1 h-4 w-4" />
