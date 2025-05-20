@@ -1,6 +1,7 @@
 import { type RouteHandlerMethod } from "fastify";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
+import refreshMaterializedViews from "../helpers/refreshMaterializedViews";
 import { calculateXpFromGameRecap, ExperienceData, getLevelDataFromXp } from "../helpers/xp";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
@@ -93,6 +94,8 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             SET xp = xp + ${gainedExperience}
             WHERE id = ${player.id}::UUID
         `;
+
+        refreshMaterializedViews();
 
         return res.status(200).send({
             oldXpData: currentXpData,
