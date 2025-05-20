@@ -125,7 +125,11 @@ const recordsCommand = c({
 
             if (!recordsRequest.ok) {
                 if (recordsRequest.status === 500)
-                    ctx.utils.sendChatMessage(t("error.api.inaccessible"));
+                    ctx.utils.sendChatMessage(
+                        t("error.api.inaccessible", {
+                            lng: l(ctx),
+                        })
+                    );
                 return;
             }
 
@@ -140,7 +144,11 @@ const recordsCommand = c({
                 path: "BirdBotCommands.ts",
                 error: e,
             });
-            ctx.utils.sendChatMessage(t("error.api.inaccessible"));
+            ctx.utils.sendChatMessage(
+                t("error.api.inaccessible", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -234,7 +242,11 @@ const currentGameScoresCommand = c({
             ctx.usedAlias.length + 2
         );
         if (ctx.room.roomState.gameData!.step.value !== "round") {
-            ctx.utils.sendChatMessage(t("error.roomState.noGameInProgress"));
+            ctx.utils.sendChatMessage(
+                t("error.roomState.noGameInProgress", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -272,12 +284,20 @@ const currentGameScoresCommand = c({
                 const playerStats = roomMetadata.scoresByGamerId[bestMatch.id];
 
                 if (playerStats === undefined) {
-                    ctx.utils.sendChatMessage(t("error.404.playerStats"));
+                    ctx.utils.sendChatMessage(
+                        t("error.404.playerStats", {
+                            lng: l(ctx),
+                        })
+                    );
                     return;
                 }
                 sendResults(bestMatch.identity.nickname, playerStats);
             } else {
-                ctx.utils.sendChatMessage(t("error.404.player"));
+                ctx.utils.sendChatMessage(
+                    t("error.404.player", {
+                        lng: l(ctx),
+                    })
+                );
             }
         } else {
             const roomMetadata = ctx.room.roomState
@@ -292,20 +312,32 @@ const currentGameScoresCommand = c({
                     ctx.room.roomState.gameData!
                 );
                 if (!currentPlayer) {
-                    ctx.utils.sendChatMessage(t("error.404.currentPlayer"));
+                    ctx.utils.sendChatMessage(
+                        t("error.404.currentPlayer", {
+                            lng: l(ctx),
+                        })
+                    );
                     return;
                 }
                 const playerStats =
                     roomMetadata.scoresByGamerId[currentPlayer.gamerId];
                 if (playerStats === undefined) {
-                    ctx.utils.sendChatMessage(t("error.404.playerStats"));
+                    ctx.utils.sendChatMessage(
+                        t("error.404.playerStats", {
+                            lng: l(ctx),
+                        })
+                    );
                     return;
                 }
                 const gamer = ctx.room.roomState.roomData!.gamers.find(
                     (gamer) => gamer.id === currentPlayer.gamerId
                 );
                 if (gamer === undefined) {
-                    ctx.utils.sendChatMessage(t("error.404.gamer"));
+                    ctx.utils.sendChatMessage(
+                        t("error.404.gamer", {
+                            lng: l(ctx),
+                        })
+                    );
                     return;
                 }
                 sendResults(gamer.identity.nickname, playerStats);
@@ -321,16 +353,28 @@ const startGameCommand = c({
     exampleUsage: "/sn",
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
-            ctx.utils.sendChatMessage(t("error.roomState.notInPregame"));
+            ctx.utils.sendChatMessage(
+                t("error.roomState.notInPregame", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
         if (ctx.room.roomState.gameData!.players.length < 2) {
-            ctx.utils.sendChatMessage(t("error.roomState.notEnoughPlayers"));
+            ctx.utils.sendChatMessage(
+                t("error.roomState.notEnoughPlayers", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
         const startGameMessage = ctx.bot.networkAdapter.getStartGameMessage();
         ctx.room.ws!.send(startGameMessage);
-        ctx.utils.sendChatMessage(t("command.startGame.starting"));
+        ctx.utils.sendChatMessage(
+            t("command.startGame.starting", {
+                lng: l(ctx),
+            })
+        );
     },
 }) satisfies Command;
 
@@ -342,7 +386,11 @@ const setGameModeCommand = c({
     roomCreatorRequired: true,
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
-            ctx.utils.sendChatMessage(t("error.roomState.cannotSetMode"));
+            ctx.utils.sendChatMessage(
+                t("error.roomState.cannotSetMode", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
         const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(
@@ -388,7 +436,11 @@ const setRoomLanguageCommand = c({
     roomCreatorRequired: true,
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
-            ctx.utils.sendChatMessage(t("error.roomState.cannotSetLanguage"));
+            ctx.utils.sendChatMessage(
+                t("error.roomState.cannotSetLanguage", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -426,7 +478,11 @@ const setRoomLanguageCommand = c({
                 birdbotLanguageToDictionaryId[targetLanguage]
             );
         } else {
-            ctx.utils.sendChatMessage(t("error.invalid.language"));
+            ctx.utils.sendChatMessage(
+                t("error.invalid.language", {
+                    lng: l(ctx),
+                })
+            );
         }
     },
 }) satisfies Command;
@@ -588,7 +644,11 @@ const searchWordsCommand = c({
             const syllCount =
                 dictionaryResource.metadata.syllablesCount[syllable];
             if (syllCount === undefined) {
-                ctx.utils.sendChatMessage(t("error.404.syllableNotExists"));
+                ctx.utils.sendChatMessage(
+                    t("error.404.syllableNotExists", {
+                        lng: l(ctx),
+                    })
+                );
                 return;
             }
             targetMsSyllable = syllable;
@@ -769,7 +829,9 @@ const playerProfileCommand = c({
             ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.identity.name;
         if (!targetUsername) {
             ctx.utils.sendChatMessage(
-                t("command.playerProfile.noUsernameNotConnected")
+                t("command.playerProfile.noUsernameNotConnected", {
+                    lng: l(ctx),
+                })
             );
             return;
         }
@@ -820,9 +882,17 @@ const playerProfileCommand = c({
             );
             if (!playerDataRequest.ok) {
                 if (playerDataRequest.status === 404) {
-                    ctx.utils.sendChatMessage(t("error.404.player"));
+                    ctx.utils.sendChatMessage(
+                        t("error.404.player", {
+                            lng: l(ctx),
+                        })
+                    );
                 } else {
-                    ctx.utils.sendChatMessage(t("error.api.inaccessible"));
+                    ctx.utils.sendChatMessage(
+                        t("error.api.inaccessible", {
+                            lng: l(ctx),
+                        })
+                    );
                 }
                 return;
             }
@@ -833,7 +903,11 @@ const playerProfileCommand = c({
                 path: "BirdBotCommands.ts",
                 error: e,
             });
-            ctx.utils.sendChatMessage(t("error.api.inaccessible"));
+            ctx.utils.sendChatMessage(
+                t("error.api.inaccessible", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -952,7 +1026,11 @@ const rareSyllablesCommand = c({
         const targetWord = ctx.args[0];
 
         if (!targetWord?.length) {
-            ctx.utils.sendChatMessage(t("error.invalidParams.mustProvideWord"));
+            ctx.utils.sendChatMessage(
+                t("error.invalidParams.mustProvideWord", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -974,7 +1052,11 @@ const rareSyllablesCommand = c({
         const dictionaryWords = dictionaryResource.resource;
 
         if (!dictionaryWords.includes(targetWord)) {
-            ctx.utils.sendChatMessage(t("error.404.word"));
+            ctx.utils.sendChatMessage(
+                t("error.404.word", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -1117,7 +1199,11 @@ const modUserCommand = c({
     handler: (ctx) => {
         const username = ctx.normalizedTextAfterCommand;
         if (!username) {
-            ctx.utils.sendChatMessage(t("error.invalidParams.noUsername"));
+            ctx.utils.sendChatMessage(
+                t("error.invalidParams.noUsername", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -1126,7 +1212,11 @@ const modUserCommand = c({
             ctx.room.roomState.roomData!.gamers
         );
         if (!gamer) {
-            ctx.utils.sendChatMessage(t("error.404.player"));
+            ctx.utils.sendChatMessage(
+                t("error.404.player", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -1157,7 +1247,11 @@ const unmodUserCommand = c({
     handler: (ctx) => {
         const username = ctx.normalizedTextAfterCommand;
         if (!username) {
-            ctx.utils.sendChatMessage(t("error.invalidParams.noUsername"));
+            ctx.utils.sendChatMessage(
+                t("error.invalidParams.noUsername", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -1166,7 +1260,11 @@ const unmodUserCommand = c({
             ctx.room.roomState.roomData!.gamers
         );
         if (!gamer) {
-            ctx.utils.sendChatMessage(t("error.404.player"));
+            ctx.utils.sendChatMessage(
+                t("error.404.player", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
 
@@ -1199,7 +1297,11 @@ const privateRoomCommand = c({
         const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
             accessMode: "private",
         });
-        ctx.utils.sendChatMessage(t("command.privateRoom.setting"));
+        ctx.utils.sendChatMessage(
+            t("command.privateRoom.setting", {
+                lng: l(ctx),
+            })
+        );
         ctx.room.ws.send(message);
     },
 }) satisfies Command;
@@ -1214,7 +1316,11 @@ const publicRoomCommand = c({
         const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
             accessMode: "public",
         });
-        ctx.utils.sendChatMessage(t("command.publicRoom.setting"));
+        ctx.utils.sendChatMessage(
+            t("command.publicRoom.setting", {
+                lng: l(ctx),
+            })
+        );
         ctx.room.ws.send(message);
     },
 }) satisfies Command;
@@ -1232,7 +1338,9 @@ const destroyAllRoomsCommand = c({
             if (room.ws && room.ws.readyState === WebSocket.OPEN) {
                 room.ws.send(
                     ctx.bot.networkAdapter.getSendChatMessage(
-                        t("command.destroyAllRooms.message")
+                        t("command.destroyAllRooms.message", {
+                            lng: l(ctx),
+                        })
                     )
                 );
             }
@@ -1271,7 +1379,11 @@ const createRoomCommand = c({
         const gamer = ctx.gamer;
         const bot = ctx.bot.rawBot as BirdBot;
         if (!gamer.identity.name) {
-            ctx.utils.sendChatMessage(t("error.platform.mustBeLoggedIn"));
+            ctx.utils.sendChatMessage(
+                t("error.platform.mustBeLoggedIn", {
+                    lng: l(ctx),
+                })
+            );
             return;
         }
         {
