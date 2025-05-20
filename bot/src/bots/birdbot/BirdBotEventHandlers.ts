@@ -2,6 +2,7 @@ import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventHandlers.class";
 import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
+import { RoomRole } from "../../lib/types/gameTypes";
 import type { BotEventHandlers } from "../../lib/types/libEventTypes";
 import { birdbotCommands } from "./BirdBotCommands";
 import {
@@ -64,7 +65,24 @@ const birdbotEventHandlers: BotEventHandlers = {
         ],
         setRoomAccessMode: CommonTEH.setRoomAccessMode,
         setRole: CommonTEH.setRole,
-        addGamer: CommonTEH.addGamer,
+        addGamer: [
+            CommonTEH.addGamer,
+            (ctx) => {
+                const roomOwner = ctx.room.constantRoomData.roomCreatorUsername;
+                if (!roomOwner) return;
+
+                const gamer = ctx.room.roomState.roomData!.gamers.find(
+                    (gamer) => gamer.identity.name === roomOwner
+                );
+                if (!gamer) return;
+
+                const message = ctx.bot.networkAdapter.getSetGamerRoleMessage({
+                    gamerId: gamer.id,
+                    role: "moderator" satisfies RoomRole,
+                });
+                ctx.room.ws!.send(message);
+            },
+        ],
         setGamerOnline: CommonTEH.setGamerOnline,
         chat: (ctx) => {
             const data = ctx.bot.networkAdapter.readChatData(ctx.message);
