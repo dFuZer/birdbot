@@ -113,7 +113,7 @@ export default class BirdBotUtils {
         dictionary: string[],
         letterRarityScores: Record<string, number>,
         dictionaryId: DictionaryId,
-        n: number,
+        n: number
     ): { word: string; score: number }[] => {
         const necessaryLetters = dictionaryManifests[dictionaryId].bonusLetters;
         return dictionary
@@ -148,7 +148,7 @@ export default class BirdBotUtils {
     public static getTopSnWords = (
         dictionary: string[],
         syllablesCount: Record<string, number>,
-        n: number,
+        n: number
     ): { word: string; score: number }[] => {
         return dictionary
             .map((word) => {
@@ -176,7 +176,7 @@ export default class BirdBotUtils {
                 path: "BirdBotUtils.class.ts",
             });
             throw new Error(
-                `Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`,
+                `Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`
             );
         }
         const timeSurvived = gameRecap.diedAt - ctx.room.roomState.gameData!.round.startTimestamp;
@@ -192,7 +192,7 @@ export default class BirdBotUtils {
                     t("general.playerStats.diedNoWords", {
                         username: gamer.identity.nickname,
                         lng: l(ctx),
-                    }),
+                    })
                 );
             } else {
                 const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByGamerId[gamerId], l(ctx));
@@ -210,7 +210,7 @@ export default class BirdBotUtils {
                             oldTotalLevelXp: data.oldXpData.totalLevelXp,
                             newTotalLevelXp: data.newXpData.totalLevelXp,
                             lng: l(ctx),
-                        }),
+                        })
                     );
                 } else {
                     ctx.utils.sendChatMessage(
@@ -220,7 +220,7 @@ export default class BirdBotUtils {
                             scores,
                             gainedXp: data.newXpData.xp - data.oldXpData.xp,
                             lng: l(ctx),
-                        }),
+                        })
                     );
                 }
             }
@@ -270,7 +270,7 @@ export default class BirdBotUtils {
             flipsCount: playerScores.flips,
             depletedSyllablesCount: playerScores.depletedSyllables,
             alphaCount: playerScores.alpha,
-            wordsWithoutDeathCount: playerScores.currentWordsWithoutDeath,
+            wordsWithoutDeathCount: playerScores.maxWordsWithoutDeath,
             previousSyllablesCount: playerScores.previousSyllableScore,
             multiSyllablesCount: playerScores.multiSyllables,
             hyphenWordsCount: playerScores.hyphenWords,
@@ -330,7 +330,7 @@ export default class BirdBotUtils {
             this.setRoomGameRuleIfDifferent(
                 ctx,
                 rule as keyof DictionaryLessGameRules,
-                mode[rule as keyof DictionaryLessGameRules],
+                mode[rule as keyof DictionaryLessGameRules]
             );
         }
     };
@@ -378,7 +378,7 @@ export default class BirdBotUtils {
                                 lng: l(ctx),
                             }),
                             lng: l(ctx),
-                        }),
+                        })
                     );
                 }
                 foundCorrespondingGameMode = true;
@@ -452,7 +452,7 @@ export default class BirdBotUtils {
     }) => {
         if (recordType) {
             return await this.getJsonFromApi<ApiResponseBestScoresSpecificRecord>(
-                `/records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`,
+                `/records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`
             );
         } else {
             return await this.getJsonFromApi<ApiResponseAllRecords>(`/records?lang=${language}&mode=${gameMode}`);
@@ -519,7 +519,7 @@ export default class BirdBotUtils {
         word: string,
         letterRarityScores: Record<string, number>,
         requiredLetters: string,
-        placedLetters: string,
+        placedLetters: string
     ) => {
         const requiredLettersSet = new Set(requiredLetters);
         const placedLettersSet = new Set(placedLetters);
@@ -665,7 +665,7 @@ export default class BirdBotUtils {
             word,
             dictionaryResource.metadata.letterRarityScores,
             dictionaryManifests[roomDictionaryId].bonusLetters,
-            "",
+            ""
         );
         if (flipScore > dictionaryResource.metadata.topFlipWords[dictionaryResource.metadata.topFlipWords.length - 1][1]) {
             dictionaryResource.metadata.topFlipWords.push([word, flipScore]);
@@ -702,7 +702,7 @@ export default class BirdBotUtils {
         ctx: EventCtx,
         roomLanguage: BirdBotLanguage,
         wordIndex: number,
-        word: string,
+        word: string
     ) => {
         const dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${roomLanguage}`);
         dictionaryResource.resource.splice(wordIndex, 1);
@@ -847,7 +847,7 @@ export default class BirdBotUtils {
                     count: x[1],
                     formattedScore: recordsUtils[x[0]].format(x[1]),
                     lng,
-                }),
+                })
             )
             .join(" — ");
     };
