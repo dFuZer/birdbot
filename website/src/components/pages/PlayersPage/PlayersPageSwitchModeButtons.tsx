@@ -47,6 +47,14 @@ export default function PlayersPageSwitchModeButtons({ sortMode }: { sortMode: S
     return (
         <div className="grid grid-cols-2 gap-3 sm:flex">
             <SwitchButton
+                label="PP"
+                icon={<SparklesIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
+                activeIcon={<SparklesIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
+                active={sortMode === sortModeEnumSchema.Values.pp}
+                sortMode={sortModeEnumSchema.Values.pp}
+                changeSearchParam={changeSearchParam}
+            />
+            <SwitchButton
                 label="Experience"
                 icon={<AcademicCapIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
                 activeIcon={<AcademicCapIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
@@ -60,14 +68,6 @@ export default function PlayersPageSwitchModeButtons({ sortMode }: { sortMode: S
                 activeIcon={<TrophyIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
                 active={sortMode === sortModeEnumSchema.Values.records}
                 sortMode={sortModeEnumSchema.Values.records}
-                changeSearchParam={changeSearchParam}
-            />
-            <SwitchButton
-                label="PP"
-                icon={<SparklesIconOutline className="text-primary-950 h-5 w-5 stroke-[1.5px]" />}
-                activeIcon={<SparklesIconSolid className="h-5 w-5 stroke-[1.5px] text-neutral-50" />}
-                active={sortMode === sortModeEnumSchema.Values.pp}
-                sortMode={sortModeEnumSchema.Values.pp}
                 changeSearchParam={changeSearchParam}
             />
         </div>

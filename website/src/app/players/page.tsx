@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default async function Page({ searchParams }: { searchParams: TSearchParams }) {
     const sortSearchParamValue = (await searchParams).sort;
-    const sortMode = isValidPlayersPageSortParam(sortSearchParamValue) ? sortSearchParamValue : sortModeEnumSchema.Values.xp;
+    const sortMode = isValidPlayersPageSortParam(sortSearchParamValue) ? sortSearchParamValue : sortModeEnumSchema.Values.pp;
 
     const pageDataResponse = await getFromApi(`/leaderboard?mode=${sortMode}`);
     const json: PlayersPageData = await pageDataResponse.json();
