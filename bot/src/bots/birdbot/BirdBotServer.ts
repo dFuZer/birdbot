@@ -52,7 +52,7 @@ function birdBotServerHandler(req: IncomingMessage, res: ServerResponse, bot: Bi
                 roomDictionaryId && roomDictionaryId in dictionaryIdToBirdbotLanguage
                     ? dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId]
                     : "UNKNOWN";
-            const playerCount = room.roomState.roomData?.gamers.length ?? 0;
+            const playerCount = room.roomState.roomData?.gamers.filter((x) => x.isOnline).length ?? 0;
             const gameTime =
                 room.roomState.gameData?.step.value === "round"
                     ? Date.now() - room.roomState.gameData.step.timestamp
