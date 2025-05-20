@@ -62,8 +62,15 @@ export default function LayoutFooter() {
                     <p>by Enzo “dFuZer”</p>
                 </div>
                 <p>
-                    BirdBot and all of its services are licensed under the Creative Commons CC BY-NC 4.0. You are free to use,
-                    share, and modify the materials for non-commercial purposes only. See the full license details here.
+                    BirdBot and all of its services are licensed under the{" "}
+                    <Link
+                        target="_blank"
+                        className="underline underline-offset-2"
+                        href="https://creativecommons.org/licenses/by-nc/4.0/"
+                    >
+                        Creative Commons CC BY-NC 4.0
+                    </Link>
+                    . You are free to use, share, and modify the materials for non-commercial purposes only.
                 </p>
             </div>
         </footer>
