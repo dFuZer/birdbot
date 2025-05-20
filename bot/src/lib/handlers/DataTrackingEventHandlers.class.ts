@@ -15,13 +15,10 @@ export default class CommonPlayerDataTrackingEventHandlers {
     };
 
     public static setRoomAccessMode: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readSetRoomAccessModeData(
-            ctx.message
-        );
+        const data = ctx.bot.networkAdapter.readSetRoomAccessModeData(ctx.message);
         const { roomAccessMode } = data;
 
-        ctx.room.roomState.roomData!.access.mode =
-            roomAccessMode as CrocoTypes.RoomAccessMode;
+        ctx.room.roomState.roomData!.access.mode = roomAccessMode as CrocoTypes.RoomAccessMode;
     };
 
     public static setRole: BotEventHandlerFn = (ctx) => {
@@ -31,16 +28,12 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const roomData = ctx.room.roomState.roomData!;
 
         if (role === "host") {
-            const currentHost = roomData.gamers.find(
-                (gamer) => gamer.role === "host"
-            );
+            const currentHost = roomData.gamers.find((gamer) => gamer.role === "host");
             if (currentHost) {
                 currentHost.role = "";
             }
 
-            const newHost = roomData.gamers.find(
-                (gamer) => gamer.id === gamerId
-            );
+            const newHost = roomData.gamers.find((gamer) => gamer.id === gamerId);
             if (newHost) {
                 newHost.role = "host";
             }
@@ -74,12 +67,8 @@ export default class CommonPlayerDataTrackingEventHandlers {
     };
 
     public static setup: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
-        const isInitialSetup =
-            ctx.room.roomState.gameData!.step.value === "initialSetup";
-        const data = ctx.bot.networkAdapter.readSetupData(
-            ctx.message,
-            isInitialSetup
-        );
+        const isInitialSetup = ctx.room.roomState.gameData!.step.value === "initialSetup";
+        const data = ctx.bot.networkAdapter.readSetupData(ctx.message, isInitialSetup);
 
         if (isInitialSetup) {
             previousHandlersCtx.initialSetup = true;
@@ -88,8 +77,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
 
                 ctx.room.roomState.gameData!.rules.gameMode = gameMode;
                 ctx.room.roomState.gameData!.rules.dictionaryId = dictionaryId;
-                ctx.room.roomState.gameData!.dictionaryManifest =
-                    dictionaryManifest;
+                ctx.room.roomState.gameData!.dictionaryManifest = dictionaryManifest;
                 ctx.room.roomState.gameData!.step = {
                     value: "pregame",
                     timestamp: data.timestamp,
@@ -102,15 +90,12 @@ export default class CommonPlayerDataTrackingEventHandlers {
                 if (rule === "gameMode") {
                     ctx.room.roomState.gameData!.rules.gameMode = value;
                 } else if (rule === "dictionaryId") {
-                    ctx.room.roomState.gameData!.rules.dictionaryId =
-                        value.dictionaryId;
-                    ctx.room.roomState.gameData!.dictionaryManifest =
-                        value.dictionaryManifest;
+                    ctx.room.roomState.gameData!.rules.dictionaryId = value.dictionaryId;
+                    ctx.room.roomState.gameData!.dictionaryManifest = value.dictionaryManifest;
                 } else if (rule === "promptDifficulty") {
                     ctx.room.roomState.gameData!.rules.promptDifficulty = value;
                 } else if (rule === "customPromptDifficulty") {
-                    ctx.room.roomState.gameData!.rules.customPromptDifficulty =
-                        value;
+                    ctx.room.roomState.gameData!.rules.customPromptDifficulty = value;
                 } else if (rule === "bombDuration") {
                     ctx.room.roomState.gameData!.rules.bombDuration = value;
                 } else if (rule === "roundsToWin") {
@@ -122,23 +107,18 @@ export default class CommonPlayerDataTrackingEventHandlers {
                 } else if (rule === "maxLives") {
                     ctx.room.roomState.gameData!.rules.maxLives = value;
                 } else if (rule === "minWordLengthOption") {
-                    ctx.room.roomState.gameData!.rules.minWordLengthOption =
-                        value;
+                    ctx.room.roomState.gameData!.rules.minWordLengthOption = value;
                 }
             }
         }
     };
 
     public static toggleCountdown: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readToggleCountdownData(
-            ctx.message
-        );
+        const data = ctx.bot.networkAdapter.readToggleCountdownData(ctx.message);
         const { enabled, timestamp } = data;
 
         ctx.room.roomState.gameData!.countdown.enabled = enabled;
-        ctx.room.roomState.gameData!.countdown.timestamp = enabled
-            ? timestamp
-            : null;
+        ctx.room.roomState.gameData!.countdown.timestamp = enabled ? timestamp : null;
     };
 
     public static removePlayer: BotEventHandlerFn = (ctx) => {
@@ -146,9 +126,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const { removedGamerId } = data;
 
         const gameData = ctx.room.roomState.gameData!;
-        gameData.players = gameData.players.filter(
-            (player) => player.gamerId !== removedGamerId
-        );
+        gameData.players = gameData.players.filter((player) => player.gamerId !== removedGamerId);
     };
 
     public static addPlayer: BotEventHandlerFn = (ctx) => {
@@ -159,9 +137,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
     };
 
     public static oneVOneAnnouncement: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readOneVOneAnnouncementData(
-            ctx.message
-        );
+        const data = ctx.bot.networkAdapter.readOneVOneAnnouncementData(ctx.message);
 
         ctx.room.roomState.gameData!.step = {
             value: "1v1Announcement",
@@ -253,17 +229,12 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const data = ctx.bot.networkAdapter.readExplodeBombData(ctx.message);
 
         const gameData = ctx.room.roomState.gameData!;
-        const currentPlayer = Utilitary.getCurrentPlayer(
-            ctx.room.roomState.gameData!
-        );
+        const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
         if (!currentPlayer) {
             throw new Error("Current player is not set");
         }
         currentPlayer.justExploded = true;
-        currentPlayer.points = Math.max(
-            0,
-            currentPlayer.points + resultPoints.bombExploded
-        );
+        currentPlayer.points = Math.max(0, currentPlayer.points + resultPoints.bombExploded);
         currentPlayer.lastSubmit = {
             timestamp: data.timestamp,
             result: "bombExploded",
@@ -283,38 +254,25 @@ export default class CommonPlayerDataTrackingEventHandlers {
         ctx.room.roomState.currentTurnIndex = gameData.round.turnIndex;
         let currentPlayer;
 
-        let playerIndex =
-            (gameData.round.startPlayerIndex + gameData.round.turnIndex) %
-            gameData.players.length;
-        previousHandlersCtx.previousGamerId =
-            gameData.players[playerIndex]!.gamerId;
+        let playerIndex = (gameData.round.startPlayerIndex + gameData.round.turnIndex) % gameData.players.length;
+        previousHandlersCtx.previousGamerId = gameData.players[playerIndex]!.gamerId;
         previousHandlersCtx.previousPrompt = gameData.round.prompt;
         previousHandlersCtx.deadPlayerIds = [] as number[];
         previousHandlersCtx.lostLifePlayerIds = [] as number[];
 
         do {
             gameData.round.turnIndex++;
-            if (
-                gameData.round.turnIndex >= 0 &&
-                gameData.round.turnIndex % gameData.players.length === 0
-            ) {
+            if (gameData.round.turnIndex >= 0 && gameData.round.turnIndex % gameData.players.length === 0) {
                 const shouldRemoveLives =
-                    gameData.players.filter(
-                        (player) =>
-                            player.lives > 1 ||
-                            (player.lives === 1 && !player.justExploded)
-                    ).length > 0;
+                    gameData.players.filter((player) => player.lives > 1 || (player.lives === 1 && !player.justExploded)).length >
+                    0;
                 if (shouldRemoveLives) {
                     for (const player of gameData.players)
                         if (player.justExploded) {
                             player.lives--;
-                            previousHandlersCtx.lostLifePlayerIds.push(
-                                player.gamerId
-                            );
+                            previousHandlersCtx.lostLifePlayerIds.push(player.gamerId);
                             if (player.lives === 0) {
-                                previousHandlersCtx.deadPlayerIds.push(
-                                    player.gamerId
-                                );
+                                previousHandlersCtx.deadPlayerIds.push(player.gamerId);
                             }
                         }
                 }
@@ -322,9 +280,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
                     player.justExploded = false;
                 }
             }
-            playerIndex =
-                (gameData.round.startPlayerIndex + gameData.round.turnIndex) %
-                gameData.players.length;
+            playerIndex = (gameData.round.startPlayerIndex + gameData.round.turnIndex) % gameData.players.length;
             currentPlayer = gameData.players[playerIndex]!;
             currentPlayer.text = "";
         } while (currentPlayer.lives === 0);
@@ -341,9 +297,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const data = ctx.bot.networkAdapter.readSubmitData(ctx.message);
         const { result, points, timestamp } = data;
 
-        const currentPlayer = Utilitary.getCurrentPlayer(
-            ctx.room.roomState.gameData!
-        );
+        const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
         if (!currentPlayer) {
             throw new Error("Current player is not set");
         }
@@ -360,23 +314,15 @@ export default class CommonPlayerDataTrackingEventHandlers {
             ctx.room.roomState.wordHistory.push(currentPlayer.text);
             let currentUsedLetters = currentPlayer.usedLetters;
             for (const letter of currentPlayer.text) {
-                if (
-                    !currentUsedLetters.includes(letter) &&
-                    gameData.dictionaryManifest.bonusLetters.includes(letter)
-                ) {
+                if (!currentUsedLetters.includes(letter) && gameData.dictionaryManifest.bonusLetters.includes(letter)) {
                     currentUsedLetters += letter;
                 }
             }
             currentPlayer.usedLetters = currentUsedLetters;
-            const isLifeGain =
-                gameData.dictionaryManifest.bonusLetters.length ===
-                currentUsedLetters.length;
+            const isLifeGain = gameData.dictionaryManifest.bonusLetters.length === currentUsedLetters.length;
             if (isLifeGain) {
                 previousHandlersCtx.isLifeGain = true;
-                currentPlayer.lives = Math.min(
-                    gameData.rules.maxLives,
-                    currentPlayer.lives + 1
-                );
+                currentPlayer.lives = Math.min(gameData.rules.maxLives, currentPlayer.lives + 1);
                 currentPlayer.usedLetters = "";
             }
         }
@@ -386,9 +332,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const data = ctx.bot.networkAdapter.readTypeData(ctx.message);
         const { typedWord } = data;
 
-        const currentPlayer = Utilitary.getCurrentPlayer(
-            ctx.room.roomState.gameData!
-        );
+        const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
         if (!currentPlayer) {
             throw new Error("Current player is not set");
         }
@@ -431,8 +375,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
                 gameData.players.length = 0;
             }
             for (const gamer of roomData.gamers) gamer.roundsWon = 0;
-            for (const player of gameData.players)
-                Utilitary.resetPlayer(player);
+            for (const player of gameData.players) Utilitary.resetPlayer(player);
         }
         gameData.game = {
             duration: 0,

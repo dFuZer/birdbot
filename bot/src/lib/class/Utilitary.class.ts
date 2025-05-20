@@ -9,11 +9,7 @@ import { crocoDomain } from "../constants/gameConstants";
 import { NAMESPACE_UUID } from "../env";
 import { dataPath } from "../paths";
 import type { GameData, Gamer, Player } from "../types/gameTypes";
-import type {
-    BotEventHandler,
-    BotEventPreviousHandlersCtx,
-    EventCtx,
-} from "../types/libEventTypes";
+import type { BotEventHandler, BotEventPreviousHandlersCtx, EventCtx } from "../types/libEventTypes";
 import type Bot from "./Bot.class";
 import type { Command, CommandHandlerCtx } from "./CommandUtils.class";
 import Logger from "./Logger.class";
@@ -58,11 +54,7 @@ export default class Utilitary {
         fs.writeFileSync(path.join(dataPath, fileName), content);
     }
 
-    public static sendChatMessage(
-        ws: WebSocket,
-        message: string,
-        adapter: AbstractNetworkAdapter
-    ) {
+    public static sendChatMessage(ws: WebSocket, message: string, adapter: AbstractNetworkAdapter) {
         let cutTxt = message.split(" ");
         let buffer = "";
         let chunks = [];
@@ -107,10 +99,7 @@ export default class Utilitary {
         return data as T;
     }
 
-    public static async postJson<T>(
-        path: string,
-        obj: Record<string, any>
-    ): Promise<T> {
+    public static async postJson<T>(path: string, obj: Record<string, any>): Promise<T> {
         const res = await fetch(`https://${crocoDomain}${path}`, {
             method: "POST",
             body: JSON.stringify(obj),
@@ -131,16 +120,11 @@ export default class Utilitary {
             return null;
         }
         const { round } = gameData;
-        const index =
-            (round.startPlayerIndex + round.turnIndex) %
-            gameData.players.length;
+        const index = (round.startPlayerIndex + round.turnIndex) % gameData.players.length;
         return gameData.players[index]!;
     }
 
-    public static executeEventHandlers(
-        eventHandler: BotEventHandler,
-        ctx: EventCtx
-    ) {
+    public static executeEventHandlers(eventHandler: BotEventHandler, ctx: EventCtx) {
         const previousHandlersCtx: BotEventPreviousHandlersCtx = {};
         if (Array.isArray(eventHandler)) {
             for (const handler of eventHandler) {
@@ -187,9 +171,7 @@ export default class Utilitary {
         const getEventCtx = (buffer: Buffer): EventCtx => {
             const ctx: EventCtx = {
                 bot: {
-                    getResource: bot.resourceManager.get.bind(
-                        bot.resourceManager
-                    ),
+                    getResource: bot.resourceManager.get.bind(bot.resourceManager),
                     session: bot.botData!.session,
                     networkAdapter: bot.networkAdapter,
                     rooms: bot.rooms,
@@ -198,16 +180,10 @@ export default class Utilitary {
                 message: buffer,
                 utils: {
                     sendChatMessage: (m: string) => {
-                        Utilitary.sendChatMessage(
-                            room.ws!,
-                            m,
-                            bot.networkAdapter
-                        );
+                        Utilitary.sendChatMessage(room.ws!, m, bot.networkAdapter);
                     },
                     userIsAdmin: (username: string) => {
-                        return bot.botData!.adminAccountUsernames.includes(
-                            username
-                        );
+                        return bot.botData!.adminAccountUsernames.includes(username);
                     },
                 },
                 room: {
@@ -218,11 +194,7 @@ export default class Utilitary {
                     isHealthy: () => {
                         const botRoom = bot.rooms[room.id];
 
-                        return (
-                            botRoom !== undefined &&
-                            botRoom.ws !== null &&
-                            botRoom.ws.readyState === WebSocket.OPEN
-                        );
+                        return botRoom !== undefined && botRoom.ws !== null && botRoom.ws.readyState === WebSocket.OPEN;
                     },
                 },
             };
@@ -238,10 +210,7 @@ export default class Utilitary {
                 return;
             }
 
-            Utilitary.executeEventHandlers(
-                bot.handlers.open,
-                getEventCtx(new Buffer(""))
-            );
+            Utilitary.executeEventHandlers(bot.handlers.open, getEventCtx(new Buffer("")));
         });
 
         ws.on("close", () => {
@@ -252,15 +221,11 @@ export default class Utilitary {
                 });
                 return;
             }
-            Utilitary.executeEventHandlers(
-                bot.handlers.close,
-                getEventCtx(new Buffer(""))
-            );
+            Utilitary.executeEventHandlers(bot.handlers.close, getEventCtx(new Buffer("")));
         });
 
         ws.on("message", (message: Buffer) => {
-            const baseMessageData =
-                bot.networkAdapter.readNodeMessageBaseData(message);
+            const baseMessageData = bot.networkAdapter.readNodeMessageBaseData(message);
             let handler: BotEventHandler | undefined;
             let eventName: string;
 
@@ -306,9 +271,7 @@ export default class Utilitary {
     public static readArrayFromFile(filePath: string) {
         const fileText = readFileSync(filePath, "utf-8");
         const words = fileText.split(/\r?\n/);
-        return words
-            .map((word) => word.trim())
-            .filter((word) => word.length > 0);
+        return words.map((word) => word.trim()).filter((word) => word.length > 0);
     }
 
     public static async readArrayFromFileAsync(filePath: string) {
@@ -326,10 +289,7 @@ export default class Utilitary {
         return array;
     }
 
-    public static insertionSort<T>(
-        arr: T[],
-        compare: (a: T, b: T) => number
-    ): T[] {
+    public static insertionSort<T>(arr: T[], compare: (a: T, b: T) => number): T[] {
         const n = arr.length;
         for (let i = 1; i < n; i++) {
             const currentElement = arr[i];
@@ -347,7 +307,7 @@ export default class Utilitary {
         ctx: EventCtx,
         rawMessage: string,
         gamer: Gamer,
-        commands: Command[]
+        commands: Command[],
     ):
         | "no-command-given"
         | "command-not-found"
@@ -357,11 +317,7 @@ export default class Utilitary {
         | "not-admin" {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
         const commandPrefixes = ["!", "/", "."];
-        if (
-            commandPrefixes.some((prefix) =>
-                normalizedMessage.startsWith(prefix)
-            )
-        ) {
+        if (commandPrefixes.some((prefix) => normalizedMessage.startsWith(prefix))) {
             const args = normalizedMessage.slice(1).split(" ");
             const requestedCommand = args[0];
             if (!requestedCommand) return "no-command-given";
@@ -373,21 +329,14 @@ export default class Utilitary {
                 .slice(1)
                 .filter((arg) => !arg.startsWith("-"))
                 .map((arg) => arg.toLowerCase());
-            const command = commands.find((c) =>
-                c.aliases.includes(requestedCommand)
-            );
+            const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
-            if (
-                command.adminRequired &&
-                !ctx.utils.userIsAdmin(gamer.identity.name)
-            ) {
+            if (command.adminRequired && !ctx.utils.userIsAdmin(gamer.identity.name)) {
                 return "not-admin";
             }
             if (
                 !(
-                    (command.roomCreatorRequired &&
-                        ctx.room.constantRoomData.roomCreatorUsername ===
-                            gamer.identity.name) ||
+                    (command.roomCreatorRequired && ctx.room.constantRoomData.roomCreatorUsername === gamer.identity.name) ||
                     ctx.utils.userIsAdmin(gamer.identity.name) ||
                     !command.roomCreatorRequired
                 )
@@ -409,9 +358,7 @@ export default class Utilitary {
                 gamer,
                 normalizedMessage,
                 usedAlias: requestedCommand,
-                normalizedTextAfterCommand: normalizedMessage
-                    .slice(requestedCommand.length + 1)
-                    .trim(),
+                normalizedTextAfterCommand: normalizedMessage.slice(requestedCommand.length + 1).trim(),
             };
             command.handler(commandHandlerCtx);
             return "trying-to-handle-command";

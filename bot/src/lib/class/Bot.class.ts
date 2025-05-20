@@ -84,11 +84,7 @@ export default class Bot {
         });
     }
 
-    public async init({
-        adminAccountUsernames,
-    }: {
-        adminAccountUsernames: string[];
-    }) {
+    public async init({ adminAccountUsernames }: { adminAccountUsernames: string[] }) {
         Logger.log({
             message: "Initializing bot",
             path: "Bot.class.ts",
@@ -146,12 +142,9 @@ export default class Bot {
         callback?: (roomCode: string) => void;
         errorCallback?: () => void;
     }) {
-        let ws: WebSocket = new WebSocket(
-            `wss://${crocoDomain}/api/websocket`,
-            {
-                perMessageDeflate: false,
-            }
-        );
+        let ws: WebSocket = new WebSocket(`wss://${crocoDomain}/api/websocket`, {
+            perMessageDeflate: false,
+        });
 
         const onOpen = () => {
             let msg = this.networkAdapter.getCreateRoomMessage({
@@ -164,8 +157,7 @@ export default class Bot {
         };
 
         const onMessage = (message: Buffer) => {
-            const data =
-                this.networkAdapter.readCentralMessageBaseData(message);
+            const data = this.networkAdapter.readCentralMessageBaseData(message);
 
             if (data.eventType === "roomReady") {
                 this.joinRoom({
@@ -180,8 +172,7 @@ export default class Bot {
 
                 // The bye message may indicate that the session is not valid anymore.
                 Logger.log({
-                    message:
-                        "Session may be invalid. Trying to reinitialize it.",
+                    message: "Session may be invalid. Trying to reinitialize it.",
                     path: "Bot.class.ts",
                 });
                 this.botData?.session.init();

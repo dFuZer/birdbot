@@ -20,9 +20,7 @@ export const recordEnumToDatabaseFieldMap = {
     time: "time", // TODO: Add time
 } satisfies { [key in TRecord]: Prisma.GameRecapScalarFieldEnum | "time" };
 
-export type GameRecapRecordField =
-    | Exclude<Prisma.GameRecapScalarFieldEnum, "id" | "game_id" | "player_id" | "died_at">
-    | "time";
+export type GameRecapRecordField = Exclude<Prisma.GameRecapScalarFieldEnum, "id" | "game_id" | "player_id" | "died_at"> | "time";
 
 export const databaseFieldToRecordEnumMap = {
     alpha_count: "alpha",

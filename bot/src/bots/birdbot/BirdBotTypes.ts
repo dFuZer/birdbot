@@ -2,12 +2,7 @@ import { z } from "zod";
 import type { Resource } from "../../lib/class/ResourceManager.class";
 import { RoomTargetConfig } from "../../lib/class/Room.class";
 import { SubmitResultType } from "../../lib/types/gameTypes";
-import type {
-    birdbotSupportedDictionaryIds,
-    languageEnumSchema,
-    modesEnumSchema,
-    recordsEnumSchema,
-} from "./BirdBotConstants";
+import type { birdbotSupportedDictionaryIds, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "./BirdBotConstants";
 
 export type CacheableDictionaryMetadata = {
     letterRarityScores: Record<string, number>;
@@ -30,8 +25,7 @@ export type BirdBotLanguage = z.infer<typeof languageEnumSchema>;
 export type BirdBotGameMode = z.infer<typeof modesEnumSchema>;
 export type BirdBotRecordType = z.infer<typeof recordsEnumSchema>;
 
-export type BirdBotSupportedDictionaryId =
-    (typeof birdbotSupportedDictionaryIds)[number];
+export type BirdBotSupportedDictionaryId = (typeof birdbotSupportedDictionaryIds)[number];
 
 export type PlayerGameScores = {
     words: number;

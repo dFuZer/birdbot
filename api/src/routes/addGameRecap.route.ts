@@ -1,19 +1,12 @@
 import { type RouteHandlerMethod } from "fastify";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
-import {
-    calculateXpFromGameRecap,
-    ExperienceData,
-    getLevelDataFromXp,
-} from "../helpers/xp";
+import { calculateXpFromGameRecap, ExperienceData, getLevelDataFromXp } from "../helpers/xp";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
 import { gameRecap } from "../schemas/game.zod";
 
-export let addGameRecapRouteHandler: RouteHandlerMethod = async function (
-    req,
-    res
-) {
+export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, res) {
     Logger.log({
         message: "-- addGameRecap route handler --",
         path: "addGameRecap.route.ts",
@@ -83,9 +76,7 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (
             wordsWithoutDeathCount: gameRecapData.wordsWithoutDeathCount,
             previousSyllablesCount: gameRecapData.previousSyllablesCount,
             multiSyllablesCount: gameRecapData.multiSyllablesCount,
-            listedRecordsTotalCount:
-                gameRecapData.hyphenWordsCount +
-                gameRecapData.moreThan20LettersWordsCount,
+            listedRecordsTotalCount: gameRecapData.hyphenWordsCount + gameRecapData.moreThan20LettersWordsCount,
         });
 
         const playerXp: { xp: number }[] = await prisma.$queryRaw`

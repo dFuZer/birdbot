@@ -1,8 +1,4 @@
-import type {
-    BombPartyRules,
-    DictionaryId,
-    DictionaryManifest,
-} from "../types/gameTypes";
+import type { BombPartyRules, DictionaryId, DictionaryManifest } from "../types/gameTypes";
 export const crocoDomain = "croco.games";
 export const baseMessageKinds = ["bye"] as const;
 export const centralMessageKinds = [
@@ -81,34 +77,10 @@ export const bombpartySessionMessageKinds = [
 
 export const gameModes = ["party", "survival", "solo"] as const;
 export const hostRoomAccessModes = ["public", "private", "locked"] as const;
-export const gameIds = [
-    "bombParty",
-    "popSauce",
-    "masterOfTheGrid",
-    "cavernFrenzy",
-] as const;
-export const queueTypes = [
-    "quickPlay",
-    "hostRoom",
-    "ranked1v1",
-    "soloChallenge",
-] as const;
-export const centralSocketTypes = [
-    "node",
-    "queuer",
-    "watcher",
-    "admin",
-] as const;
-export const dictionaryIds = [
-    "en",
-    "fr",
-    "de",
-    "it",
-    "es",
-    "pt-BR",
-    "eu",
-    "br",
-] as const;
+export const gameIds = ["bombParty", "popSauce", "masterOfTheGrid", "cavernFrenzy"] as const;
+export const queueTypes = ["quickPlay", "hostRoom", "ranked1v1", "soloChallenge"] as const;
+export const centralSocketTypes = ["node", "queuer", "watcher", "admin"] as const;
+export const dictionaryIds = ["en", "fr", "de", "it", "es", "pt-BR", "eu", "br"] as const;
 export const roomRoles = ["", "host", "moderator", "banned"] as const;
 
 export const dictionaryManifests: Record<DictionaryId, DictionaryManifest> = {
@@ -205,40 +177,18 @@ export const livesRange = {
     max: 10,
 } as const;
 export const alphabet = "abcdefghijklmnopqrstuvwxyz" as const;
-export const minWordLengthOptions = [
-    "0",
-    "auto8",
-    "auto16",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-] as const;
+export const minWordLengthOptions = ["0", "auto8", "auto16", "3", "4", "5", "6", "7", "8"] as const;
 export const bombDurationRange = {
     min: 3,
     max: 10,
 } as const;
 
-export const promptDifficulties = [
-    "beginner",
-    "medium",
-    "hard",
-    "custom",
-] as const;
+export const promptDifficulties = ["beginner", "medium", "hard", "custom"] as const;
 export const customPromptDifficultyRange = {
     min: -5e3,
     max: 5e3,
 } as const;
-export const submitResults = [
-    "success",
-    "failsPrompt",
-    "invalidWord",
-    "noText",
-    "alreadyUsed",
-    "bombExploded",
-] as const;
+export const submitResults = ["success", "failsPrompt", "invalidWord", "noText", "alreadyUsed", "bombExploded"] as const;
 export const resultPoints = {
     success: 5,
     failsPrompt: -5,

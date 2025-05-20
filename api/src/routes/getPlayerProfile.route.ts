@@ -6,10 +6,7 @@ import getPlayerProfile from "../helpers/getPlayerProfile";
 import prisma from "../prisma";
 import { languageEnumSchema, modeEnumSchema } from "../schemas/records.zod";
 
-export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (
-    req,
-    res
-) {
+export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (req, res) {
     const requestQuery = req.query;
     const parsedData = z
         .object({
@@ -22,7 +19,7 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (
                 playerId: z.string(),
                 language: languageEnumSchema.optional(),
                 mode: modeEnumSchema.optional(),
-            })
+            }),
         )
         .safeParse(requestQuery);
 
@@ -38,9 +35,7 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (
     if ("playerId" in parsedData.data) {
         searchPlayerId = parsedData.data.playerId;
     } else {
-        const bestPlayerMatch = await findPlayerByUsername(
-            parsedData.data.name
-        );
+        const bestPlayerMatch = await findPlayerByUsername(parsedData.data.name);
 
         if (!bestPlayerMatch) {
             return res.status(404).send({ message: "Player not found" });
@@ -77,10 +72,7 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (
 
     const finalProfileData = {
         ...profileData,
-        foundUsername:
-            "name" in parsedData.data && foundUsername
-                ? foundUsername
-                : profileData.playerUsername,
+        foundUsername: "name" in parsedData.data && foundUsername ? foundUsername : profileData.playerUsername,
     };
 
     console.log(finalProfileData);

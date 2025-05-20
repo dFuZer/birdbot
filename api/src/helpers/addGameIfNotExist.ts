@@ -14,8 +14,8 @@ export default async function addGameIfNotExist(game: z.infer<typeof gameSchema>
         const insertedResult: { id: string; started_at: Date }[] = await prisma.$queryRaw`
             INSERT INTO game (id, "language", mode)
             VALUES (${game.id}::UUID, ${languageEnumToDatabaseEnumMap[game.lang]}::"language", ${
-            modeEnumToDatabaseEnumMap[game.mode]
-        }::"game_mode")
+                modeEnumToDatabaseEnumMap[game.mode]
+            }::"game_mode")
         RETURNING id, started_at;
         `;
         return insertedResult[0];

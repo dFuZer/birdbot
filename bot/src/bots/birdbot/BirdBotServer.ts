@@ -2,11 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "http";
 import BirdBot from "./BirdBot.class";
 import { dictionaryIdToBirdbotLanguage } from "./BirdBotConstants";
 import { API_KEY } from "./BirdBotEnv";
-import {
-    BirdBotLanguage,
-    BirdBotRoomMetadata,
-    BirdBotSupportedDictionaryId,
-} from "./BirdBotTypes";
+import { BirdBotLanguage, BirdBotRoomMetadata, BirdBotSupportedDictionaryId } from "./BirdBotTypes";
 
 function returnUnauthorized(res: ServerResponse) {
     res.writeHead(401, { "Content-Type": "text/plain" });
@@ -20,11 +16,7 @@ function returnNotFound(res: ServerResponse) {
     res.end();
 }
 
-function birdBotServerHandler(
-    req: IncomingMessage,
-    res: ServerResponse,
-    bot: BirdBot
-) {
+function birdBotServerHandler(req: IncomingMessage, res: ServerResponse, bot: BirdBot) {
     const authorizationHeader = req.headers["authorization"];
 
     if (!authorizationHeader) {
@@ -55,14 +47,10 @@ function birdBotServerHandler(
         };
 
         const roomList = Object.entries(bot.rooms).map(([roomId, room]) => {
-            const roomDictionaryId =
-                room.roomState.gameData?.rules.dictionaryId;
+            const roomDictionaryId = room.roomState.gameData?.rules.dictionaryId;
             const roomLanguage =
-                roomDictionaryId &&
-                roomDictionaryId in dictionaryIdToBirdbotLanguage
-                    ? dictionaryIdToBirdbotLanguage[
-                          roomDictionaryId as BirdBotSupportedDictionaryId
-                      ]
+                roomDictionaryId && roomDictionaryId in dictionaryIdToBirdbotLanguage
+                    ? dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId]
                     : "UNKNOWN";
             const playerCount = room.roomState.roomData?.gamers.length ?? 0;
             const gameTime =
@@ -73,9 +61,7 @@ function birdBotServerHandler(
 
             const roomName = room.constantRoomData.targetConfig.roomName;
 
-            const roomScoresByGamer = (
-                room?.roomState?.metadata as BirdBotRoomMetadata
-            )?.scoresByGamerId;
+            const roomScoresByGamer = (room?.roomState?.metadata as BirdBotRoomMetadata)?.scoresByGamerId;
 
             const wordCount = roomScoresByGamer
                 ? Object.values(roomScoresByGamer).reduce((acc, curr) => {

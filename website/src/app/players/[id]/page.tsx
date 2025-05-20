@@ -44,7 +44,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
     const selectedMode = isValidGameModeParam(mode) ? mode : null;
 
     const playerDataResponse = await getFromApi(
-        `/player-profile?playerId=${playerId}${selectedLanguage ? `&language=${selectedLanguage}` : ""}${selectedMode ? `&mode=${selectedMode}` : ""}`
+        `/player-profile?playerId=${playerId}${selectedLanguage ? `&language=${selectedLanguage}` : ""}${selectedMode ? `&mode=${selectedMode}` : ""}`,
     );
     const playerData: IPlayerProfileData = await playerDataResponse.json();
 

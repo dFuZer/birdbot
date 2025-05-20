@@ -35,7 +35,7 @@ let getRecords = z
         z.object({
             lang: languageEnumSchema,
             mode: modeEnumSchema,
-        })
+        }),
     );
 
 export {

@@ -4,23 +4,17 @@ import { ResourceText } from "./englishTexts";
 export const spanishTexts = {
     error: {
         intro: "Error:",
-        missing_text:
-            "Falta el texto traducido. Esto no debería pasar. ¿Podrías reportarlo en el servidor de Discord?",
+        missing_text: "Falta el texto traducido. Esto no debería pasar. ¿Podrías reportarlo en el servidor de Discord?",
         unspecific: "$t(error.intro) Ha ocurrido un error desconocido.",
         api: {
-            inaccessible:
-                "$t(error.intro) La API no está accesible. ¡Inténtalo más tarde!",
+            inaccessible: "$t(error.intro) La API no está accesible. ¡Inténtalo más tarde!",
         },
         roomState: {
             noGameInProgress: "$t(error.intro) No hay partida en curso.",
-            notInPregame:
-                "$t(error.intro) No hay partida en fase de preparación.",
-            notEnoughPlayers:
-                "$t(error.intro) No hay suficientes jugadores para empezar la partida.",
-            cannotSetMode:
-                "$t(error.intro) No se puede cambiar el modo fuera de la fase de preparación.",
-            cannotSetLanguage:
-                "$t(error.intro) No se puede cambiar el idioma fuera de la fase de preparación.",
+            notInPregame: "$t(error.intro) No hay partida en fase de preparación.",
+            notEnoughPlayers: "$t(error.intro) No hay suficientes jugadores para empezar la partida.",
+            cannotSetMode: "$t(error.intro) No se puede cambiar el modo fuera de la fase de preparación.",
+            cannotSetLanguage: "$t(error.intro) No se puede cambiar el idioma fuera de la fase de preparación.",
         },
         invalid: {
             regex: "$t(error.intro) Regex inválida: {{regex}}",
@@ -36,25 +30,20 @@ export const spanishTexts = {
             gamer: "$t(error.intro) Jugador no encontrado en la sala. Esto no debería pasar.",
             dictionaryResource:
                 "$t(error.intro) No se puede encontrar el recurso del diccionario para este idioma. Esto no debería pasar.",
-            playerStats:
-                "$t(error.intro) No se encuentran puntuaciones para este jugador. Esto no debería pasar.",
+            playerStats: "$t(error.intro) No se encuentran puntuaciones para este jugador. Esto no debería pasar.",
             currentPlayer: "$t(error.intro) No hay jugador actual.",
-            syllableNotExists:
-                "$t(error.intro) Esta sílaba no existe en ninguna palabra del diccionario solicitado.",
+            syllableNotExists: "$t(error.intro) Esta sílaba no existe en ninguna palabra del diccionario solicitado.",
         },
         searchWords: {
-            nonsensicalRecordSearch:
-                "$t(error.intro) No tiene sentido ordenar palabras por record(s): {{records}}.",
+            nonsensicalRecordSearch: "$t(error.intro) No tiene sentido ordenar palabras por record(s): {{records}}.",
             multipleSortRecords:
                 "$t(error.intro) Solo puedes ordenar por un record de orden a la vez. Los records de orden son: {{sortRecords}}. Puedes seguir filtrando por varios records de filtrado. Los records de filtrado son: {{filterRecords}}.",
             mustProvideOneSyllable:
                 "$t(error.intro) Solo puedes ordenar por palabras multisilábicas si proporcionas exactamente una sílaba.",
         },
         invalidParams: {
-            noUsername:
-                "$t(error.intro) Tienes que proporcionar un nombre de usuario para usar este comando.",
-            mustProvideWord:
-                "$t(error.intro) Tienes que proporcionar una palabra para usar este comando.",
+            noUsername: "$t(error.intro) Tienes que proporcionar un nombre de usuario para usar este comando.",
+            mustProvideWord: "$t(error.intro) Tienes que proporcionar una palabra para usar este comando.",
         },
         platform: {
             mustBeLoggedIn: `$t(intro) Tienes que estar conectado a Croco.games para usar este comando. Para conectarte, ve a la página principal https://${crocoDomain}/ y haz clic en "Iniciar sesión" si tienes una cuenta o "Nueva cuenta" si no tienes.`,
@@ -62,16 +51,13 @@ export const spanishTexts = {
     },
     command: {
         help: {
-            description:
-                "Muestra la lista de comandos. Si indicas un comando, muestra su descripción.",
+            description: "Muestra la lista de comandos. Si indicas un comando, muestra su descripción.",
             list: "{{commandList}} — Para más info sobre un comando, usa /help [comando]",
-            details:
-                "/{{commandName}}: {{description}} — Uso: {{usage}} — Ej. {{example}}",
+            details: "/{{commandName}}: {{description}} — Uso: {{usage}} — Ej. {{example}}",
         },
         records: {
             description: "Muestra la lista de records.",
-            specificRecord:
-                "[{{languageFlag}} {{gameMode}} {{recordType}}] {{records}}",
+            specificRecord: "[{{languageFlag}} {{gameMode}} {{recordType}}] {{records}}",
             allRecords: "[{{languageFlag}} {{gameMode}}] {{records}}",
         },
         currentGameScore: {
@@ -97,8 +83,7 @@ export const spanishTexts = {
             description:
                 "Busca palabras en el diccionario. Puedes dar tantas sílabas o regex como quieras. El comando te dará las palabras que coincidan con cada regex.",
             result: "[{{recordTypes}}{{resultCount}} res. ({{hiddenCount}} ocultos)] {{wordsList}}",
-            noResults:
-                "[{{recordTypes}}{{resultCount}} res. ({{hiddenCount}} ocultos)] No hay resultados disponibles",
+            noResults: "[{{recordTypes}}{{resultCount}} res. ({{hiddenCount}} ocultos)] No hay resultados disponibles",
             previousSyllableHint:
                 "En lugar de filtrar palabras para el record {{recordType}}, puedes proporcionar varias regex. Ejemplo: /c ER FA, si ER es la sílaba actual y FA la sílaba anterior.",
             alphaHint:
@@ -108,11 +93,9 @@ export const spanishTexts = {
             noUsernameNotConnected:
                 "Debes estar conectado a Croco.games para ver tu propio perfil. Si quieres ver el perfil de otro jugador, usa la sintaxis /p [nombre de usuario].",
             description: "Muestra el perfil de un jugador.",
-            resultMode:
-                "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}",
+            resultMode: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}",
             result: "[{{languageFlag}}] {{playerUsername}}: Rango #{{rank}} con {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, nivel {{level}}. Top 5 actuaciones: {{topPerformances}}",
-            noRecords:
-                "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: No hay records en esta categoría",
+            noRecords: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: No hay records en esta categoría",
         },
         rareSyllables: {
             description: "Muestra las sílabas raras en el diccionario.",
@@ -122,8 +105,7 @@ export const spanishTexts = {
                 "$t(error.intro) Una de las sílabas de la palabra dada no está en el diccionario. Esto no debería pasar. ¿Podrías reportarlo en el servidor de Discord?",
         },
         broadcast: {
-            description:
-                "Envía un mensaje a todos los jugadores en todas las salas.",
+            description: "Envía un mensaje a todos los jugadores en todas las salas.",
             message: "Difusión: {{message}}",
         },
         discord: {
@@ -164,8 +146,7 @@ export const spanishTexts = {
         },
         destroyAllRooms: {
             description: "Destruye todas las salas.",
-            message:
-                "Destruyendo todas las salas, probablemente por mantenimiento. ¡BirdBot volverá pronto!",
+            message: "Destruyendo todas las salas, probablemente por mantenimiento. ¡BirdBot volverá pronto!",
         },
         showAllRooms: {
             description: "Muestra todas las salas.",
@@ -175,8 +156,7 @@ export const spanishTexts = {
             description: "Crea una sala.",
             roomCreated: `Sala creada: https://${crocoDomain}/{{roomCode}}`,
             roomAlreadyExists: `Ya eres el propietario de una sala: https://${crocoDomain}/{{roomCode}}`,
-            roomBeingCreated:
-                "La sala está siendo creada, por favor, espera un poco...",
+            roomBeingCreated: "La sala está siendo creada, por favor, espera un poco...",
             unknownError:
                 "$t(error.intro) Un error desconocido ocurrió al crear la sala. Por favor, inténtalo de nuevo más tarde.",
         },
@@ -189,8 +169,7 @@ export const spanishTexts = {
             diedLevelUp:
                 "{{username}} murió a las {{time}} — +{{gainedXp}}xp, {{oldCurrentLevelXp}}/{{oldTotalLevelXp}}xp nivel {{oldLevel}} -> {{newCurrentLevelXp}}/{{newTotalLevelXp}}xp nivel {{newLevel}} — Puntuaciones: {{scores}}",
             died: "{{username}} murió a las {{time}} — Puntuaciones: {{scores}}",
-            diedNoWords:
-                "{{username}} murió sin colocar ninguna palabra en esta partida. ¡Buena suerte la próxima vez!",
+            diedNoWords: "{{username}} murió sin colocar ninguna palabra en esta partida. ¡Buena suerte la próxima vez!",
         },
         roomState: {
             gameModeSet: "Modo de juego cambiado a {{gameMode}}.",
@@ -202,28 +181,20 @@ export const spanishTexts = {
             commandNotFound: "Comando no encontrado: {{command}}",
             notRoomCreator:
                 "No puedes usar este comando si no eres el creador de la sala. /b para crear tu sala estará disponible pronto.",
-            notAdmin:
-                "No puedes usar este comando si no eres un administrador.",
+            notAdmin: "No puedes usar este comando si no eres un administrador.",
         },
         submit: {
             turnCommentWithWord: "{{username}}: ({{word}}) {{comments}}.",
             turnCommentWithoutWord: "{{username}}: {{comments}}.",
             comments: {
-                gainedLives:
-                    "ha ganado {{count}} vidas ({{playerTotal}}/{{globalTotal}})",
-                reachedWordsNoDeath:
-                    "ha alcanzado {{count}} palabras sin morir",
-                placedLongWord:
-                    "ha colocado una palabra larga ({{playerTotal}}/{{globalTotal}})",
-                placedHyphenatedWord:
-                    "ha colocado una palabra compuesta ({{playerTotal}}/{{globalTotal}})",
+                gainedLives: "ha ganado {{count}} vidas ({{playerTotal}}/{{globalTotal}})",
+                reachedWordsNoDeath: "ha alcanzado {{count}} palabras sin morir",
+                placedLongWord: "ha colocado una palabra larga ({{playerTotal}}/{{globalTotal}})",
+                placedHyphenatedWord: "ha colocado una palabra compuesta ({{playerTotal}}/{{globalTotal}})",
                 completedAlpha: "ha completado un alpha: {{alphaString}}",
-                placedPreviousSyllable:
-                    "ha colocado una sílaba anterior: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
-                gainedMultiSyllables:
-                    "ha ganado {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
-                depletedSyllables:
-                    "ha agotado {{count}} sílaba(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                placedPreviousSyllable: "ha colocado una sílaba anterior: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
+                gainedMultiSyllables: "ha ganado {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
+                depletedSyllables: "ha agotado {{count}} sílaba(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
             },
         },
     },

@@ -78,7 +78,7 @@ export default async function getPlayerProfile({
     `;
 
     const currentLanguagePpProfile = ppLeaderboardProfile.find(
-        (profile) => profile.language === languageEnumToDatabaseEnumMap[language]
+        (profile) => profile.language === languageEnumToDatabaseEnumMap[language],
     );
 
     if (!recordsCount[0] || !gamesPlayedCount[0]) {
@@ -95,10 +95,13 @@ export default async function getPlayerProfile({
         gamesPlayedCount: gamesPlayedCount[0].games_played_count,
         recordsCount: recordsCount[0].records_count,
         pp: currentLanguagePpProfile ? currentLanguagePpProfile.pp_sum : 0,
-        ppPerLanguage: ppLeaderboardProfile.reduce((acc, curr) => {
-            acc[databaseEnumToLanguageEnumMap[curr.language]] = curr.pp_sum;
-            return acc;
-        }, {} as Record<TLanguage, number>),
+        ppPerLanguage: ppLeaderboardProfile.reduce(
+            (acc, curr) => {
+                acc[databaseEnumToLanguageEnumMap[curr.language]] = curr.pp_sum;
+                return acc;
+            },
+            {} as Record<TLanguage, number>,
+        ),
         ppRank: currentLanguagePpProfile ? currentLanguagePpProfile.rank : 0,
         records: records.map((record) => {
             return { ...record, record_type: databaseFieldToRecordEnumMap[record.record_type] };

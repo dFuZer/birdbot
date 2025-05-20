@@ -3,11 +3,7 @@ import { type PeriodicTask } from "../../lib/class/Bot.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import BirdBot from "./BirdBot.class";
-import {
-    birdbotLanguageToDictionaryId,
-    dictionaryIdToBirdbotLanguage,
-    languageEnumSchema,
-} from "./BirdBotConstants";
+import { birdbotLanguageToDictionaryId, dictionaryIdToBirdbotLanguage, languageEnumSchema } from "./BirdBotConstants";
 import {
     BirdBotLanguage,
     BirdBotRoomMetadata,
@@ -27,8 +23,7 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
             for (const roomId in bot.rooms) {
                 const room = bot.rooms[roomId];
                 const hostName = room.constantRoomData.roomCreatorUsername;
-                const roomMetadata = room.roomState
-                    .metadata as BirdBotRoomMetadata;
+                const roomMetadata = room.roomState.metadata as BirdBotRoomMetadata;
                 const gamers = room.roomState.roomData?.gamers;
 
                 if (!room.ws || room.ws.readyState !== WebSocket.OPEN) continue;
@@ -36,13 +31,8 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                 if (gamers === undefined) continue;
                 if (hostName === null) continue;
 
-                const host = gamers.find(
-                    (gamer) => gamer.identity.name === hostName
-                );
-                if (
-                    (host === undefined || !host.isOnline) &&
-                    room.roomState.gameData?.round.state.value !== "round"
-                ) {
+                const host = gamers.find((gamer) => gamer.identity.name === hostName);
+                if ((host === undefined || !host.isOnline) && room.roomState.gameData?.round.state.value !== "round") {
                     // Host left the room
                     roomMetadata.hostLeftIteration++;
                     if (roomMetadata.hostLeftIteration >= 6) {
@@ -69,23 +59,12 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                 .map(([roomId, room]) => {
                     return room.roomState.gameData?.rules.dictionaryId;
                 })
-                .filter(
-                    (lang) =>
-                        lang !== undefined &&
-                        lang in dictionaryIdToBirdbotLanguage
-                )
-                .map(
-                    (lang) =>
-                        dictionaryIdToBirdbotLanguage[
-                            lang as BirdBotSupportedDictionaryId
-                        ]
-                );
+                .filter((lang) => lang !== undefined && lang in dictionaryIdToBirdbotLanguage)
+                .map((lang) => dictionaryIdToBirdbotLanguage[lang as BirdBotSupportedDictionaryId]);
 
-            const missingMainRoomLanguages = bot.mainRoomLanguages.filter(
-                (language) => {
-                    return !currentMainRoomLanguages.includes(language);
-                }
-            );
+            const missingMainRoomLanguages = bot.mainRoomLanguages.filter((language) => {
+                return !currentMainRoomLanguages.includes(language);
+            });
             if (missingMainRoomLanguages[0]) {
                 Logger.log({
                     message: `Creating main room for language ${missingMainRoomLanguages[0]}`,
@@ -94,17 +73,11 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                 await bot.createRoom({
                     roomCreatorUsername: null,
                     targetConfig: {
-                        dictionaryId:
-                            birdbotLanguageToDictionaryId[
-                                missingMainRoomLanguages[0]
-                            ],
+                        dictionaryId: birdbotLanguageToDictionaryId[missingMainRoomLanguages[0]],
                         gameMode: "survival",
                         birdbotGameMode: "regular",
                         isPublic: true,
-                        roomName: `🐤 BirdBot ${t(
-                            `lib.language.${missingMainRoomLanguages[0]}.flag`,
-                            { lng: "en" }
-                        )}`,
+                        roomName: `🐤 BirdBot ${t(`lib.language.${missingMainRoomLanguages[0]}.flag`, { lng: "en" })}`,
                     },
                 });
             }
@@ -147,15 +120,11 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
         intervalInMs: 30 * 1000,
         timeout: undefined,
         fn: async (ctx) => {
-            const languages =
-                languageEnumSchema.options satisfies BirdBotLanguage[];
+            const languages = languageEnumSchema.options satisfies BirdBotLanguage[];
             for (const language of languages) {
                 let dictionaryResource: DictionaryResource | undefined;
                 try {
-                    dictionaryResource =
-                        ctx.bot.resourceManager.get<DictionaryResource>(
-                            `dictionary-${language}`
-                        );
+                    dictionaryResource = ctx.bot.resourceManager.get<DictionaryResource>(`dictionary-${language}`);
                 } catch (e) {
                     continue;
                 }
@@ -163,32 +132,23 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     dictionaryResource.metadata.changed = false;
                     const dictionaryMetadata = dictionaryResource.metadata;
 
-                    Utilitary.insertionSort(
-                        dictionaryResource.resource,
-                        (a, b) => a.localeCompare(b)
-                    );
+                    Utilitary.insertionSort(dictionaryResource.resource, (a, b) => a.localeCompare(b));
 
-                    await writeFile(
-                        dictionaryMetadata.resourceFilePath,
-                        dictionaryResource.resource.join("\n")
-                    );
+                    await writeFile(dictionaryMetadata.resourceFilePath, dictionaryResource.resource.join("\n"));
 
-                    const dictionaryHash =
-                        BirdBotUtils.getDictionaryHash(dictionaryResource);
+                    const dictionaryHash = BirdBotUtils.getDictionaryHash(dictionaryResource);
 
                     await writeFile(
                         dictionaryMetadata.metadataFilePath,
                         [
                             dictionaryHash,
                             JSON.stringify({
-                                letterRarityScores:
-                                    dictionaryMetadata.letterRarityScores,
-                                syllablesCount:
-                                    dictionaryMetadata.syllablesCount,
+                                letterRarityScores: dictionaryMetadata.letterRarityScores,
+                                syllablesCount: dictionaryMetadata.syllablesCount,
                                 topFlipWords: dictionaryMetadata.topFlipWords,
                                 topSnWords: dictionaryMetadata.topSnWords,
                             } satisfies CacheableDictionaryMetadata),
-                        ].join("\n")
+                        ].join("\n"),
                     );
 
                     return;

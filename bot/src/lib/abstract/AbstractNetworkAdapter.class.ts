@@ -223,10 +223,7 @@ export default abstract class AbstractNetworkAdapter {
 
     public abstract getStartGameMessage(): Uint8Array;
 
-    public abstract getSetupMessage(
-        rule: BombPartyRuleKey,
-        value: any
-    ): Uint8Array;
+    public abstract getSetupMessage(rule: BombPartyRuleKey, value: any): Uint8Array;
 
     public abstract getJoinMessage(): Uint8Array;
 
@@ -242,74 +239,39 @@ export default abstract class AbstractNetworkAdapter {
 
     public abstract getSendChatMessage(message: string): Uint8Array;
 
-    public abstract getHelloMessage({
-        secret,
-        roomCode,
-    }: {
-        secret: string;
-        roomCode: string;
-    }): Uint8Array;
+    public abstract getHelloMessage({ secret, roomCode }: { secret: string; roomCode: string }): Uint8Array;
 
-    public abstract readNodeMessageBaseData(
-        message: Buffer
-    ): ReadNodeMessageBaseData;
+    public abstract readNodeMessageBaseData(message: Buffer): ReadNodeMessageBaseData;
 
     public abstract readByeMessageData(message: Buffer): ReadByeMessageData;
 
-    public abstract getSetRoomAccessModeMessage({
-        accessMode,
-    }: {
-        accessMode: RoomAccessMode;
-    }): Uint8Array;
+    public abstract getSetRoomAccessModeMessage({ accessMode }: { accessMode: RoomAccessMode }): Uint8Array;
 
-    public abstract getSetGamerRoleMessage({
-        gamerId,
-        role,
-    }: {
-        gamerId: number;
-        role: RoomRole;
-    }): Uint8Array;
+    public abstract getSetGamerRoleMessage({ gamerId, role }: { gamerId: number; role: RoomRole }): Uint8Array;
 
-    public abstract readGetGamerModerationInfoResultData(
-        message: Buffer
-    ): ReadGetGamerModerationInfoResultData;
+    public abstract readGetGamerModerationInfoResultData(message: Buffer): ReadGetGamerModerationInfoResultData;
 
     public abstract readAnnounceData(message: Buffer): ReadAnnounceData;
 
-    public abstract readAnnounceRestartData(
-        message: Buffer
-    ): ReadAnnounceRestartData;
+    public abstract readAnnounceRestartData(message: Buffer): ReadAnnounceRestartData;
 
-    public abstract readHelloOkMessageData(
-        message: Buffer
-    ): ReadHelloOkMessageData;
+    public abstract readHelloOkMessageData(message: Buffer): ReadHelloOkMessageData;
 
-    public abstract readSetRoomAccessModeData(
-        message: Buffer
-    ): ReadSetRoomAccessModeData;
+    public abstract readSetRoomAccessModeData(message: Buffer): ReadSetRoomAccessModeData;
 
-    public abstract readCentralMessageBaseData(
-        message: Buffer
-    ): ReadCentralMessageBaseData;
+    public abstract readCentralMessageBaseData(message: Buffer): ReadCentralMessageBaseData;
 
     public abstract readSetRoleData(message: Buffer): ReadSetRoleData;
 
     public abstract readAddGamerData(message: Buffer): ReadAddGamerData;
 
-    public abstract readSetGamerOnlineData(
-        message: Buffer
-    ): ReadSetGamerOnlineData;
+    public abstract readSetGamerOnlineData(message: Buffer): ReadSetGamerOnlineData;
 
     public abstract readChatData(message: Buffer): ReadChatData;
 
-    public abstract readSetupData(
-        message: Buffer,
-        isInitialSetup: boolean
-    ): ReadSetupData;
+    public abstract readSetupData(message: Buffer, isInitialSetup: boolean): ReadSetupData;
 
-    public abstract readToggleCountdownData(
-        message: Buffer
-    ): ReadToggleCountdownData;
+    public abstract readToggleCountdownData(message: Buffer): ReadToggleCountdownData;
 
     public abstract readRemovePlayerData(message: Buffer): ReadRemovePlayerData;
 
@@ -331,11 +293,7 @@ export default abstract class AbstractNetworkAdapter {
 
     public abstract readRoundIntroData(message: Buffer): ReadRoundIntroData;
 
-    public abstract readOneVOneAnnouncementData(
-        message: Buffer
-    ): ReadOneVOneAnnouncementData;
+    public abstract readOneVOneAnnouncementData(message: Buffer): ReadOneVOneAnnouncementData;
 
-    public abstract readUpdatePlaylistRatingsData(
-        message: Buffer
-    ): ReadUpdatePlaylistRatingsData;
+    public abstract readUpdatePlaylistRatingsData(message: Buffer): ReadUpdatePlaylistRatingsData;
 }

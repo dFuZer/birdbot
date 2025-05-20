@@ -38,7 +38,7 @@ export function calculateXpFromGameRecap(gameRecap: {
             gameRecap.previousSyllablesCount * 3 + // 3 xp per previous syllable
             gameRecap.multiSyllablesCount * 3 + // 3 xp per multi syllable
             gameRecap.listedRecordsTotalCount * 2) * // 2 xp per listed record
-            xpPerMode[gameRecap.mode]
+            xpPerMode[gameRecap.mode],
     );
 }
 
@@ -76,9 +76,6 @@ export function getLevelDataFromXp(xp: number) {
         level: levelFromXp(usedXp),
         currentLevelXp: usedXp - currentLevelTotalXp,
         totalLevelXp: nextLevelTotalXp - currentLevelTotalXp,
-        percentageToNextLevel:
-            ((usedXp - currentLevelTotalXp) /
-                (nextLevelTotalXp - currentLevelTotalXp)) *
-            100,
+        percentageToNextLevel: ((usedXp - currentLevelTotalXp) / (nextLevelTotalXp - currentLevelTotalXp)) * 100,
     };
 }

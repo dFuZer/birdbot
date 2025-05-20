@@ -30,7 +30,7 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
     const perPage = tryGetNumberFromParam(params.perPage) || 10;
 
     const data = await getFromApi(
-        `/records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=${selectedPage}&perPage=${perPage}`
+        `/records?lang=${selectedLanguage}&mode=${selectedMode}&record=${selectedRecord}&page=${selectedPage}&perPage=${perPage}`,
     );
 
     const json: IApiResponse = await data.json();
