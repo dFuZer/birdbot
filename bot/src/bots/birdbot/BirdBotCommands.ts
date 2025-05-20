@@ -92,9 +92,11 @@ const recordsCommand = c({
         const targetMode = BirdBotUtils.findTargetItemInZodEnum(allArguments, modesEnumSchema);
         const targetRecordType = BirdBotUtils.findValueInAliasesObject(allArguments, recordAliases);
         const targetPage = BirdBotUtils.findNumberInArgs(allArguments);
-
-        const language = targetLanguage ?? defaultLanguage;
-        const mode = targetMode ?? defaultMode;
+        const currentRoomLanguage =
+            dictionaryIdToBirdbotLanguage[ctx.room.roomState.gameData!.rules.dictionaryId as BirdBotSupportedDictionaryId];
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        const language = targetLanguage ?? currentRoomLanguage ?? defaultLanguage;
+        const mode = targetMode ?? (roomMetadata.gameMode === "custom" ? defaultMode : roomMetadata.gameMode);
 
         let responseData: ApiResponseBestScoresSpecificRecord | ApiResponseAllRecords | null = null;
 
@@ -1229,7 +1231,12 @@ const createRoomCommand = c({
             }
         }
         const allArguments = ctx.args.concat(ctx.params);
-        const targetLanguage = BirdBotUtils.findValueInAliasesObject(allArguments, languageAliases);
+        let targetLanguage = BirdBotUtils.findValueInAliasesObject(allArguments, languageAliases);
+        targetLanguage =
+            targetLanguage ??
+            dictionaryIdToBirdbotLanguage[ctx.room.roomState.gameData!.rules.dictionaryId as BirdBotSupportedDictionaryId] ??
+            defaultLanguage;
+        const targetDictionaryId = birdbotLanguageToDictionaryId[targetLanguage];
         const targetMode = BirdBotUtils.findTargetItemInZodEnum(allArguments, modesEnumSchema);
 
         if (
@@ -1256,7 +1263,7 @@ const createRoomCommand = c({
 
         bot.createRoom({
             targetConfig: {
-                dictionaryId: birdbotLanguageToDictionaryId[targetLanguage ?? defaultLanguage],
+                dictionaryId: targetDictionaryId,
                 gameMode: "survival",
                 birdbotGameMode: targetMode ?? defaultMode,
                 isPublic: true,
