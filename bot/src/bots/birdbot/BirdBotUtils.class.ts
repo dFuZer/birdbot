@@ -275,6 +275,12 @@ export default class BirdBotUtils {
             multiSyllablesCount: playerScores.multiSyllables,
             hyphenWordsCount: playerScores.hyphenWords,
             moreThan20LettersWordsCount: playerScores.moreThan20LettersWords,
+            slursCount: playerScores.slurs,
+            creaturesCount: playerScores.creatures,
+            ethnonymsCount: playerScores.ethnonyms,
+            chemicalsCount: playerScores.chemicals,
+            plantsCount: playerScores.plants,
+            adverbsCount: playerScores.adverbs,
         };
     };
 
@@ -587,6 +593,12 @@ export default class BirdBotUtils {
             maxWordsWithoutDeath: 0,
             hyphenWords: 0,
             moreThan20LettersWords: 0,
+            slurs: 0,
+            creatures: 0,
+            ethnonyms: 0,
+            chemicals: 0,
+            plants: 0,
+            adverbs: 0,
         };
     };
 
@@ -810,6 +822,12 @@ export default class BirdBotUtils {
             moreThan20LettersWords: 0,
             multiSyllables: 0,
             depletedSyllables: 0,
+            slurs: 0,
+            creatures: 0,
+            ethnonyms: 0,
+            chemicals: 0,
+            plants: 0,
+            adverbs: 0,
         };
         roomMetadata.hostLeftIteration = 0;
         this.initializeScoresForAllPlayers(ctx);
@@ -836,6 +854,12 @@ export default class BirdBotUtils {
             ["previous_syllable", playerStats.previousSyllableScore],
             ["hyphen", playerStats.hyphenWords],
             ["more_than_20_letters", playerStats.moreThan20LettersWords],
+            ["slur", playerStats.slurs],
+            ["creature", playerStats.creatures],
+            ["ethnonym", playerStats.ethnonyms],
+            ["chemical", playerStats.chemicals],
+            ["plant", playerStats.plants],
+            ["adverb", playerStats.adverbs],
         ] satisfies [BirdBotRecordType, number][];
 
         return scores
@@ -862,6 +886,12 @@ export default class BirdBotUtils {
             moreThan20LettersWords: 0,
             multiSyllables: 0,
             depletedSyllables: 0,
+            slurs: 0,
+            creatures: 0,
+            ethnonyms: 0,
+            chemicals: 0,
+            plants: 0,
+            adverbs: 0,
         };
         for (const player of ctx.room.roomState.gameData!.players) {
             this.initializeScoresForPlayerId(roomMetadata, player.gamerId);

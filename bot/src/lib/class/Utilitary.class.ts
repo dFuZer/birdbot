@@ -307,7 +307,7 @@ export default class Utilitary {
         ctx: EventCtx,
         rawMessage: string,
         gamer: Gamer,
-        commands: Command[],
+        commands: Command[]
     ):
         | "no-command-given"
         | "command-not-found"

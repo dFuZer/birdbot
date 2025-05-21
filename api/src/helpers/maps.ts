@@ -17,7 +17,13 @@ export const recordEnumToDatabaseFieldMap = {
     hyphen: Prisma.GameRecapScalarFieldEnum.hyphen_words_count,
     no_death: Prisma.GameRecapScalarFieldEnum.words_without_death_count,
     more_than_20_letters: Prisma.GameRecapScalarFieldEnum.more_than_20_letters_words_count,
-    time: "time", // TODO: Add time
+    slur: Prisma.GameRecapScalarFieldEnum.slurs_count,
+    creature: Prisma.GameRecapScalarFieldEnum.creatures_count,
+    ethnonym: Prisma.GameRecapScalarFieldEnum.ethnonyms_count,
+    chemical: Prisma.GameRecapScalarFieldEnum.chemicals_count,
+    plant: Prisma.GameRecapScalarFieldEnum.plants_count,
+    adverb: Prisma.GameRecapScalarFieldEnum.adverbs_count,
+    time: "time",
 } satisfies { [key in TRecord]: Prisma.GameRecapScalarFieldEnum | "time" };
 
 export type GameRecapRecordField = Exclude<Prisma.GameRecapScalarFieldEnum, "id" | "game_id" | "player_id" | "died_at"> | "time";
@@ -33,6 +39,12 @@ export const databaseFieldToRecordEnumMap = {
     words_without_death_count: "no_death",
     more_than_20_letters_words_count: "more_than_20_letters",
     time: "time",
+    slurs_count: "slur",
+    creatures_count: "creature",
+    ethnonyms_count: "ethnonym",
+    chemicals_count: "chemical",
+    plants_count: "plant",
+    adverbs_count: "adverb",
 } satisfies { [key in GameRecapRecordField]: TRecord };
 
 export const languageEnumToDatabaseEnumMap = {

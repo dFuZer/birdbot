@@ -1,4 +1,5 @@
 import { crocoDomain } from "../../../lib/constants/gameConstants";
+import { ListedRecord } from "../BirdBotConstants";
 import { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType } from "../BirdBotTypes";
 
 export const englishTexts = {
@@ -35,10 +36,10 @@ export const englishTexts = {
         },
         searchWords: {
             nonsensicalRecordSearch: "$t(error.intro) It makes no sense to sort words by record(s): {{records}}.",
-            multipleSortRecords:
-                "$t(error.intro) You can only sort by one sort-record at a time. The sort-records are: {{sortRecords}}. Note that you can still filter by multiple filter-records. The filter-records are: {{filterRecords}}.",
+            multipleRecords: "$t(error.intro) You can only sort by one record at a time.",
             mustProvideOneSyllable:
                 "$t(error.intro) You can only sort by multi-syllable words if you provide exactly one syllable.",
+            noArguments: "$t(error.intro) You must provide at least one syllable or regex.",
         },
         invalidParams: {
             noUsername: "$t(error.intro) You must provide a username to use this command.",
@@ -182,7 +183,7 @@ export const englishTexts = {
             notAdmin: "You cannot use this command if you are not an admin.",
         },
         submit: {
-            turnCommentWithWord: "{{username}}: ({{word}}) {{comments}}.",
+            turnCommentWithWord: "{{username}}: {{comments}} ({{word}})",
             turnCommentWithoutWord: "{{username}}: {{comments}}.",
             comments: {
                 gainedLives: "gained {{count}} lives ({{playerTotal}}/{{globalTotal}})",
@@ -193,7 +194,16 @@ export const englishTexts = {
                 placedPreviousSyllable: "placed a previous syllable: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
                 gainedMultiSyllables: "gained {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
                 depletedSyllables: "depleted {{count}} syllable(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
             },
+            listedRecordCommentIntroductions: {
+                adverb: "placed an adverb",
+                chemical: "placed a chemical",
+                creature: "placed a creature",
+                ethnonym: "placed an ethnonym",
+                plant: "placed a plant",
+                slur: "placed a slur",
+            } satisfies Record<ListedRecord, string>,
         },
     },
     lib: {
@@ -277,6 +287,48 @@ export const englishTexts = {
                 score_other: "{{count}} words",
                 score_specific_one: "{{count}} long word",
                 score_specific_other: "{{count}} long words",
+            },
+            adverb: {
+                recordName: "Adverbs",
+                score_one: "{{count}} adverb",
+                score_other: "{{count}} adverbs",
+                score_specific_one: "{{count}} adverb",
+                score_specific_other: "{{count}} adverbs",
+            },
+            chemical: {
+                recordName: "Chemicals",
+                score_one: "{{count}} chemical",
+                score_other: "{{count}} chemicals",
+                score_specific_one: "{{count}} chemical",
+                score_specific_other: "{{count}} chemicals",
+            },
+            creature: {
+                recordName: "Creatures",
+                score_one: "{{count}} creature",
+                score_other: "{{count}} creatures",
+                score_specific_one: "{{count}} creature",
+                score_specific_other: "{{count}} creatures",
+            },
+            ethnonym: {
+                recordName: "Ethnonyms",
+                score_one: "{{count}} ethnonym",
+                score_other: "{{count}} ethnonyms",
+                score_specific_one: "{{count}} ethnonym",
+                score_specific_other: "{{count}} ethnonyms",
+            },
+            plant: {
+                recordName: "Plants",
+                score_one: "{{count}} plant",
+                score_other: "{{count}} plants",
+                score_specific_one: "{{count}} plant",
+                score_specific_other: "{{count}} plants",
+            },
+            slur: {
+                recordName: "Slurs",
+                score_one: "{{count}} slur",
+                score_other: "{{count}} slurs",
+                score_specific_one: "{{count}} slur",
+                score_specific_other: "{{count}} slurs",
             },
         } satisfies Record<
             BirdBotRecordType,

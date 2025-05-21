@@ -51,7 +51,13 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             previous_syllables_count,
             multi_syllables_count,
             hyphen_words_count,
-            more_than_20_letters_words_count)
+            more_than_20_letters_words_count,
+            slurs_count,
+            creatures_count,
+            ethnonyms_count,
+            chemicals_count,
+            plants_count,
+            adverbs_count)
             VALUES (gen_random_uuid(),
             ${game.id}::UUID,
             ${player.id}::UUID,
@@ -64,7 +70,13 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             ${gameRecapData.previousSyllablesCount},
             ${gameRecapData.multiSyllablesCount},
             ${gameRecapData.hyphenWordsCount},
-            ${gameRecapData.moreThan20LettersWordsCount})
+            ${gameRecapData.moreThan20LettersWordsCount},
+            ${gameRecapData.slursCount},
+            ${gameRecapData.creaturesCount},
+            ${gameRecapData.ethnonymsCount},
+            ${gameRecapData.chemicalsCount},
+            ${gameRecapData.plantsCount},
+            ${gameRecapData.adverbsCount})
         `;
 
         const gainedExperience = calculateXpFromGameRecap({
@@ -77,7 +89,15 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             wordsWithoutDeathCount: gameRecapData.wordsWithoutDeathCount,
             previousSyllablesCount: gameRecapData.previousSyllablesCount,
             multiSyllablesCount: gameRecapData.multiSyllablesCount,
-            listedRecordsTotalCount: gameRecapData.hyphenWordsCount + gameRecapData.moreThan20LettersWordsCount,
+            listedRecordsTotalCount:
+                gameRecapData.hyphenWordsCount +
+                gameRecapData.moreThan20LettersWordsCount +
+                gameRecapData.slursCount +
+                gameRecapData.creaturesCount +
+                gameRecapData.ethnonymsCount +
+                gameRecapData.chemicalsCount +
+                gameRecapData.plantsCount +
+                gameRecapData.adverbsCount,
         });
 
         const playerXp: { xp: number }[] = await prisma.$queryRaw`

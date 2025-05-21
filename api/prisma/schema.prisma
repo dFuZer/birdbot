@@ -98,6 +98,13 @@ model GameRecap {
     hyphen_words_count               Int
     more_than_20_letters_words_count Int
 
+    slurs_count     Int @default(0)
+    creatures_count Int @default(0)
+    ethnonyms_count Int @default(0)
+    chemicals_count Int @default(0)
+    plants_count    Int @default(0)
+    adverbs_count   Int @default(0)
+
     game   Game   @relation(fields: [game_id], references: [id])
     player Player @relation(fields: [player_id], references: [id])
 

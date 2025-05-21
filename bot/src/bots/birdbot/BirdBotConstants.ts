@@ -1,7 +1,13 @@
 import { z } from "zod";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { DictionaryId, DictionaryLessGameRules } from "../../lib/types/gameTypes";
-import { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotSupportedDictionaryId } from "./BirdBotTypes";
+import {
+    BirdBotGameMode,
+    BirdBotLanguage,
+    BirdBotRecordType,
+    BirdBotSupportedDictionaryId,
+    PlayerGameScores,
+} from "./BirdBotTypes";
 
 export const DISCORD_SERVER_LINK = "https://discord.com/invite/J3yHjv4ZUd";
 export const GITHUB_REPO_LINK = "https://github.com/dFuZer/birdbot";
@@ -107,6 +113,12 @@ export const recordsEnumSchema = z.enum([
     "alpha",
     "hyphen",
     "more_than_20_letters",
+    "slur",
+    "creature",
+    "ethnonym",
+    "chemical",
+    "plant",
+    "adverb",
 ]);
 
 export const defaultLanguage = "en" satisfies BirdBotLanguage;
@@ -114,20 +126,45 @@ export const defaultMode = "regular" satisfies BirdBotGameMode;
 
 export const languageAliases = {
     fr: ["french", "fr", "francais", "français", "fra"],
-    en: [
-        "english",
-        "en",
-        "anglais",
-        "anglais",
-        "ang",
-        "eng",
-        "englais" /*  "englais" ça arrive plus souvent que ce qu'on croit */,
-    ],
+    en: ["english", "en", "anglais", "anglais", "ang", "eng", "englais" /* beaucoup de gens font l'erreur... */],
     de: ["german", "de", "deutsch", "deutsch", "allemand", "ger"],
     es: ["spanish", "es", "español", "español", "espagnol", "esp"],
     brpt: ["brasileiro", "brpt", "portuguese", "portugais", "br", "pt", "portugais"],
     it: ["italian", "it", "italiano", "italiano", "italien", "it"],
 } satisfies Record<BirdBotLanguage, string[]>;
+
+export const semiListedRecords = ["hyphen", "more_than_20_letters"] satisfies BirdBotRecordType[];
+export type SemiListedRecord = (typeof semiListedRecords)[number];
+
+export const listedRecords = ["slur", "creature", "ethnonym", "chemical", "plant", "adverb"] satisfies BirdBotRecordType[];
+export type ListedRecord = (typeof listedRecords)[number];
+
+export const semiListedRecordsPerLanguage = {
+    brpt: ["hyphen", "more_than_20_letters"],
+    de: ["more_than_20_letters"],
+    en: ["hyphen", "more_than_20_letters"],
+    es: ["hyphen", "more_than_20_letters"],
+    fr: ["hyphen", "more_than_20_letters"],
+    it: ["more_than_20_letters"],
+} satisfies Record<BirdBotLanguage, SemiListedRecord[]>;
+
+export const scoreKeyPerListedRecord = {
+    slur: "slurs",
+    creature: "creatures",
+    ethnonym: "ethnonyms",
+    chemical: "chemicals",
+    plant: "plants",
+    adverb: "adverbs",
+} satisfies Record<ListedRecord, keyof PlayerGameScores>;
+
+export const listedRecordsPerLanguage = {
+    brpt: [],
+    de: [],
+    en: [],
+    es: [],
+    fr: ["slur"],
+    it: [],
+} satisfies Record<BirdBotLanguage, ListedRecord[]>;
 
 export const recordAliases = {
     word: ["words", "word", "mots", "mot", "mots", "w", "m"],
@@ -140,10 +177,25 @@ export const recordAliases = {
     alpha: ["alpha", "alp", "a"],
     hyphen: ["hyphen", "hyp", "hyph", "compose", "mot-compose", "mot-composes", "h"],
     more_than_20_letters: ["more-than-20-letters", "20+", "plus-de-20-lettres", "long", "longs", "20-letters", "20", "l"],
+    slur: ["slur", "slurs", "s", "sl", "insult", "insulto", "insulte"],
+    creature: ["creature", "creatures", "c", "cr", "criatura", "criaturas", "criatura", "criaturas"],
+    ethnonym: ["ethnonym", "ethnonyms", "e", "eth", "gentilicio", "gentilicios", "gentilicio", "gentilicios"],
+    chemical: ["chemical", "chemicals", "ch", "che", "quimica", "quimicas", "quimica", "quimicas"],
+    plant: ["plant", "plants", "p", "pl", "planta", "plantas", "planta", "plantas"],
+    adverb: ["adverb", "adverbs", "ad", "adv", "adverbe"],
 } satisfies Record<BirdBotRecordType, string[]>;
 
 export const sortWordsModeRecords = ["flips", "multi_syllable", "depleted_syllables"] satisfies BirdBotRecordType[];
-export const filterWordsModeRecords = ["hyphen", "more_than_20_letters"] satisfies BirdBotRecordType[];
+export const filterWordsModeRecords = [
+    "hyphen",
+    "more_than_20_letters",
+    "plant",
+    "adverb",
+    "chemical",
+    "creature",
+    "ethnonym",
+    "slur",
+] satisfies BirdBotRecordType[];
 
 export const recordsUtils = {
     word: {
@@ -185,6 +237,30 @@ export const recordsUtils = {
     hyphen: {
         format: (score) => score.toString(),
         order: 10,
+    },
+    slur: {
+        format: (score) => score.toString(),
+        order: 11,
+    },
+    creature: {
+        format: (score) => score.toString(),
+        order: 12,
+    },
+    ethnonym: {
+        format: (score) => score.toString(),
+        order: 13,
+    },
+    chemical: {
+        format: (score) => score.toString(),
+        order: 14,
+    },
+    plant: {
+        format: (score) => score.toString(),
+        order: 15,
+    },
+    adverb: {
+        format: (score) => score.toString(),
+        order: 16,
     },
 } satisfies Record<
     BirdBotRecordType,

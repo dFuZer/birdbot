@@ -31,6 +31,12 @@ export default function ScoreDisplayComponent({ score, recordType }: ScoreDispla
             recordsEnumSchema.Values.more_than_20_letters,
             recordsEnumSchema.Values.previous_syllable,
             recordsEnumSchema.Values.no_death,
+            recordsEnumSchema.Values.slur,
+            recordsEnumSchema.Values.creature,
+            recordsEnumSchema.Values.ethnonym,
+            recordsEnumSchema.Values.chemical,
+            recordsEnumSchema.Values.plant,
+            recordsEnumSchema.Values.adverb,
         ].includes(recordType)
     ) {
         return (

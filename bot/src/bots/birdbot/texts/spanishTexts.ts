@@ -36,10 +36,10 @@ export const spanishTexts = {
         },
         searchWords: {
             nonsensicalRecordSearch: "$t(error.intro) No tiene sentido ordenar palabras por record(s): {{records}}.",
-            multipleSortRecords:
-                "$t(error.intro) Solo puedes ordenar por un record de orden a la vez. Los records de orden son: {{sortRecords}}. Puedes seguir filtrando por varios records de filtrado. Los records de filtrado son: {{filterRecords}}.",
+            multipleRecords: "$t(error.intro) Solo puedes ordenar por un record de orden a la vez.",
             mustProvideOneSyllable:
                 "$t(error.intro) Solo puedes ordenar por palabras multisilábicas si proporcionas exactamente una sílaba.",
+            noArguments: "$t(error.intro) Debes proporcionar al menos una sílaba o regex.",
         },
         invalidParams: {
             noUsername: "$t(error.intro) Tienes que proporcionar un nombre de usuario para usar este comando.",
@@ -184,8 +184,8 @@ export const spanishTexts = {
             notAdmin: "No puedes usar este comando si no eres un administrador.",
         },
         submit: {
-            turnCommentWithWord: "{{username}}: ({{word}}) {{comments}}.",
-            turnCommentWithoutWord: "{{username}}: {{comments}}.",
+            turnCommentWithWord: "{{username}} : {{comments}} ({{word}})",
+            turnCommentWithoutWord: "{{username}} : {{comments}}.",
             comments: {
                 gainedLives: "ha ganado {{count}} vidas ({{playerTotal}}/{{globalTotal}})",
                 reachedWordsNoDeath: "ha alcanzado {{count}} palabras sin morir",
@@ -195,6 +195,15 @@ export const spanishTexts = {
                 placedPreviousSyllable: "ha colocado una sílaba anterior: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
                 gainedMultiSyllables: "ha ganado {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
                 depletedSyllables: "ha agotado {{count}} sílaba(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
+            },
+            listedRecordCommentIntroductions: {
+                adverb: "ha colocado un adverbio",
+                chemical: "ha colocado un elemento químico",
+                creature: "ha colocado una criatura",
+                ethnonym: "ha colocado un gentilicio",
+                plant: "ha colocado una planta",
+                slur: "ha colocado una palabra ofensiva",
             },
         },
     },
@@ -279,6 +288,48 @@ export const spanishTexts = {
                 score_other: "{{count}} palabras",
                 score_specific_one: "{{count}} palabra larga",
                 score_specific_other: "{{count}} palabras largas",
+            },
+            adverb: {
+                recordName: "Adverbios",
+                score_one: "{{count}} adverbio",
+                score_other: "{{count}} adverbios",
+                score_specific_one: "{{count}} adverbio",
+                score_specific_other: "{{count}} adverbios",
+            },
+            chemical: {
+                recordName: "Elementos químicos",
+                score_one: "{{count}} elemento químico",
+                score_other: "{{count}} elementos químicos",
+                score_specific_one: "{{count}} elemento químico",
+                score_specific_other: "{{count}} elementos químicos",
+            },
+            creature: {
+                recordName: "Criaturas",
+                score_one: "{{count}} criatura",
+                score_other: "{{count}} criaturas",
+                score_specific_one: "{{count}} criatura",
+                score_specific_other: "{{count}} criaturas",
+            },
+            ethnonym: {
+                recordName: "Gentilicios",
+                score_one: "{{count}} gentilicio",
+                score_other: "{{count}} gentilicios",
+                score_specific_one: "{{count}} gentilicio",
+                score_specific_other: "{{count}} gentilicios",
+            },
+            plant: {
+                recordName: "Plantas",
+                score_one: "{{count}} planta",
+                score_other: "{{count}} plantas",
+                score_specific_one: "{{count}} planta",
+                score_specific_other: "{{count}} plantas",
+            },
+            slur: {
+                recordName: "Insultos",
+                score_one: "{{count}} insulto",
+                score_other: "{{count}} insultos",
+                score_specific_one: "{{count}} insulto",
+                score_specific_other: "{{count}} insultos",
             },
         },
     },

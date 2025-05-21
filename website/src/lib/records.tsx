@@ -13,6 +13,12 @@ export const recordsEnumSchema = z.enum([
     "alpha",
     "hyphen",
     "more_than_20_letters",
+    "slur",
+    "creature",
+    "ethnonym",
+    "chemical",
+    "plant",
+    "adverb",
 ]);
 
 export type ExperienceData = {
@@ -51,6 +57,12 @@ export const RECORDS_DATA: { [key in RecordsEnum]: IRecordData } = {
     alpha: { displayName: "Alpha" },
     hyphen: { displayName: "Hyphen" },
     more_than_20_letters: { displayName: "Long words" },
+    slur: { displayName: "Slur" },
+    creature: { displayName: "Creature" },
+    ethnonym: { displayName: "Ethnonym" },
+    chemical: { displayName: "Chemical" },
+    plant: { displayName: "Plant" },
+    adverb: { displayName: "Adverb" },
 };
 
 export const GAME_MODES_DATA: { [key in ModesEnum]: IGameModeData } = {

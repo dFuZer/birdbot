@@ -35,10 +35,10 @@ export const frenchTexts = {
         },
         searchWords: {
             nonsensicalRecordSearch: "$t(error.intro) Impossible de trier les mots par record(s) : {{records}}.",
-            multipleSortRecords:
-                "$t(error.intro) Tu ne peux trier que par un seul record de tri à la fois. Les records de tri sont : {{sortRecords}}. Tu peux toujours filtrer par plusieurs records de filtrage. Les records de filtrage sont : {{filterRecords}}.",
+            multipleRecords: "$t(error.intro) Tu ne peux trier que par un seul record à la fois.",
             mustProvideOneSyllable:
                 "$t(error.intro) Tu ne peux trier par multisyllabes que si tu fournis exactement une syllabe.",
+            noArguments: "$t(error.intro) Tu dois fournir au moins une syllabe ou un regex.",
         },
         invalidParams: {
             noUsername: "$t(error.intro) Tu dois fournir un nom d'utilisateur pour utiliser cette commande.",
@@ -183,7 +183,7 @@ export const frenchTexts = {
             notAdmin: "Tu ne peux pas utiliser cette commande si tu n'es pas un admin.",
         },
         submit: {
-            turnCommentWithWord: "{{username}} : ({{word}}) {{comments}}.",
+            turnCommentWithWord: "{{username}} : {{comments}} ({{word}})",
             turnCommentWithoutWord: "{{username}} : {{comments}}.",
             comments: {
                 gainedLives: "a gagné {{count}} vies ({{playerTotal}}/{{globalTotal}})",
@@ -194,6 +194,15 @@ export const frenchTexts = {
                 placedPreviousSyllable: "a placé une syllabe précédente : {{syllable}} ({{playerTotal}}/{{globalTotal}})",
                 gainedMultiSyllables: "a gagné {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
                 depletedSyllables: "a niqué {{count}} syllabe(s) : {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
+            },
+            listedRecordCommentIntroductions: {
+                adverb: "a placé un adverbe",
+                chemical: "a placé un élément chimique",
+                creature: "a placé une créature",
+                ethnonym: "a placé un gentilé",
+                plant: "a placé une plante",
+                slur: "a placé une insulte",
             },
         },
     },
@@ -278,6 +287,48 @@ export const frenchTexts = {
                 score_other: "{{count}} mots",
                 score_specific_one: "{{count}} long mot",
                 score_specific_other: "{{count}} longs mots",
+            },
+            adverb: {
+                recordName: "Adverbes",
+                score_one: "{{count}} adverbe",
+                score_other: "{{count}} adverbes",
+                score_specific_one: "{{count}} adverbe",
+                score_specific_other: "{{count}} adverbes",
+            },
+            chemical: {
+                recordName: "Éléments chimiques",
+                score_one: "{{count}} élément chimique",
+                score_other: "{{count}} éléments chimiques",
+                score_specific_one: "{{count}} élément chimique",
+                score_specific_other: "{{count}} éléments chimiques",
+            },
+            creature: {
+                recordName: "Créatures",
+                score_one: "{{count}} créature",
+                score_other: "{{count}} créatures",
+                score_specific_one: "{{count}} créature",
+                score_specific_other: "{{count}} créatures",
+            },
+            ethnonym: {
+                recordName: "Gentilés",
+                score_one: "{{count}} gentilé",
+                score_other: "{{count}} gentilés",
+                score_specific_one: "{{count}} gentilé",
+                score_specific_other: "{{count}} gentilés",
+            },
+            plant: {
+                recordName: "Plantes",
+                score_one: "{{count}} plante",
+                score_other: "{{count}} plantes",
+                score_specific_one: "{{count}} plante",
+                score_specific_other: "{{count}} plantes",
+            },
+            slur: {
+                recordName: "Insultes",
+                score_one: "{{count}} insulte",
+                score_other: "{{count}} insultes",
+                score_specific_one: "{{count}} insulte",
+                score_specific_other: "{{count}} insultes",
             },
         },
     },

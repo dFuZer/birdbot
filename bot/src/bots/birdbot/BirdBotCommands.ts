@@ -12,9 +12,9 @@ import {
     defaultMode,
     dictionaryIdToBirdbotLanguage,
     DISCORD_SERVER_LINK,
-    filterWordsModeRecords,
     GITHUB_REPO_LINK,
     languageAliases,
+    listedRecordsPerLanguage,
     modesEnumSchema,
     PAYPAL_DONATE_LINK,
     recordAliases,
@@ -30,6 +30,7 @@ import {
     BirdBotSupportedDictionaryId,
     DictionaryResource,
     ExperienceData,
+    ListedRecordListResource,
     PlayerGameScores,
 } from "./BirdBotTypes";
 import BirdBotUtils, { type ApiResponseAllRecords, type ApiResponseBestScoresSpecificRecord } from "./BirdBotUtils.class";
@@ -163,9 +164,9 @@ const recordsCommand = c({
 
             ctx.utils.sendChatMessage(
                 t("command.records.specificRecord", {
-                    languageFlag: t(`lib.language.${language}.flag`),
-                    gameMode: t(`lib.mode.${mode}`),
-                    recordType: t(`lib.recordType.${targetRecordType}.recordName`),
+                    languageFlag: t(`lib.language.${language}.flag`, { lng: l(ctx) }),
+                    gameMode: t(`lib.mode.${mode}`, { lng: l(ctx) }),
+                    recordType: t(`lib.recordType.${targetRecordType}.recordName`, { lng: l(ctx) }),
                     records,
                     lng: l(ctx),
                 })
@@ -175,22 +176,25 @@ const recordsCommand = c({
             const records = r.bestScores
                 .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
                 .map((score) => {
-                    return `${t(`lib.recordType.${score.record_type}.recordName`)}: ${t("general.scorePresentation", {
-                        username: score.player_username,
-                        score: t(`lib.recordType.${score.record_type}.score`, {
-                            count: score.score,
-                            formattedScore: recordsUtils[score.record_type].format(score.score),
+                    return `${t(`lib.recordType.${score.record_type}.recordName`, { lng: l(ctx) })}: ${t(
+                        "general.scorePresentation",
+                        {
+                            username: score.player_username,
+                            score: t(`lib.recordType.${score.record_type}.score`, {
+                                count: score.score,
+                                formattedScore: recordsUtils[score.record_type].format(score.score),
+                                lng: l(ctx),
+                            }),
                             lng: l(ctx),
-                        }),
-                        lng: l(ctx),
-                    })}`;
+                        }
+                    )}`;
                 })
                 .join(" — ");
 
             ctx.utils.sendChatMessage(
                 t("command.records.allRecords", {
-                    languageFlag: t(`lib.language.${language}.flag`),
-                    gameMode: t(`lib.mode.${mode}`),
+                    languageFlag: t(`lib.language.${language}.flag`, { lng: l(ctx) }),
+                    gameMode: t(`lib.mode.${mode}`, { lng: l(ctx) }),
                     records,
                     lng: l(ctx),
                 })
@@ -426,9 +430,18 @@ const setRoomLanguageCommand = c({
 const searchWordsCommand = c({
     id: "searchWords",
     aliases: ["searchwords", "c", "words", "search"],
-    usageDesc: "/c [syllable|regex] [...]",
-    exampleUsage: "/c hello - /c ^hello$",
+    usageDesc: "/c (-record) [...syllables|regexes]",
+    exampleUsage: "/c hello - /c ^hello$ - /c -life syll - /c -sn syll",
     handler: (ctx) => {
+        if (ctx.args.length === 0) {
+            ctx.utils.sendChatMessage(
+                t("error.searchWords.noArguments", {
+                    lng: l(ctx),
+                })
+            );
+            return;
+        }
+
         const paramLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
         const allParamRecords = BirdBotUtils.findValuesInAliasesObject(ctx.params, recordAliases);
 
@@ -472,38 +485,18 @@ const searchWordsCommand = c({
             return;
         }
 
-        const requestedFilterRecords = Utilitary.getUniqueStrings(
-            allParamRecords.filter((record) =>
-                filterWordsModeRecords.includes(record as any)
-            ) as (typeof filterWordsModeRecords)[number][]
-        );
-        const requestedSortRecords = Utilitary.getUniqueStrings(
-            allParamRecords.filter((record) =>
-                sortWordsModeRecords.includes(record as any)
-            ) as (typeof sortWordsModeRecords)[number][]
-        );
-        if (requestedSortRecords.length > 1) {
+        const requestedRecords = Utilitary.getUniqueStrings(allParamRecords);
+
+        if (requestedRecords.length > 1) {
             ctx.utils.sendChatMessage(
-                t("error.searchWords.multipleSortRecords", {
-                    sortRecords: sortWordsModeRecords
-                        .map((record) =>
-                            t(`lib.recordType.${record}.recordName`, {
-                                lng: l(ctx),
-                            })
-                        )
-                        .join(", "),
-                    filterRecords: filterWordsModeRecords
-                        .map((record) =>
-                            t(`lib.recordType.${record}.recordName`, {
-                                lng: l(ctx),
-                            })
-                        )
-                        .join(", "),
+                t("error.searchWords.multipleRecords", {
                     lng: l(ctx),
                 })
             );
             return;
         }
+
+        const requestedRecord = requestedRecords[0];
 
         let targetLanguage: BirdBotLanguage | null = null;
         if (paramLanguage) {
@@ -532,11 +525,11 @@ const searchWordsCommand = c({
         }
         let searchList: string[];
         let targetMsSyllable: string | null = null;
-        if (requestedSortRecords.includes("flips")) {
+        if (requestedRecord === "flips") {
             searchList = dictionaryResource.metadata.topFlipWords.map((obj) => obj[0]);
-        } else if (requestedSortRecords.includes("depleted_syllables")) {
+        } else if (requestedRecord === "depleted_syllables") {
             searchList = dictionaryResource.metadata.topSnWords.map((obj) => obj[0]);
-        } else if (requestedSortRecords.includes("multi_syllable")) {
+        } else if (requestedRecord === "multi_syllable") {
             if (ctx.args.length > 1) {
                 ctx.utils.sendChatMessage(
                     t("error.searchWords.mustProvideOneSyllable", {
@@ -557,6 +550,9 @@ const searchWordsCommand = c({
             }
             targetMsSyllable = syllable;
             searchList = dictionaryResource.resource;
+        } else if ((listedRecordsPerLanguage[targetLanguage] as string[]).includes(requestedRecord)) {
+            const resource = ctx.bot.getResource<ListedRecordListResource>(`list-${requestedRecord}-${targetLanguage}`);
+            searchList = resource.resource;
         } else {
             searchList = dictionaryResource.resource;
         }
@@ -585,10 +581,10 @@ const searchWordsCommand = c({
         }
 
         const filterFns: ((word: string) => boolean)[] = [];
-        if (requestedFilterRecords.includes("hyphen")) {
+        if (requestedRecord === "hyphen") {
             filterFns.push((word) => word.includes("-"));
         }
-        if (requestedFilterRecords.includes("more_than_20_letters")) {
+        if (requestedRecord === "more_than_20_letters") {
             filterFns.push((word) => word.length >= 20);
         }
         if (targetMsSyllable) {
@@ -629,7 +625,7 @@ const searchWordsCommand = c({
             }
         }
 
-        const shouldStartFromRandomIndex = requestedSortRecords.length === 0;
+        const shouldStartFromRandomIndex = !sortWordsModeRecords.includes(requestedRecord as any);
 
         if (shouldStartFromRandomIndex) {
             const randomStartIndex = Math.floor(Math.random() * searchList.length);
@@ -666,13 +662,9 @@ const searchWordsCommand = c({
         const foundMoreThanLimit = totalResultsCount > RESULT_LIMIT;
         const moreHiddenThanLimit = hiddenWordsCount > RESULT_LIMIT;
 
-        const targetRecordsString =
-            requestedFilterRecords.length || requestedSortRecords.length
-                ? `${requestedFilterRecords
-                      .map((record) => t(`lib.recordType.${record}.recordName`))
-                      .concat(requestedSortRecords.map((record) => t(`lib.recordType.${record}.recordName`)))
-                      .join(", ")}: `
-                : "";
+        const targetRecordsString = requestedRecord
+            ? `${t(`lib.recordType.${requestedRecord}.recordName`, { lng: l(ctx) })}: `
+            : "";
 
         if (cutResults.length > 0) {
             ctx.utils.sendChatMessage(
@@ -791,8 +783,8 @@ const playerProfileCommand = c({
 
         if (targetMode !== null) {
             const messageParams = {
-                languageFlag: t(`lib.language.${playerData.language}.flag`),
-                gameMode: t(`lib.mode.${playerData.mode}`),
+                languageFlag: t(`lib.language.${playerData.language}.flag`, { lng: l(ctx) }),
+                gameMode: t(`lib.mode.${playerData.mode}`, { lng: l(ctx) }),
                 playerUsername: playerData.playerUsername,
                 lng: l(ctx),
             };
@@ -806,7 +798,7 @@ const playerProfileCommand = c({
                 .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
                 .map((record) => {
                     const r = recordsUtils[record.record_type];
-                    return `${t(`lib.recordType.${record.record_type}.recordName`)}: ${r.format(record.score)}`;
+                    return `${t(`lib.recordType.${record.record_type}.recordName`, { lng: l(ctx) })}: ${r.format(record.score)}`;
                 })
                 .join(" — ");
 
@@ -930,7 +922,7 @@ const rareSyllablesCommand = c({
         if (rareSyllables.length) {
             ctx.utils.sendChatMessage(
                 t("command.rareSyllables.result", {
-                    languageFlag: t(`lib.language.${targetLanguage}.flag`),
+                    languageFlag: t(`lib.language.${targetLanguage}.flag`, { lng: l(ctx) }),
                     word: targetWord,
                     rareSyllables: rareSyllables.map((s) => `${s.syllable}: ${s.count}`).join(", "),
                     lng: l(ctx),

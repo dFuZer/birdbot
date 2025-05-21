@@ -5,8 +5,14 @@ import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
 import { RoomRole } from "../../lib/types/gameTypes";
 import type { BotEventHandlers } from "../../lib/types/libEventTypes";
 import { birdbotCommands } from "./BirdBotCommands";
-import { birdbotModeRules, birdbotSupportedDictionaryIds, recordsUtils } from "./BirdBotConstants";
-import type { BirdBotRoomMetadata, BirdbotRoomTargetConfig } from "./BirdBotTypes";
+import {
+    birdbotModeRules,
+    birdbotSupportedDictionaryIds,
+    listedRecordsPerLanguage,
+    recordsUtils,
+    scoreKeyPerListedRecord,
+} from "./BirdBotConstants";
+import type { BirdBotRoomMetadata, BirdbotRoomTargetConfig, ListedRecordListResource } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 import { l, t } from "./texts/BirdBotTextUtils";
 
@@ -84,19 +90,19 @@ const birdbotEventHandlers: BotEventHandlers = {
                     t("eventHandler.chat.commandNotFound", {
                         command: rawMessage,
                         lng: l(ctx),
-                    }),
+                    })
                 );
             } else if (handleCommandResult === "not-room-creator") {
                 ctx.utils.sendChatMessage(
                     t("eventHandler.chat.notRoomCreator", {
                         lng: l(ctx),
-                    }),
+                    })
                 );
             } else if (handleCommandResult === "not-admin") {
                 ctx.utils.sendChatMessage(
                     t("eventHandler.chat.notAdmin", {
                         lng: l(ctx),
-                    }),
+                    })
                 );
             }
         },
@@ -124,7 +130,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                             BirdBotUtils.setRoomGameRuleIfDifferent(
                                 ctx,
                                 "dictionaryId",
-                                ctx.room.constantRoomData.targetConfig.dictionaryId,
+                                ctx.room.constantRoomData.targetConfig.dictionaryId
                             );
                         }
                         const joinMessage = ctx.bot.networkAdapter.getJoinMessage();
@@ -260,7 +266,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                         playerTotal: playerScores.flips,
                                         globalTotal: roomMetadata.globalScores.flips,
                                         lng: l(ctx),
-                                    }),
+                                    })
                                 );
                             }
                         }
@@ -277,14 +283,14 @@ const birdbotEventHandlers: BotEventHandlers = {
                             const passedMilestone = BirdBotUtils.passedMilestone(
                                 oldMaxWordsWithoutDeath,
                                 newMaxWordsWithoutDeath,
-                                50,
+                                50
                             );
                             if (passedMilestone) {
                                 turnComments.push(
                                     t("eventHandler.submit.comments.reachedWordsNoDeath", {
                                         count: newMaxWordsWithoutDeath,
                                         lng: l(ctx),
-                                    }),
+                                    })
                                 );
                             }
                         }
@@ -298,7 +304,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                     playerTotal: playerScores.moreThan20LettersWords,
                                     globalTotal: roomMetadata.globalScores.moreThan20LettersWords,
                                     lng: l(ctx),
-                                }),
+                                })
                             );
                             showWord = true;
                         }
@@ -312,7 +318,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                     playerTotal: playerScores.hyphenWords,
                                     globalTotal: roomMetadata.globalScores.hyphenWords,
                                     lng: l(ctx),
-                                }),
+                                })
                             );
                             showWord = true;
                         }
@@ -330,7 +336,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                     t("eventHandler.submit.comments.completedAlpha", {
                                         alphaString: recordsUtils.alpha.format(newAlpha),
                                         lng: l(ctx),
-                                    }),
+                                    })
                                 );
                             }
                         }
@@ -348,7 +354,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                         playerTotal: playerScores.previousSyllableScore,
                                         globalTotal: roomMetadata.globalScores.previousSyllables,
                                         lng: l(ctx),
-                                    }),
+                                    })
                                 );
                                 showWord = true;
                             }
@@ -367,7 +373,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                     playerTotal: playerScores.multiSyllables,
                                     globalTotal: roomMetadata.globalScores.multiSyllables,
                                     lng: l(ctx),
-                                }),
+                                })
                             );
                             showWord = true;
                         }
@@ -415,9 +421,40 @@ const birdbotEventHandlers: BotEventHandlers = {
                                     playerTotal: playerScores.depletedSyllables,
                                     globalTotal: roomMetadata.globalScores.depletedSyllables,
                                     lng: l(ctx),
-                                }),
+                                })
                             );
                         }
+
+                        // Listed records
+                        {
+                            const listedRecordsInLanguage = listedRecordsPerLanguage[currentRoomLanguage];
+
+                            for (const record of listedRecordsInLanguage) {
+                                const resource = ctx.bot.getResource<ListedRecordListResource>(
+                                    `list-${record}-${currentRoomLanguage}`
+                                );
+                                const recordScoreKey = scoreKeyPerListedRecord[record];
+                                if (resource.resource.includes(word)) {
+                                    playerScores[recordScoreKey]++;
+                                    roomMetadata.globalScores[recordScoreKey]++;
+                                    showWord = true;
+                                    turnComments.push(
+                                        t("eventHandler.submit.comments.listedRecord", {
+                                            commentIntroduction: t(
+                                                `eventHandler.submit.listedRecordCommentIntroductions.${record}`,
+                                                {
+                                                    lng: l(ctx),
+                                                }
+                                            ),
+                                            playerTotal: playerScores[recordScoreKey],
+                                            globalTotal: roomMetadata.globalScores[recordScoreKey],
+                                            lng: l(ctx),
+                                        })
+                                    );
+                                }
+                            }
+                        }
+
                         if (turnComments.length > 0 && !isGamerMe) {
                             if (showWord) {
                                 ctx.utils.sendChatMessage(
@@ -426,7 +463,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                         word: word.toUpperCase(),
                                         comments: turnComments.join(" - "),
                                         lng: l(ctx),
-                                    }),
+                                    })
                                 );
                             } else {
                                 ctx.utils.sendChatMessage(
@@ -434,7 +471,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                         username: currentGamer.identity.nickname,
                                         comments: turnComments.join(" - "),
                                         lng: l(ctx),
-                                    }),
+                                    })
                                 );
                             }
                         }
@@ -465,13 +502,13 @@ const birdbotEventHandlers: BotEventHandlers = {
                                 t("eventHandler.chat.commandNotFound", {
                                     command: word,
                                     lng: l(ctx),
-                                }),
+                                })
                             );
                         } else if (handleCommandResult === "not-room-creator") {
                             ctx.utils.sendChatMessage(
                                 t("eventHandler.chat.notRoomCreator", {
                                     lng: l(ctx),
-                                }),
+                                })
                             );
                         }
                         if (submitIsInDictionary) {
@@ -486,7 +523,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                             ctx,
                                             currentRoomLanguage,
                                             wordIndex,
-                                            word,
+                                            word
                                         );
                                     }
                                     currentDictionaryResource.metadata.testWords =
@@ -497,7 +534,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                                         !currentDictionaryResource.metadata.testWords.some((testWord) => testWord.word === word)
                                     ) {
                                         ctx.utils.sendChatMessage(
-                                            `Word ${word} is invalid and was added to the test list for removal from the dictionary.`,
+                                            `Word ${word} is invalid and was added to the test list for removal from the dictionary.`
                                         );
                                         currentDictionaryResource.metadata.testWords.push({
                                             word,

@@ -17,7 +17,7 @@ dist/
 .data/
 
 # Resources
-resources/*.dictionary.txt
+resources/*
 !resources/*.example.txt
 
 # Admins

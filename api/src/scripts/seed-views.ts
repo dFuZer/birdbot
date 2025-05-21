@@ -59,6 +59,30 @@ async function seed() {
                         gr.more_than_20_letters_words_count
                     ),
                     (
+                        'slurs_count',
+                        gr.slurs_count
+                    ),
+                    (
+                        'creatures_count',
+                        gr.creatures_count
+                    ),
+                    (
+                        'ethnonyms_count',
+                        gr.ethnonyms_count
+                    ),
+                    (
+                        'chemicals_count',
+                        gr.chemicals_count
+                    ),
+                    (
+                        'plants_count',
+                        gr.plants_count
+                    ),
+                    (
+                        'adverbs_count',
+                        gr.adverbs_count
+                    ),
+                    (
                         'time',
                         EXTRACT(
                         EPOCH
@@ -102,6 +126,12 @@ async function seed() {
                         WHEN "record_type" = 'previous_syllables_count' THEN (500 / 1500::FLOAT)
                         WHEN "record_type" = 'hyphen_words_count' THEN (500 / 1500::FLOAT)
                         WHEN "record_type" = 'more_than_20_letters_words_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'slurs_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'creatures_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'ethnonyms_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'chemicals_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'plants_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'adverbs_count' THEN (500 / 1500::FLOAT)
                         ELSE 0
                     END
                     ) * (

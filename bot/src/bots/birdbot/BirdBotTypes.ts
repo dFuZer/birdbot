@@ -18,8 +18,13 @@ export type DictionaryMetadata = CacheableDictionaryMetadata & {
     metadataFilePath: string;
     changed: boolean;
 };
-
 export type DictionaryResource = Resource<string[], DictionaryMetadata>;
+
+export type ListedRecordListMetadata = {
+    language: BirdBotLanguage;
+    resourceFilePath: string;
+};
+export type ListedRecordListResource = Resource<string[], ListedRecordListMetadata>;
 
 export type BirdBotLanguage = z.infer<typeof languageEnumSchema>;
 export type BirdBotGameMode = z.infer<typeof modesEnumSchema>;
@@ -39,6 +44,12 @@ export type PlayerGameScores = {
     multiSyllables: number;
     hyphenWords: number;
     moreThan20LettersWords: number;
+    slurs: number;
+    creatures: number;
+    ethnonyms: number;
+    chemicals: number;
+    plants: number;
+    adverbs: number;
 };
 
 export type GlobalGameScores = {
@@ -48,6 +59,12 @@ export type GlobalGameScores = {
     hyphenWords: number;
     moreThan20LettersWords: number;
     multiSyllables: number;
+    slurs: number;
+    creatures: number;
+    ethnonyms: number;
+    chemicals: number;
+    plants: number;
+    adverbs: number;
 };
 
 export type BirdbotRoomTargetConfig = {
@@ -104,4 +121,10 @@ export type BirdBotGameRecap = {
     multiSyllablesCount: number;
     hyphenWordsCount: number;
     moreThan20LettersWordsCount: number;
+    slursCount: number;
+    creaturesCount: number;
+    ethnonymsCount: number;
+    chemicalsCount: number;
+    plantsCount: number;
+    adverbsCount: number;
 };

@@ -36,10 +36,10 @@ export const portugueseTexts = {
         },
         searchWords: {
             nonsensicalRecordSearch: "$t(error.intro) Não faz sentido ordenar palavras por record(s): {{records}}.",
-            multipleSortRecords:
-                "$t(error.intro) Você só pode ordenar por um record de ordenação por vez. Os records de ordenação são: {{sortRecords}}. Você ainda pode filtrar por vários records de filtro. Os records de filtro são: {{filterRecords}}.",
+            multipleRecords: "$t(error.intro) Você só pode ordenar por um record de ordenação por vez.",
             mustProvideOneSyllable:
                 "$t(error.intro) Você só pode ordenar por palavras multissilábicas se fornecer exatamente uma sílaba.",
+            noArguments: "$t(error.intro) Você precisa fornecer pelo menos uma sílaba ou regex.",
         },
         invalidParams: {
             noUsername: "$t(error.intro) Você precisa fornecer um nome de usuário para usar este comando.",
@@ -113,12 +113,12 @@ export const portugueseTexts = {
             result: "Servidor Discord: {{link}} - Entre no servidor para ter as últimas novidades e atualizações!",
         },
         github: {
-            description: "Fornece o link do repo GitHub.",
-            result: "Repo GitHub: {{link}} - Dê uma estrela se você curte o projeto e quer nos apoiar!",
+            description: "Fornece o link do repositório do GitHub.",
+            result: "Repositório do GitHub: {{link}} - Dê uma estrela se você curte o projeto e quer nos apoiar!",
         },
         donate: {
             description: "Fornece o link de doação PayPal.",
-            result: "Link de doação PayPal: {{link}} - Muito obrigado pelo seu apoio!",
+            result: "Link para doação no PayPal: {{link}} - Muito obrigado pelo seu apoio!",
         },
         website: {
             description: "Fornece o link do site.",
@@ -183,7 +183,7 @@ export const portugueseTexts = {
             notAdmin: "Você não pode usar este comando se não for um administrador.",
         },
         submit: {
-            turnCommentWithWord: "{{username}}: ({{word}}) {{comments}}.",
+            turnCommentWithWord: "{{username}}: {{comments}} ({{word}})",
             turnCommentWithoutWord: "{{username}}: {{comments}}.",
             comments: {
                 gainedLives: "ganhou {{count}} vidas ({{playerTotal}}/{{globalTotal}})",
@@ -194,6 +194,15 @@ export const portugueseTexts = {
                 placedPreviousSyllable: "colocou uma sílaba anterior: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
                 gainedMultiSyllables: "ganhou {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
                 depletedSyllables: "esgotou {{count}} sílaba(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
+            },
+            listedRecordCommentIntroductions: {
+                adverb: "colocou um advérbio",
+                chemical: "colocou um elemento químico",
+                creature: "colocou uma criatura",
+                ethnonym: "colocou um gentílico",
+                plant: "colocou uma planta",
+                slur: "colocou uma palavra ofensiva",
             },
         },
     },
@@ -278,6 +287,48 @@ export const portugueseTexts = {
                 score_other: "{{count}} palavras",
                 score_specific_one: "{{count}} palavra longa",
                 score_specific_other: "{{count}} palavras longas",
+            },
+            adverb: {
+                recordName: "Advérbios",
+                score_one: "{{count}} advérbio",
+                score_other: "{{count}} advérbios",
+                score_specific_one: "{{count}} advérbio",
+                score_specific_other: "{{count}} advérbios",
+            },
+            chemical: {
+                recordName: "Elementos químicos",
+                score_one: "{{count}} elemento químico",
+                score_other: "{{count}} elementos químicos",
+                score_specific_one: "{{count}} elemento químico",
+                score_specific_other: "{{count}} elementos químicos",
+            },
+            creature: {
+                recordName: "Criaturas",
+                score_one: "{{count}} criatura",
+                score_other: "{{count}} criaturas",
+                score_specific_one: "{{count}} criatura",
+                score_specific_other: "{{count}} criaturas",
+            },
+            ethnonym: {
+                recordName: "Gentílicos",
+                score_one: "{{count}} gentílico",
+                score_other: "{{count}} gentílicos",
+                score_specific_one: "{{count}} gentílico",
+                score_specific_other: "{{count}} gentílicos",
+            },
+            plant: {
+                recordName: "Plantas",
+                score_one: "{{count}} planta",
+                score_other: "{{count}} plantas",
+                score_specific_one: "{{count}} planta",
+                score_specific_other: "{{count}} plantas",
+            },
+            slur: {
+                recordName: "Ofensas",
+                score_one: "{{count}} ofensa",
+                score_other: "{{count}} ofensas",
+                score_specific_one: "{{count}} ofensa",
+                score_specific_other: "{{count}} ofensas",
             },
         },
     },

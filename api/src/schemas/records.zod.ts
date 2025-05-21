@@ -14,6 +14,12 @@ const recordsEnumSchema = z.enum([
     "alpha",
     "hyphen",
     "more_than_20_letters",
+    "slur",
+    "creature",
+    "ethnonym",
+    "chemical",
+    "plant",
+    "adverb",
 ]);
 
 type TLanguage = z.infer<typeof languageEnumSchema>;
@@ -35,7 +41,7 @@ let getRecords = z
         z.object({
             lang: languageEnumSchema,
             mode: modeEnumSchema,
-        }),
+        })
     );
 
 export {

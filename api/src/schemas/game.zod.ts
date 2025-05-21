@@ -27,7 +27,12 @@ let gameRecap = z.object({
     moreThan20LettersWordsCount: z.number(),
 
     // Listed records
-    // (None)
+    slursCount: z.number(),
+    creaturesCount: z.number(),
+    ethnonymsCount: z.number(),
+    chemicalsCount: z.number(),
+    plantsCount: z.number(),
+    adverbsCount: z.number(),
 });
 
 export { gameRecap, gameSchema };
