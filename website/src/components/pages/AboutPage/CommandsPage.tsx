@@ -52,8 +52,8 @@ const commands: Command[] = [
                 useDescription: `Search for the best MS words for the prompt "an", which means the word that contain an a maximum number of times`,
             },
             {
-                use: "/c -hyphen -long .",
-                useDescription: `Search for words containing any prompt that are hyphenated and are longer than 20 characters`,
+                use: "/c -hyphen .",
+                useDescription: `Search for words containing any prompt that are hyphenated`,
             },
             { use: "/c a b c d e f", useDescription: `Search for words containing A, B, C, D, E, and F` },
         ],

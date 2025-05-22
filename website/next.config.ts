@@ -20,7 +20,6 @@ const nextConfig: NextConfig = {
     },
     webpack(config) {
         // SVGR config
-        /* eslint-disable @typescript-eslint/no-explicit-any */
         const fileLoaderRule = config.module.rules.find((rule: any) => rule.test?.test?.(".svg"));
 
         config.module.rules.push(

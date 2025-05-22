@@ -8,12 +8,12 @@ import BirdBotUtils from "./BirdBotUtils.class";
 
 export async function loadDictionaryMetadata(
     dictionaryId: BirdBotLanguage,
-    dictionaryFileName: string,
+    dictionaryFileName: string
 ): Promise<CacheableDictionaryMetadata> {
     return new Promise((resolve, reject) => {
         const timestamp1 = performance.now();
         const powerHousePath = path.join(distPath, "bots", "birdbot", "powerhouse", "release", "powerhouse");
-        const dictionaryFilePath = path.join(resourcesPath, dictionaryFileName);
+        const dictionaryFilePath = path.join(resourcesPath, "dictionaries", dictionaryFileName);
 
         const powerhouseProcess = spawn(powerHousePath, [dictionaryId, dictionaryFilePath, dataPath]);
 
@@ -31,7 +31,7 @@ export async function loadDictionaryMetadata(
                 const timestamp2 = performance.now();
                 Logger.log({
                     message: `${dictionaryId} dictionary: time to generate metadata: ${(timestamp2 - timestamp1).toFixed(
-                        2,
+                        2
                     )} milliseconds`,
                     path: "index.unstable.ts",
                 });
@@ -45,12 +45,12 @@ export async function loadDictionaryMetadata(
 
 export async function loadDictionaryResource(
     dictionaryId: BirdBotLanguage,
-    dictionaryFileName: string,
+    dictionaryFileName: string
 ): Promise<DictionaryResource> {
     return new Promise((resolve, reject) => {
         const timestamp1 = performance.now();
         const powerHousePath = path.join(distPath, "bots", "birdbot", "powerhouse", "release", "powerhouse");
-        const dictionaryFilePath = path.join(resourcesPath, dictionaryFileName);
+        const dictionaryFilePath = path.join(resourcesPath, "dictionaries", dictionaryFileName);
 
         const powerhouseProcess = spawn(powerHousePath, [dictionaryId, dictionaryFilePath, dataPath]);
 
@@ -96,7 +96,7 @@ export async function loadDictionaryResource(
                 const timestamp3 = performance.now();
                 Logger.log({
                     message: `${dictionaryId} dictionary: time to generate metadata: ${(timestamp2 - timestamp1).toFixed(
-                        2,
+                        2
                     )} milliseconds, time to generate dictionary resource: ${(timestamp3 - timestamp2).toFixed(2)} milliseconds`,
                     path: "index.unstable.ts",
                 });

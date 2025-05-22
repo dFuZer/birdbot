@@ -46,6 +46,18 @@ interface IGameModeData {
     displayName: string;
 }
 
+export const listedRecords = ["plant", "creature", "ethnonym", "chemical", "adverb", "slur"] satisfies RecordsEnum[];
+type ListedRecord = (typeof listedRecords)[number];
+
+export const listedRecordsPerLanguage: Record<LanguageEnum, ListedRecord[]> = {
+    brpt: [],
+    de: [],
+    en: ["adverb", "slur", "plant", "creature", "chemical", "adverb"],
+    es: ["ethnonym", "adverb", "creature", "chemical"],
+    fr: ["slur", "creature", "ethnonym", "adverb", "plant"],
+    it: [],
+};
+
 export const RECORDS_DATA: { [key in RecordsEnum]: IRecordData } = {
     time: { displayName: "Time" },
     word: { displayName: "Words" },

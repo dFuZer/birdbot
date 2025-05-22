@@ -14,6 +14,8 @@ import {
     DISCORD_SERVER_LINK,
     GITHUB_REPO_LINK,
     languageAliases,
+    ListedRecord,
+    listedRecords,
     listedRecordsPerLanguage,
     modesEnumSchema,
     PAYPAL_DONATE_LINK,
@@ -101,6 +103,20 @@ const recordsCommand = c({
 
         let responseData: ApiResponseBestScoresSpecificRecord | ApiResponseAllRecords | null = null;
 
+        if (targetRecordType) {
+            if (
+                listedRecords.includes(targetRecordType as any) &&
+                !listedRecordsPerLanguage[language].includes(targetRecordType as any)
+            ) {
+                ctx.utils.sendChatMessage(
+                    t("error.notSupported.listedRecordNotExistsInLanguage", {
+                        lng: l(ctx),
+                    })
+                );
+                return;
+            }
+        }
+
         try {
             const recordsRequest = await BirdBotUtils.getRecordsFromApi({
                 language,
@@ -174,6 +190,13 @@ const recordsCommand = c({
         } else {
             const r = responseData as ApiResponseAllRecords;
             const records = r.bestScores
+                .filter(
+                    (score) =>
+                        !(
+                            listedRecords.includes(score.record_type as any) &&
+                            !listedRecordsPerLanguage[language].includes(score.record_type as any)
+                        )
+                )
                 .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
                 .map((score) => {
                     return `${t(`lib.recordType.${score.record_type}.recordName`, { lng: l(ctx) })}: ${t(
@@ -516,6 +539,20 @@ const searchWordsCommand = c({
             targetLanguage = roomBirdBotLanguage;
         }
 
+        let requestedListedRecord: ListedRecord | null = null;
+
+        if (listedRecords.includes(requestedRecord as any)) {
+            if (!listedRecordsPerLanguage[targetLanguage].includes(requestedRecord as any)) {
+                ctx.utils.sendChatMessage(
+                    t("error.notSupported.listedRecordNotExistsInLanguage", {
+                        lng: l(ctx),
+                    })
+                );
+            } else {
+                requestedListedRecord = requestedRecord as ListedRecord;
+            }
+        }
+
         let dictionaryResource;
         try {
             dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${targetLanguage}`);
@@ -550,7 +587,7 @@ const searchWordsCommand = c({
             }
             targetMsSyllable = syllable;
             searchList = dictionaryResource.resource;
-        } else if ((listedRecordsPerLanguage[targetLanguage] as string[]).includes(requestedRecord)) {
+        } else if (requestedListedRecord) {
             const resource = ctx.bot.getResource<ListedRecordListResource>(`list-${requestedRecord}-${targetLanguage}`);
             searchList = resource.resource;
         } else {

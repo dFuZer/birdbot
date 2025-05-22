@@ -23,6 +23,7 @@ export const portugueseTexts = {
         },
         notSupported: {
             language: '$t(intro) O idioma "{{language}}" não é suportado.',
+            listedRecordNotExistsInLanguage: "$t(error.intro) O record à lista solicitado não existe na língua solicitada.",
         },
         "404": {
             word: "$t(error.intro) A palavra não está no dicionário.",

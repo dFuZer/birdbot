@@ -27,7 +27,11 @@ export default function RecordsPageSelectors({ language, mode, record }: Records
             </div>
             <div>
                 <p className="mb-1 text-sm font-medium">Record</p>
-                <RecordSelect record={record} onChangeRecord={(value) => changeSearchParam({ r: value, page: null })} />
+                <RecordSelect
+                    language={language}
+                    record={record}
+                    onChangeRecord={(value) => changeSearchParam({ r: value, page: null })}
+                />
             </div>
         </>
     );

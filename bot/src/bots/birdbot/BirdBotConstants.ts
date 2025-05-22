@@ -157,14 +157,14 @@ export const scoreKeyPerListedRecord = {
     adverb: "adverbs",
 } satisfies Record<ListedRecord, keyof PlayerGameScores>;
 
-export const listedRecordsPerLanguage = {
+export const listedRecordsPerLanguage: Record<BirdBotLanguage, ListedRecord[]> = {
     brpt: [],
     de: [],
-    en: [],
-    es: [],
-    fr: ["slur"],
+    en: ["adverb", "slur", "plant", "creature", "chemical", "adverb"],
+    es: ["ethnonym", "adverb", "creature", "chemical"],
+    fr: ["slur", "creature", "ethnonym", "adverb", "plant"],
     it: [],
-} satisfies Record<BirdBotLanguage, ListedRecord[]>;
+};
 
 export const recordAliases = {
     word: ["words", "word", "mots", "mot", "mots", "w", "m"],

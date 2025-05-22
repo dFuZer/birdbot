@@ -1,13 +1,16 @@
 import i18next from "i18next";
+import path from "path";
 import BirdBot from "./bots/birdbot/BirdBot.class";
+import { listedRecordsPerLanguage } from "./bots/birdbot/BirdBotConstants";
 import { birdbotPeriodicTasks } from "./bots/birdbot/BirdbotPeriodicTasks";
 import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import getBirdBotHttpServer from "./bots/birdbot/BirdBotServer";
-import { BirdBotLanguage, DictionaryResource } from "./bots/birdbot/BirdBotTypes";
+import { BirdBotLanguage, DictionaryResource, ListedRecordListResource } from "./bots/birdbot/BirdBotTypes";
 import { birdbotTextResource } from "./bots/birdbot/texts/BirdBotTextUtils";
 import AbstractNetworkAdapter from "./lib/abstract/AbstractNetworkAdapter.class";
 import Logger from "./lib/class/Logger.class";
 import Utilitary from "./lib/class/Utilitary.class";
+import { resourcesPath } from "./lib/paths";
 
 async function tryGetNetworkAdapter() {
     try {
@@ -24,7 +27,7 @@ async function tryGetNetworkAdapter() {
                 path: "index.ts",
                 message:
                     "Found an implementation of the NetworkAdapter class, but it is not working properly.\n" +
-                    "Are you sure you implemented all the class methods correctly?.",
+                    "Are you sure you implemented all the class methods correctly ?",
             });
             console.error(e);
             process.exit(1);
@@ -44,19 +47,30 @@ async function tryGetNetworkAdapter() {
 
 async function start() {
     const NetworkAdapterClass = await tryGetNetworkAdapter();
-    const launchLanguages = ["fr", "en", "es", "brpt"] satisfies BirdBotLanguage[];
+
+    // Initialize bot
+    const permanentRoomLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt"];
+    const allowedLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt", "de", "it"];
     const bot = new BirdBot({
         networkAdapter: new NetworkAdapterClass(),
         periodicTasks: birdbotPeriodicTasks,
-        mainRoomLanguages: launchLanguages,
+        mainRoomLanguages: permanentRoomLanguages,
     });
+
+    // Initialize bot HTTP server for communication with the API
     bot.initServer({
         app: getBirdBotHttpServer(bot),
         port: 3001,
     });
+
+    // Initialize bot admins
     let admins: string[];
     try {
         admins = Utilitary.readArrayFromFile("./admins.txt");
+        Logger.log({
+            message: `Starting bot with admins: ${admins.join(", ")}`,
+            path: "index.unstable.ts",
+        });
     } catch (e) {
         admins = [];
         Logger.error({
@@ -64,34 +78,70 @@ async function start() {
             path: "index.unstable.ts",
         });
     }
-    Logger.log({
-        message: `Starting bot with admins: ${admins.join(", ")}`,
-        path: "index.unstable.ts",
-    });
 
-    const s1 = performance.now();
-    const loadedResources = await Promise.all(
-        launchLanguages.map((lang) => loadDictionaryResource(lang, `${lang}.dictionary.txt`)),
-    );
-    const s2 = performance.now();
-    Logger.log({
-        message: `Time taken to load 6 dictionaries in parallel: ${(s2 - s1).toFixed(2)} milliseconds`,
-        path: "index.unstable.ts",
-    });
+    // Load dictionaries
+    {
+        const s1 = performance.now();
+        const loadedResources = await Promise.all(
+            allowedLanguages.map((lang) => loadDictionaryResource(lang, `${lang}.dictionary.txt`))
+        );
+        const s2 = performance.now();
+        Logger.log({
+            message: `Time taken to load 6 dictionaries in parallel: ${(s2 - s1).toFixed(2)} milliseconds`,
+            path: "index.unstable.ts",
+        });
 
-    loadedResources.forEach((resource) => {
-        bot.resourceManager.set<DictionaryResource>(`dictionary-${resource.metadata.language}`, resource);
-    });
+        loadedResources.forEach((resource) => {
+            bot.resourceManager.set<DictionaryResource>(`dictionary-${resource.metadata.language}`, resource);
+        });
+    }
 
-    await i18next.init({
-        lng: "en",
-        fallbackLng: "en",
-        interpolation: {
-            escapeValue: false,
-        },
-        resources: birdbotTextResource,
-    });
+    // Load lists for listed records
+    {
+        const s1 = performance.now();
+        const records = Object.entries(listedRecordsPerLanguage)
+            .map(([language, recordList]) => {
+                return {
+                    language,
+                    recordList,
+                };
+            })
+            .filter((object) => allowedLanguages.includes(object.language as BirdBotLanguage));
 
+        for (const { language, recordList } of records) {
+            for (const record of recordList) {
+                const fileName = `${record}-${language}.list.txt`;
+                const filePath = path.join(resourcesPath, "lists", fileName);
+                const resource = await Utilitary.readArrayFromFileAsync(filePath);
+                bot.resourceManager.set<ListedRecordListResource>(`list-${record}-${language}`, {
+                    resource,
+                    metadata: {
+                        language: language as BirdBotLanguage,
+                        resourceFilePath: filePath,
+                    },
+                });
+            }
+        }
+        const s2 = performance.now();
+        Logger.log({
+            message: `Time taken to load 6 dictionaries in parallel: ${(s2 - s1).toFixed(2)} milliseconds`,
+            path: "index.unstable.ts",
+        });
+    }
+
+    // Load i18n text resources
+    {
+        await i18next.init({
+            lng: "en",
+            fallbackLng: "en",
+            interpolation: {
+                escapeValue: false,
+            },
+            resources: birdbotTextResource,
+        });
+    }
+
+    // Initialize bot session
     while (true) {
         try {
             await bot.init({ adminAccountUsernames: admins });
@@ -105,8 +155,22 @@ async function start() {
         }
     }
 
+    // Create test room
+    await bot.createRoom({
+        roomCreatorUsername: null,
+        targetConfig: {
+            dictionaryId: "fr",
+            gameMode: "survival",
+            birdbotGameMode: "regular",
+            isPublic: false,
+            roomName: "BirdBot test room",
+        },
+    });
+
+    // Start periodic tasks
     await bot.startPeriodicTasks();
 
+    // Start server
     bot.startServer();
 }
 

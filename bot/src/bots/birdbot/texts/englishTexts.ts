@@ -24,6 +24,8 @@ export const englishTexts = {
         },
         notSupported: {
             language: '$t(intro) Language "{{language}}" is not supported.',
+            listedRecordNotExistsInLanguage:
+                "$t(error.intro) The requested listed record does not exist in the requested language.",
         },
         "404": {
             word: "$t(error.intro) Word not found in dictionary.",
