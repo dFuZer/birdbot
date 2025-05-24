@@ -39,7 +39,7 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
             return res.status(404).send({ message: "Player not found" });
         }
 
-        searchPlayerId = bestPlayerMatch.player_id;
+        searchPlayerId = bestPlayerMatch.id;
         foundUsername = bestPlayerMatch.username;
     }
 

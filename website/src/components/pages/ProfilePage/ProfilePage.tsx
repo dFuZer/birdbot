@@ -25,7 +25,7 @@ export default function MyProfilePage() {
                 <div className="bg-primary-600 h-25 w-full" />
                 <div className="absolute left-1/2 size-25 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-lg">
                     <OptionalImage
-                        src={userData?.playerData?.avatarUrl}
+                        src={userData?.websiteUserData.avatarUrl}
                         commonClasses="h-full w-full"
                         height={150}
                         width={150}

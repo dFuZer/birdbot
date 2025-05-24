@@ -1,60 +1,75 @@
 import prisma from "../prisma";
 
-export default async function findPlayerByUsername(username: string) {
-    type Result = { player_id: string; username: string }[];
+export default async function findPlayerByUsername(username: string): Promise<{ id: string; username: string } | null> {
+    const usernameLower = username.toLowerCase();
 
-    const exactAccountNameMatchPlayersQuery = prisma.$queryRaw<Result>`SELECT p.id as player_id, p.account_name as username FROM player p WHERE p.account_name ILIKE ${username};`;
-    const latestExactMatchPlayersQuery = prisma.$queryRaw<Result>`SELECT plu.player_id, plu.username FROM player_latest_username plu WHERE plu.username ILIKE ${username};`;
-    const latestStartWithPlayersQuery = prisma.$queryRaw<Result>`SELECT plu.player_id, plu.username FROM player_latest_username plu WHERE plu.username ILIKE ${username} || '%';`;
-    const latestContainsPlayersQuery = prisma.$queryRaw<Result>`SELECT plu.player_id, plu.username FROM player_latest_username plu WHERE plu.username ILIKE '%' || ${username} || '%';`;
-    const anyExactMatchPlayersQuery = prisma.$queryRaw<Result>`SELECT pu.player_id, pu.username FROM player_username pu INNER JOIN player p ON p.id = pu.player_id WHERE pu.username ILIKE ${username};`;
-    const anyStartWithPlayersQuery = prisma.$queryRaw<Result>`SELECT pu.player_id, pu.username FROM player_username pu INNER JOIN player p ON p.id = pu.player_id WHERE pu.username ILIKE ${username} || '%';`;
-    const anyContainsPlayersQuery = prisma.$queryRaw<Result>`SELECT pu.player_id, pu.username FROM player_username pu INNER JOIN player p ON p.id = pu.player_id WHERE pu.username ILIKE '%' || ${username} || '%';`;
+    const playersQuery: { player_id: string; account_name: string; latest_username: string }[] =
+        await prisma.$queryRaw`SELECT p.id as player_id, p.account_name, p.metadata->>'latest_username' as latest_username FROM player p WHERE p.account_name ILIKE ${username} OR p.metadata->>'latest_username' ILIKE '%' || ${username} || '%';`;
+    const usernamesQuery: { player_id: string; username: string }[] =
+        await prisma.$queryRaw`SELECT pu.player_id, pu.username FROM player_username pu WHERE pu.username ILIKE '%' || ${username} || '%';`;
 
-    const [
-        exactAccountNameMatchPlayers,
-        latestExactMatchPlayers,
-        latestStartWithPlayers,
-        latestContainsPlayers,
-        anyExactMatchPlayers,
-        anyStartWithPlayers,
-        anyContainsPlayers,
-    ] = await Promise.all([
-        exactAccountNameMatchPlayersQuery,
-        latestExactMatchPlayersQuery,
-        latestStartWithPlayersQuery,
-        latestContainsPlayersQuery,
-        anyExactMatchPlayersQuery,
-        anyStartWithPlayersQuery,
-        anyContainsPlayersQuery,
-    ]);
+    const exactAccountNameMatchPlayer = playersQuery.find((player) => player.account_name.toLowerCase() === usernameLower);
 
-    let bestArray;
-
-    if (exactAccountNameMatchPlayers.length) {
-        // Exact match on account name
-        bestArray = exactAccountNameMatchPlayers;
-    } else if (latestExactMatchPlayers.length) {
-        // Exact match on latest username
-        bestArray = latestExactMatchPlayers;
-    } else if (latestStartWithPlayers.length) {
-        // Match on latest username starting with the given username
-        bestArray = latestStartWithPlayers;
-    } else if (anyExactMatchPlayers.length) {
-        // Match on any name used by the player ever
-        bestArray = anyExactMatchPlayers;
-    } else if (anyStartWithPlayers.length) {
-        // Match on any name used by the player ever starting with the given username
-        bestArray = anyStartWithPlayers;
-    } else if (latestContainsPlayers.length) {
-        // Match on latest username containing the given username
-        bestArray = latestContainsPlayers;
-    } else if (anyContainsPlayers.length) {
-        // Match on any name used by the player ever containing the given username
-        bestArray = anyContainsPlayers;
-    } else {
-        return null;
+    if (exactAccountNameMatchPlayer) {
+        return {
+            id: exactAccountNameMatchPlayer.player_id,
+            username: exactAccountNameMatchPlayer.account_name,
+        };
     }
 
-    return bestArray[0];
+    const latestUsernameMatchPlayer = playersQuery.find((player) => player.latest_username.toLowerCase() === usernameLower);
+
+    if (latestUsernameMatchPlayer) {
+        return {
+            id: latestUsernameMatchPlayer.player_id,
+            username: latestUsernameMatchPlayer.latest_username,
+        };
+    }
+
+    const latestStartWithPlayer = playersQuery.find((player) => player.latest_username.toLowerCase().startsWith(usernameLower));
+
+    if (latestStartWithPlayer) {
+        return {
+            id: latestStartWithPlayer.player_id,
+            username: latestStartWithPlayer.latest_username,
+        };
+    }
+
+    const latestContainsPlayer = playersQuery.find((player) => player.latest_username.toLowerCase().includes(usernameLower));
+
+    if (latestContainsPlayer) {
+        return {
+            id: latestContainsPlayer.player_id,
+            username: latestContainsPlayer.latest_username,
+        };
+    }
+
+    const anyExactMatchPlayer = usernamesQuery.find((username) => username.username.toLowerCase() === usernameLower);
+
+    if (anyExactMatchPlayer) {
+        return {
+            id: anyExactMatchPlayer.player_id,
+            username: anyExactMatchPlayer.username,
+        };
+    }
+
+    const anyStartWithPlayer = usernamesQuery.find((username) => username.username.toLowerCase().startsWith(usernameLower));
+
+    if (anyStartWithPlayer) {
+        return {
+            id: anyStartWithPlayer.player_id,
+            username: anyStartWithPlayer.username,
+        };
+    }
+
+    const anyContainsPlayer = usernamesQuery.find((username) => username.username.toLowerCase().includes(usernameLower));
+
+    if (anyContainsPlayer) {
+        return {
+            id: anyContainsPlayer.player_id,
+            username: anyContainsPlayer.username,
+        };
+    }
+
+    return null;
 }

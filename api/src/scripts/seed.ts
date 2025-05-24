@@ -7,15 +7,81 @@ async function seed() {
     await prisma.$connect();
 
     await prisma.$executeRaw`
-        create or replace view player_latest_username as
-            (with un as (
-                select p.id as player_id, pu.username as player_username, row_number() over (partition by pu.player_id order by pu.created_at desc) as recency_rank
-                from player_username pu
-                inner join player p
-                on pu.player_id = p.id
-            )
-            select player_id, player_username as username from un where recency_rank = 1
+        CREATE OR REPLACE FUNCTION set_player_metadata_key(
+            p_player_id UUID,
+            p_json_key TEXT,
+            p_new_value TEXT
         )
+        RETURNS VOID
+        AS $$
+        BEGIN
+            UPDATE player
+            SET metadata = metadata || jsonb_build_object(p_json_key, p_new_value)
+            WHERE id = p_player_id;
+        END;
+        $$ LANGUAGE plpgsql;
+    `;
+
+    await prisma.$executeRaw`
+        CREATE OR REPLACE FUNCTION set_player_avatar_url() RETURNS TRIGGER AS $$
+        DECLARE
+            auth_avatar_hash TEXT;
+            auth_id TEXT;
+            avatar_url TEXT;
+        BEGIN
+            SELECT wu.oauth_avatar, wu.oauth_identifier
+            INTO auth_avatar_hash, auth_id
+            FROM website_user wu
+            WHERE wu.id = NEW.website_user_id
+            LIMIT 1;
+
+            IF auth_avatar_hash IS NOT NULL AND auth_id IS NOT NULL THEN
+                avatar_url := 'https://cdn.discordapp.com/avatars/' || auth_id || '/' || auth_avatar_hash || '.jpg?size=1024';
+                
+                PERFORM set_player_metadata_key(
+                    NEW.player_id,
+                    'avatar_url',
+                    avatar_url
+                );
+            END IF;
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+    `;
+
+    await prisma.$executeRaw`
+        CREATE OR REPLACE FUNCTION set_player_latest_username() RETURNS TRIGGER AS $$
+            BEGIN
+                PERFORM set_player_metadata_key(
+                    NEW.player_id,
+                    'latest_username',
+                    NEW.username
+                );
+                RETURN NEW;
+            END;
+        $$ LANGUAGE plpgsql;
+    `;
+
+    await prisma.$executeRaw`
+        DROP TRIGGER IF EXISTS set_player_latest_username_trigger ON public.player_username;
+    `;
+
+    await prisma.$executeRaw`
+        DROP TRIGGER IF EXISTS set_player_avatar_url_trigger ON public.website_user_to_player;
+    `;
+
+    await prisma.$executeRaw`
+        CREATE TRIGGER set_player_latest_username_trigger
+        AFTER INSERT ON player_username
+        FOR EACH ROW
+        EXECUTE FUNCTION set_player_latest_username();
+    `;
+
+    await prisma.$executeRaw`
+        CREATE TRIGGER set_player_avatar_url_trigger
+        AFTER INSERT OR UPDATE ON website_user_to_player
+        FOR EACH ROW
+        EXECUTE FUNCTION set_player_avatar_url();
     `;
 
     await prisma.$executeRaw`
@@ -170,11 +236,10 @@ async function seed() {
                     ) = 1 THEN TRUE
                     ELSE FALSE
                 END AS best_pp_in_record_type,
-                plu.username AS player_username,
                 CAST(lbct1."rank" AS INT) AS "rank"
                 FROM
                 lbct1
-                INNER JOIN player_latest_username plu ON lbct1.player_id = plu.player_id
+                INNER JOIN player p ON lbct1.player_id = p.id
             ),
             lbct3 AS (
                 SELECT

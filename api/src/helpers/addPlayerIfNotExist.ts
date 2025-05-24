@@ -2,7 +2,7 @@ import type { z } from "zod";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
 import type { playerSchema } from "../schemas/player.zod";
-import { randomUUID } from "./uuid";
+import { randomUUID } from "./crypto";
 
 export default async function addPlayerIfNotExist(player: z.infer<typeof playerSchema>): Promise<{
     id: string;

@@ -1,14 +1,25 @@
+"use client";
+
 import { buttonVariants } from "@/components/ui/button";
 import { IMyPlayerProfileData } from "@/lib/auth";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Separator } from "../ui/separator";
 import DisconnectButton from "./DisconnectButton";
 
 export default function UserPopover({ userData }: { userData: IMyPlayerProfileData }) {
+    const [open, setOpen] = useState(false);
+    const pathname = usePathname();
+
+    useEffect(() => {
+        setOpen(false);
+    }, [pathname]);
+
     return (
-        <Popover>
+        <Popover open={open} onOpenChange={(open) => setOpen(open)}>
             <PopoverTrigger asChild>
                 <button>
                     <Avatar>
@@ -23,7 +34,11 @@ export default function UserPopover({ userData }: { userData: IMyPlayerProfileDa
                 </p>
                 <Separator />
                 <div className="p-3">
-                    <Link className={buttonVariants({ variant: "ghost", class: "w-full" })} href={`/profile`}>
+                    <Link
+                        onClick={() => setOpen(false)}
+                        className={buttonVariants({ variant: "ghost", class: "w-full" })}
+                        href={`/profile`}
+                    >
                         My profile
                     </Link>
                     <DisconnectButton className="w-full" />

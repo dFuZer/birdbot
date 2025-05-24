@@ -22,11 +22,12 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             player_username: string;
             score: number;
             record_type: GameRecapRecordField;
+            avatar_url: string;
             xp: number;
         }[];
 
         const bestScores: Results = await prisma.$queryRaw`
-            SELECT l.player_id, l.player_username, l.score, l.record_type, p.xp
+            SELECT l.player_id, l.score, l.record_type, p.xp, p.metadata->>'avatar_url' as avatar_url, p.metadata->>'latest_username' as player_username
             FROM leaderboard l
             INNER JOIN player p
             ON l.player_id = p.id
@@ -53,10 +54,11 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             score: number;
             rank: number;
             xp: number;
+            avatar_url: string;
         }[];
 
         const bestScores: Results = await prisma.$queryRaw`
-            SELECT l.player_id, l.player_username, l.score, l.rank, p.xp
+            SELECT l.player_id, l.score, l.rank, p.xp, p.metadata->>'avatar_url' as avatar_url, p.metadata->>'latest_username' as player_username
             FROM leaderboard l
             INNER JOIN player p
             ON l.player_id = p.id
@@ -84,6 +86,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             bestScores: bestScores.map((score) => ({
                 ...score,
                 xp: getLevelDataFromXp(score.xp),
+                avatarUrl: score.avatar_url,
             })),
             maxPage,
         };

@@ -11,7 +11,7 @@
         "__comment_2": "Database scripts",
         "db:deploy": "npx prisma migrate deploy",
         "db:sample": "node dist/scripts/add-sample-data.js",
-        "db:seed": "node dist/scripts/seed-views.js",
+        "db:seed": "node dist/scripts/seed.js",
         "db:reset": "npm run build && npx prisma db push --force-reset && npm run db:seed",
         "db:reset-sample": "npm run build && npx prisma db push --force-reset && npm run db:seed && npm run db:sample"
     },

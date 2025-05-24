@@ -60,10 +60,12 @@ model Player {
     account_name String
     xp           Int    @default(0)
 
-    words             Word[]
-    usernames         PlayerUsername[]
-    gameRecaps        GameRecap[]
-    OAuthLinkToPlayer OAuthLinkToPlayer?
+    metadata Json @default("{}")
+
+    words        Word[]
+    usernames    PlayerUsername[]
+    gameRecaps   GameRecap[]
+    websiteUsers WebsiteUserToPlayer[]
 
     @@map("player")
 }
@@ -129,18 +131,50 @@ model Word {
     @@map("word")
 }
 
-model Session {
-    session_key      String @id
-    oauth_identifier String
+model WebsiteSession {
+    id String @id @default(uuid()) @db.Uuid
 
-    @@map("session")
+    session_token   String @unique
+    website_user_id String @db.Uuid
+
+    user WebsiteUser @relation(fields: [website_user_id], references: [id])
+
+    @@map("website_session")
 }
 
-model OAuthLinkToPlayer {
-    oauth_identifier String @id @unique
-    player_id        String @unique @db.Uuid
+model WebsiteUser {
+    id String @id @default(uuid()) @db.Uuid
 
-    player Player @relation(fields: [player_id], references: [id])
+    oauth_identifier  String @unique
+    oauth_username    String
+    oauth_global_name String
+    oauth_avatar      String
+    oauth_provider    String
 
-    @@map("oauth_link_to_player")
+    WebsiteSession           WebsiteSession[]
+    WebsiteUserToPlayer      WebsiteUserToPlayer?
+    WebsiteUserToPlayerToken WebsiteUserToPlayerToken?
+
+    @@map("website_user")
+}
+
+model WebsiteUserToPlayer {
+    player_id       String @unique @db.Uuid
+    website_user_id String @unique @db.Uuid
+
+    player       Player      @relation(fields: [player_id], references: [id])
+    website_user WebsiteUser @relation(fields: [website_user_id], references: [id])
+
+    @@map("website_user_to_player")
+}
+
+model WebsiteUserToPlayerToken {
+    id String @id @default(uuid()) @db.Uuid
+
+    token           String @unique
+    website_user_id String @unique @db.Uuid
+
+    website_user WebsiteUser @relation(fields: [website_user_id], references: [id])
+
+    @@map("website_user_to_player_token")
 }

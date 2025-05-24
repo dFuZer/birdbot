@@ -30,13 +30,15 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             pp_sum: number;
             rank: number;
             language: PrismaLanguage;
+            avatar_url: string;
             username: string;
             xp: number;
         }[] = await prisma.$queryRaw`
             SELECT
                 ppl.player_id,
                 ppl.pp_sum,
-                plu.username,
+                p.metadata->>'latest_username' as username,
+                p.metadata->>'avatar_url' as avatar_url,
                 ppl.language,
                 p.xp,
                 CAST(ROW_NUMBER() OVER (
@@ -46,9 +48,6 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             INNER JOIN player p
             ON
                 p.id = ppl.player_id
-            INNER JOIN player_latest_username plu
-            ON
-                p.id = plu.player_id
             ORDER BY
                 pp_sum DESC
             LIMIT
@@ -62,8 +61,6 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             FROM pp_leaderboard ppl
             INNER JOIN player p
             ON p.id = ppl.player_id
-            INNER JOIN player_latest_username plu
-            ON p.id = plu.player_id
         `;
 
         const maxPage = Math.ceil(totalCount[0].count / perPage);
@@ -76,6 +73,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 pp: row.pp_sum,
                 rank: row.rank,
                 name: row.username,
+                avatarUrl: row.avatar_url,
                 xp: getLevelDataFromXp(row.xp),
                 language: databaseEnumToLanguageEnumMap[row.language],
             })),
@@ -86,18 +84,17 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             xp: number;
             rank: number;
             username: string;
+            avatar_url: string;
         }[] = await prisma.$queryRaw`
             SELECT
                 p.id AS player_id,
                 p.xp,
-                plu.username,
+                p.metadata->>'latest_username' as username,
+                p.metadata->>'avatar_url' as avatar_url,
                 CAST(ROW_NUMBER() OVER (
                 ORDER BY p.xp DESC) AS int) AS RANK
             FROM
                 player p
-            INNER JOIN player_latest_username plu
-            ON
-                p.id = plu.player_id
             ORDER BY
                 p.xp DESC
             LIMIT
@@ -109,8 +106,6 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
         const totalCount: { count: number }[] = await prisma.$queryRaw`
             SELECT CAST(COUNT(*) as int) as count
             FROM player p
-            INNER JOIN player_latest_username plu
-            ON p.id = plu.player_id
         `;
 
         const maxPage = Math.ceil(totalCount[0].count / perPage);
@@ -123,6 +118,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 xp: getLevelDataFromXp(row.xp),
                 rank: row.rank,
                 name: row.username,
+                avatarUrl: row.avatar_url,
             })),
         });
     } else if (mode === "records") {
@@ -131,6 +127,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             records_count: number;
             xp: number;
             username: string;
+            avatar_url: string;
             rank: number;
         }[] = await prisma.$queryRaw`
             WITH ct AS (
@@ -140,13 +137,11 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 records_count)
             l.player_id,
                 p.xp,
-                plu.username,
+                p.metadata->>'latest_username' as username,
+                p.metadata->>'avatar_url' as avatar_url,
                 CAST(count(*) OVER (PARTITION BY l.player_id) AS int) AS records_count
             FROM
                 leaderboard l
-            INNER JOIN player_latest_username plu 
-            ON
-                plu.player_id = l.player_id
             INNER JOIN player p
             ON
                 l.player_id = p.id
@@ -175,6 +170,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 xp: getLevelDataFromXp(row.xp),
                 name: row.username,
                 rank: row.rank,
+                avatarUrl: row.avatar_url,
             })),
         });
     }

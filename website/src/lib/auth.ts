@@ -6,7 +6,6 @@ import { ExperienceData } from "./records";
 
 export interface IMyPlayerProfileData {
     playerData?: {
-        avatarUrl?: string;
         username: string;
         xp: ExperienceData;
         id: string;
@@ -23,7 +22,6 @@ export interface IMyPlayerProfileData {
 export async function getAuthDataAction() {
     const cookieStore = await cookies();
     const token = cookieStore.get("session")?.value;
-    console.log("Token", token);
     if (!token) {
         return null;
     }
@@ -35,13 +33,12 @@ export async function getAuthDataAction() {
     });
 
     if (!res.ok) {
-        console.log("Error fetching user data", res.status, res.statusText);
         return null;
     }
 
     const data: IMyPlayerProfileData = await res.json();
 
-    console.log("User data fetched", data);
+    console.log(data);
 
     return data;
 }

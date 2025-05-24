@@ -21,8 +21,8 @@ export default async function getPlayerProfile({
     mode: TMode;
     language: TLanguage;
 }) {
-    const playerQuery: { id: string; account_name: string; xp: number; username: string }[] =
-        await prisma.$queryRaw`SELECT p.id, p.account_name, plu.username, p.xp FROM player p INNER JOIN player_latest_username plu ON plu.player_id = p.id WHERE p.id = ${playerId}::UUID LIMIT 1`;
+    const playerQuery: { id: string; account_name: string; xp: number; username: string; avatar_url: string }[] =
+        await prisma.$queryRaw`SELECT p.id, p.account_name, p.metadata->>'latest_username' as username, p.xp, p.metadata->>'avatar_url' as avatar_url FROM player p WHERE p.id = ${playerId}::UUID LIMIT 1`;
     const player = playerQuery[0];
 
     if (!player) {
@@ -86,6 +86,7 @@ export default async function getPlayerProfile({
     }
 
     const res = {
+        avatarUrl: player.avatar_url,
         playerId: player.id,
         playerAccountName: player.account_name,
         playerUsername: player.username,

@@ -6,7 +6,6 @@ import { atom, useAtom } from "jotai";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createRef, useEffect } from "react";
-import BirdBotLogo from "~/public/icon.svg";
 import AuthButton from "./AuthButton";
 
 export const mobileHeaderOpenAtom = atom(false);
@@ -65,9 +64,6 @@ export default function MobileHeader() {
             <div className="flex min-w-[6rem] flex-1 justify-end">
                 <AuthButton />
             </div>
-            <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4">
-                <BirdBotLogo className="size-8 min-h-max min-w-max" />
-            </Link>
         </div>
     );
 }
