@@ -72,7 +72,7 @@ async function seed() {
 
     await prisma.$executeRaw`
         CREATE TRIGGER set_player_latest_username_trigger
-        AFTER INSERT ON player_username
+        AFTER INSERT OR UPDATE ON player_username
         FOR EACH ROW
         EXECUTE FUNCTION set_player_latest_username();
     `;
