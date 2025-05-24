@@ -10,7 +10,7 @@ import LandingPageFeaturesSection from "./LandingPageFeaturesSection";
 export default function LandingPage() {
     return (
         <div className="adaptivePadding">
-            <div className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col-reverse items-center justify-center gap-10 px-10 md:flex-row">
+            <div className="flex min-h-[calc(100vh-var(--header-height))] w-full flex-col-reverse items-center justify-center gap-10 px-10 md:flex-row">
                 <div className="relative">
                     <div className="bg-primary-500/80 absolute top-1/2 left-1/2 -z-10 size-60 -translate-x-1/2 -translate-y-1/2 blur-[200px] md:left-10 md:hidden md:translate-x-0"></div>
                     <h1 className={`${katibehFont.className} text-center text-6xl leading-14 md:text-left`}>

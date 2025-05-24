@@ -5,10 +5,9 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { atom, useAtom } from "jotai";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createRef, useContext, useEffect } from "react";
+import { createRef, useEffect } from "react";
 import BirdBotLogo from "~/public/icon.svg";
-import { PublicEnvironmentVariablesContext } from "../providers/PublicEnvironmentVariablesProvider";
-import DiscordLoginLink from "./DiscordLoginLink";
+import AuthButton from "./AuthButton";
 
 export const mobileHeaderOpenAtom = atom(false);
 
@@ -16,7 +15,6 @@ export default function MobileHeader() {
     const [open, setOpen] = useAtom(mobileHeaderOpenAtom);
     const location = usePathname();
     const firstLinkRef = createRef<HTMLAnchorElement>();
-    const { EXPERIMENTAL_FEATURES_ENABLED } = useContext(PublicEnvironmentVariablesContext);
 
     function invertOpen() {
         setOpen((prev) => !prev);
@@ -45,7 +43,7 @@ export default function MobileHeader() {
                 )}
             </button>
             <div
-                className={`absolute top-0 left-0 -z-1 flex h-screen w-full flex-col overflow-hidden bg-neutral-50 py-2 pt-[calc(3.5rem-1px)] ${open ? "visible" : "invisible"}`}
+                className={`absolute top-0 left-0 -z-1 flex h-screen w-full flex-col overflow-hidden bg-neutral-50 py-2 pt-[calc(var(--header-height)-1px)] ${open ? "visible" : "invisible"}`}
             >
                 <div className="h-[1px] bg-neutral-200"></div>
                 {LINKS.map((link, index) => (
@@ -64,13 +62,9 @@ export default function MobileHeader() {
                     </Link>
                 ))}
             </div>
-            <div className="flex-1 px-8">
-                {/* <Button className="flex w-full items-center justify-between gap-4" variant={"outline"}>
-                    <span className="w-2/3 truncate text-left font-light text-neutral-400">Search on the website</span>
-                    <MagnifyingGlassIcon className="h-5 w-5 text-neutral-700" />
-                </Button> */}
+            <div className="flex min-w-[6rem] flex-1 justify-end">
+                <AuthButton />
             </div>
-            {EXPERIMENTAL_FEATURES_ENABLED && <DiscordLoginLink />}
             <Link onClick={(e) => closeIfSameLocation(e, "/")} href="/" className="ml-4">
                 <BirdBotLogo className="size-8 min-h-max min-w-max" />
             </Link>

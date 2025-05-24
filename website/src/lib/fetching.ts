@@ -9,7 +9,6 @@ export function getFromApi(url: string) {
     });
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function postToApi(url: string, body: any, method: "POST" | "PUT" | "DELETE") {
     return fetch(`${API_URL}${url}`, {
         method,

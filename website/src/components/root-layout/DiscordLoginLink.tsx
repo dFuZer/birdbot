@@ -2,6 +2,7 @@
 
 import { PublicEnvironmentVariablesContext } from "@/components/providers/PublicEnvironmentVariablesProvider";
 import { Button } from "@/components/ui/button";
+import { SiDiscord } from "@icons-pack/react-simple-icons";
 import Link from "next/link";
 import { useContext, useMemo } from "react";
 
@@ -16,6 +17,7 @@ export default function DiscordLoginLink() {
         <Link href={loginLink}>
             <Button variant={"ghost"}>
                 <span>Log in</span>
+                <SiDiscord className="size-4" />
             </Button>
         </Link>
     );
