@@ -24,6 +24,7 @@ import {
     sortWordsModeRecords,
     WEBSITE_LINK,
 } from "./BirdBotConstants";
+import { API_KEY, API_URL } from "./BirdBotEnv";
 import {
     BirdBotGameMode,
     BirdBotLanguage,
@@ -977,6 +978,52 @@ const rareSyllablesCommand = c({
     },
 }) satisfies Command;
 
+const linkAccountCommand = c({
+    id: "linkAccount",
+    aliases: ["link"],
+    usageDesc: "/link [token]",
+    handler: async (ctx) => {
+        if (!ctx.gamer.identity.name) {
+            ctx.utils.sendChatMessage(t("error.platform.mustBeLoggedIn", { lng: l(ctx) }));
+            return;
+        }
+
+        const token = ctx.args[0];
+        if (!token) {
+            ctx.utils.sendChatMessage(t("error.invalidParams.mustProvideToken", { lng: l(ctx) }));
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/link-account`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${API_KEY}`,
+                },
+                body: JSON.stringify({
+                    accountName: ctx.gamer.identity.name,
+                    token,
+                    currentNickname: ctx.gamer.identity.nickname,
+                }),
+            });
+
+            if (response.status === 404) {
+                ctx.utils.sendChatMessage(t("command.linkAccount.tokenNotFound", { lng: l(ctx) }));
+                return;
+            }
+
+            if (response.status === 200) {
+                ctx.utils.sendChatMessage(t("command.linkAccount.success", { lng: l(ctx) }));
+                return;
+            }
+        } catch (e) {
+            ctx.utils.sendChatMessage(t("error.api.inaccessible", { lng: l(ctx) }));
+            return;
+        }
+    },
+}) satisfies Command;
+
 const broadcastCommand = c({
     id: "broadcast",
     aliases: ["broadcast", "bc"],
@@ -1343,6 +1390,7 @@ export const birdbotCommands = [
     rareSyllablesCommand,
     privateRoomCommand,
     publicRoomCommand,
+    linkAccountCommand,
     discordCommand,
     githubCommand,
     donateCommand,

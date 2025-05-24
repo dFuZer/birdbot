@@ -160,6 +160,13 @@ export const frenchTexts = {
             unknownError:
                 "$t(error.intro) Une erreur inconnue est survenue lors de la création du salon. Merci de réessayer plus tard.",
         },
+        linkAccount: {
+            description:
+                "Relie ton compte Discord à ton compte Croco.games. C'est utile si tu veux utiliser les fonctionnalités du site web (et du bot Discord qui arrive bientôt).",
+            tokenNotFound: "Le token est invalide ou expiré.",
+            success:
+                "Ton compte Discord a été relié à ton compte Croco.games. Tu peux maintenant utiliser les fonctionnalités du site.",
+        },
         test: {
             description: "Commande de test pour les admins.",
         },
@@ -178,7 +185,7 @@ export const frenchTexts = {
     },
     eventHandler: {
         chat: {
-            commandNotFound: "Commande pas trouvée : {{command}}",
+            commandNotFound: "Commande introuvable : {{command}}",
             notRoomCreator:
                 "Tu ne peux pas utiliser cette commande si tu n'es pas le créateur du salon. /b pour créer ton salon sera bientôt disponible.",
             notAdmin: "Tu ne peux pas utiliser cette commande si tu n'es pas un admin.",

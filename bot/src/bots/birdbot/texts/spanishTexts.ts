@@ -161,6 +161,13 @@ export const spanishTexts = {
             unknownError:
                 "$t(error.intro) Un error desconocido ocurrió al crear la sala. Por favor, inténtalo de nuevo más tarde.",
         },
+        linkAccount: {
+            description:
+                "Relaciona tu cuenta Discord con tu cuenta Croco.games. Esto es útil si quieres usar las funcionalidades del sitio web (y el bot de Discord que está llegando pronto).",
+            tokenNotFound: "El token es inválido o expiró.",
+            success:
+                "Tu cuenta Discord ha sido relacionada con tu cuenta Croco.games. Ahora puedes usar las funcionalidades del sitio.",
+        },
         test: {
             description: "Comando de prueba para admins.",
         },

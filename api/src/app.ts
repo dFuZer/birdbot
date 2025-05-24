@@ -10,6 +10,7 @@ import { getLeaderboardRouteHandler } from "./routes/getLeaderboard.route";
 import { getPlayerProfileRouteHandler } from "./routes/getPlayerProfile.route";
 import { getUserProfileRouteHandler } from "./routes/getUserProfile.route";
 import { healthRouteHandler } from "./routes/health.route";
+import { linkAccountRouteHandler } from "./routes/linkAccount.route";
 import { postDiscordOAuthToken } from "./routes/postDiscordOAuthToken.route";
 
 const app = Fastify();
@@ -40,6 +41,8 @@ app.put("/game-recap", { preHandler: authMiddleware }, addGameRecapRouteHandler)
 
 // Handle Discord OAuth token transfer
 app.post("/auth-code", { preHandler: authMiddleware }, postDiscordOAuthToken);
+// Link account
+app.post("/link-account", { preHandler: authMiddleware }, linkAccountRouteHandler);
 
 // --- GET ---
 

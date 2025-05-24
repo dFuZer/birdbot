@@ -161,6 +161,12 @@ export const englishTexts = {
             roomAlreadyExists: `$t(error.intro) You are already the owner of a room: https://${crocoDomain}/{{code}}`,
             unknownError: "$t(error.intro) An unknown error occurred while creating the room. Please try again later.",
         },
+        linkAccount: {
+            description:
+                "Links your Discord account to your Croco.games account. This is useful if you want to use the website features (and the Discord bot which is coming soon).",
+            tokenNotFound: "$t(error.intro) The token is invalid or expired.",
+            success: "Your Discord account has been linked to your Croco.games account. You can now use the website features.",
+        },
         test: {
             description: "Test command for admins.",
         },
