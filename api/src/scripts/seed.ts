@@ -85,7 +85,15 @@ async function seed() {
     `;
 
     await prisma.$executeRaw`
-        CREATE OR REPLACE MATERIALIZED VIEW leaderboard AS (
+        DROP MATERIALIZED VIEW IF EXISTS leaderboard;
+    `;
+
+    await prisma.$executeRaw`
+        DROP MATERIALIZED VIEW IF EXISTS pp_leaderboard;
+    `;
+
+    await prisma.$executeRaw`
+        CREATE MATERIALIZED VIEW leaderboard AS (
             WITH all_scores AS (
                 SELECT DISTINCT
                 ON (
@@ -277,7 +285,7 @@ async function seed() {
     `;
 
     await prisma.$executeRaw`
-        CREATE OR REPLACE MATERIALIZED VIEW pp_leaderboard AS (
+        CREATE MATERIALIZED VIEW pp_leaderboard AS (
             WITH ct AS (
                 SELECT
                 DISTINCT ON
