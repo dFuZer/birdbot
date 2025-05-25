@@ -49,7 +49,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             ON
                 p.id = ppl.player_id
             ORDER BY
-                pp_sum DESC
+                "rank" ASC
             LIMIT
                 ${perPage}
             OFFSET
@@ -92,11 +92,11 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 p.metadata->>'latest_username' as username,
                 p.metadata->>'avatar_url' as avatar_url,
                 CAST(ROW_NUMBER() OVER (
-                ORDER BY p.xp DESC) AS int) AS RANK
+                ORDER BY p.xp DESC) AS int) AS "rank"
             FROM
                 player p
             ORDER BY
-                p.xp DESC
+                "rank" ASC
             LIMIT
                 ${perPage}
             OFFSET
@@ -154,7 +154,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             FROM
                 ct
             ORDER BY
-                ct.records_count DESC
+                "rank" ASC
             LIMIT
                 ${perPage}
             OFFSET
