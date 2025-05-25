@@ -85,11 +85,11 @@ async function seed() {
     `;
 
     await prisma.$executeRaw`
-        DROP MATERIALIZED VIEW IF EXISTS leaderboard;
+        DROP MATERIALIZED VIEW IF EXISTS pp_leaderboard;
     `;
 
     await prisma.$executeRaw`
-        DROP MATERIALIZED VIEW IF EXISTS pp_leaderboard;
+        DROP MATERIALIZED VIEW IF EXISTS leaderboard;
     `;
 
     await prisma.$executeRaw`
