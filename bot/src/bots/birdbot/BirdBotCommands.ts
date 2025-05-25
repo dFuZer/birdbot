@@ -330,6 +330,7 @@ const startGameCommand = c({
     id: "startGame",
     aliases: ["startnow", "sn"],
     usageDesc: "/sn",
+    roomCreatorRequired: true,
     exampleUsage: "/sn",
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.step.value !== "pregame") {
