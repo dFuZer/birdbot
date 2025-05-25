@@ -65,7 +65,8 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             WHERE "mode" = ${enumMode}::"game_mode"
             AND "language" = ${enumLang}::"language"
             AND "record_type" = ${enumRecord}
-            ORDER BY score DESC
+            AND score > 0
+            ORDER BY rank ASC
             LIMIT ${perPage}
             OFFSET ${(page - 1) * perPage}
         `;

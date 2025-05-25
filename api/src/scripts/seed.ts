@@ -185,7 +185,8 @@ async function seed() {
                     "mode",
                     "record_type"
                     ORDER BY
-                    "score" DESC
+                    "score" DESC,
+                    player_id ASC
                 ) AS "rank",
                 ROUND(
                     "score" * (
@@ -240,6 +241,7 @@ async function seed() {
                         lbct1.record_type
                         ORDER BY
                         lbct1.pp DESC
+                        lbct1.player_id ASC
                     ) AS INT
                     ) = 1 THEN TRUE
                     ELSE FALSE
@@ -262,7 +264,8 @@ async function seed() {
                             lbct2."language",
                             lbct2.best_pp_in_record_type
                         ORDER BY
-                            lbct2.pp DESC
+                            lbct2.pp DESC,
+                            lbct2.player_id ASC
                         ) - 1
                     ) * 0.12
                     )
@@ -307,7 +310,8 @@ async function seed() {
                     *,
                     CAST(ROW_NUMBER() OVER (PARTITION BY "language"
                 ORDER BY
-                    "pp_sum" DESC) AS INT) AS rank
+                    "pp_sum" DESC,
+                    "player_id" ASC) AS INT) AS rank
                 FROM
                     ct
             );
