@@ -38,8 +38,6 @@ export async function getAuthDataAction() {
 
     const data: IMyPlayerProfileData = await res.json();
 
-    console.log(data);
-
     return data;
 }
 

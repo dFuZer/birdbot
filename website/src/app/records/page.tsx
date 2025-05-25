@@ -1,7 +1,7 @@
 import RecordsPage, { IScoreData } from "@/components/pages/RecordsPage/RecordsPage";
 import { getFromApi } from "@/lib/fetching";
 import { TSearchParams } from "@/lib/params";
-import { ExperienceData, languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "@/lib/records";
+import { languageEnumSchema, modesEnumSchema, recordsEnumSchema } from "@/lib/records";
 import { isValidGameModeParam, isValidLanguageParam, isValidRecordParam, tryGetNumberFromParam } from "@/lib/validation";
 import { Metadata } from "next";
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 type IApiResponse = {
     message: string;
-    bestScores: { player_id: string; player_username: string; score: number; rank: number; xp: ExperienceData }[];
+    bestScores: IScoreData[];
     maxPage: number;
 };
 
@@ -36,19 +36,9 @@ export default async function Page({ searchParams }: { searchParams: TSearchPara
 
     const json: IApiResponse = await data.json();
 
-    const finalData: IScoreData[] = json.bestScores.map((record) => {
-        return {
-            name: record.player_username,
-            rank: record.rank,
-            score: record.score,
-            id: record.player_id,
-            xp: record.xp,
-        };
-    });
-
     return (
         <RecordsPage
-            data={finalData}
+            data={json.bestScores}
             language={selectedLanguage}
             mode={selectedMode}
             record={selectedRecord}

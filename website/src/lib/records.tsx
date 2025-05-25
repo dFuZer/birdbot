@@ -52,7 +52,7 @@ type ListedRecord = (typeof listedRecords)[number];
 export const listedRecordsPerLanguage: Record<LanguageEnum, ListedRecord[]> = {
     brpt: [],
     de: [],
-    en: ["adverb", "slur", "plant", "creature", "chemical", "adverb"],
+    en: ["adverb", "slur", "plant", "creature", "chemical"],
     es: ["ethnonym", "adverb", "creature", "chemical"],
     fr: ["slur", "creature", "ethnonym", "adverb", "plant"],
     it: [],

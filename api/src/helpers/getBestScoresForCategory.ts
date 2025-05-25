@@ -84,7 +84,10 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
 
         return {
             bestScores: bestScores.map((score) => ({
-                ...score,
+                id: score.player_id,
+                name: score.player_username,
+                score: score.score,
+                rank: score.rank,
                 xp: getLevelDataFromXp(score.xp),
                 avatarUrl: score.avatar_url,
             })),
