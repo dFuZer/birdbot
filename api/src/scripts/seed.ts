@@ -240,7 +240,7 @@ async function seed() {
                         lbct1."language",
                         lbct1.record_type
                         ORDER BY
-                        lbct1.pp DESC
+                        lbct1.pp DESC,
                         lbct1.player_id ASC
                     ) AS INT
                     ) = 1 THEN TRUE
