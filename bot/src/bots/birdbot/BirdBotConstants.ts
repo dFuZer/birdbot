@@ -160,7 +160,7 @@ export const scoreKeyPerListedRecord = {
 export const listedRecordsPerLanguage: Record<BirdBotLanguage, ListedRecord[]> = {
     brpt: [],
     de: [],
-    en: ["adverb", "slur", "plant", "creature", "chemical", "adverb"],
+    en: ["adverb", "slur", "plant", "creature", "chemical"],
     es: ["ethnonym", "adverb", "creature", "chemical"],
     fr: ["slur", "creature", "ethnonym", "adverb", "plant"],
     it: [],
