@@ -18,7 +18,6 @@ dist/
 
 # Resources
 resources/*
-!resources/*.example.txt
 
 # Admins
 admins.txt

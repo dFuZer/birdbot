@@ -155,18 +155,6 @@ async function start() {
         }
     }
 
-    // Create test room
-    await bot.createRoom({
-        roomCreatorUsername: null,
-        targetConfig: {
-            dictionaryId: "fr",
-            gameMode: "survival",
-            birdbotGameMode: "regular",
-            isPublic: false,
-            roomName: "BirdBot test room",
-        },
-    });
-
     // Start periodic tasks
     await bot.startPeriodicTasks();
 
