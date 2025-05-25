@@ -7,6 +7,7 @@ import RecordsPageSelectors from "./RecordsPageSelectors";
 
 export interface IScoreData {
     id: string;
+    accountName: string;
     name: string;
     avatarUrl?: string;
     rank: number;

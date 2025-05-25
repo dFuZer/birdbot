@@ -1,4 +1,4 @@
-import { IPlayerProfileData } from "@/app/players/[id]/page";
+import { IPlayerProfileData } from "@/app/players/[name]/page";
 import PlayerProfilePageLanguageSelector from "@/components/pages/PlayersPage/PlayerProfilePageLanguageSelector";
 import PlayerProfilePageSelectors from "@/components/pages/PlayersPage/PlayerProfilePageSelectors";
 import ScoreDisplayComponent from "@/components/pages/RecordsPage/RecordsPageScoreDisplayComponent";

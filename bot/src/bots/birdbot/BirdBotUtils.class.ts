@@ -29,10 +29,12 @@ import { l, t } from "./texts/BirdBotTextUtils";
 export type ApiResponseAllRecords = {
     message: string;
     bestScores: {
-        player_id: string;
-        player_username: string;
+        id: string;
+        name: string;
+        accountName: string;
         score: number;
-        record_type: BirdBotRecordType;
+        recordType: BirdBotRecordType;
+        xp: ExperienceData;
     }[];
 };
 

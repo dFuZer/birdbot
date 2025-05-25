@@ -194,19 +194,19 @@ const recordsCommand = c({
                 .filter(
                     (score) =>
                         !(
-                            listedRecords.includes(score.record_type as any) &&
-                            !listedRecordsPerLanguage[language].includes(score.record_type as any)
+                            listedRecords.includes(score.recordType as any) &&
+                            !listedRecordsPerLanguage[language].includes(score.recordType as any)
                         )
                 )
-                .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
+                .sort((a, b) => recordsUtils[a.recordType].order - recordsUtils[b.recordType].order)
                 .map((score) => {
-                    return `${t(`lib.recordType.${score.record_type}.recordName`, { lng: l(ctx) })}: ${t(
+                    return `${t(`lib.recordType.${score.recordType}.recordName`, { lng: l(ctx) })}: ${t(
                         "general.scorePresentation",
                         {
-                            username: score.player_username,
-                            score: t(`lib.recordType.${score.record_type}.score`, {
+                            username: score.name,
+                            score: t(`lib.recordType.${score.recordType}.score`, {
                                 count: score.score,
-                                formattedScore: recordsUtils[score.record_type].format(score.score),
+                                formattedScore: recordsUtils[score.recordType].format(score.score),
                                 lng: l(ctx),
                             }),
                             lng: l(ctx),
@@ -777,7 +777,7 @@ const playerProfileCommand = c({
 
         try {
             const playerDataRequest = await BirdBotUtils.getJsonFromApi(
-                `/player-profile?name=${encodeURIComponent(targetUsername)}${
+                `/player-profile?searchByName=${encodeURIComponent(targetUsername)}${
                     targetLanguage ? `&language=${targetLanguage}` : ""
                 }${targetMode ? `&mode=${targetMode}` : ""}`
             );
@@ -825,6 +825,7 @@ const playerProfileCommand = c({
                 languageFlag: t(`lib.language.${playerData.language}.flag`, { lng: l(ctx) }),
                 gameMode: t(`lib.mode.${playerData.mode}`, { lng: l(ctx) }),
                 playerUsername: playerData.playerUsername,
+                profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAccountName)}`,
                 lng: l(ctx),
             };
 
@@ -848,8 +849,6 @@ const playerProfileCommand = c({
                 })
             );
         } else {
-            // result: "[{{languageFlag}}] {{playerUsername}} : Rang #{{rank}} avec {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, niveau {{level}}. Top 3 performances : {{top3Performances}}",
-
             ctx.utils.sendChatMessage(
                 t("command.playerProfile.result", {
                     languageFlag: t(`lib.language.${playerData.language}.flag`),
@@ -859,6 +858,7 @@ const playerProfileCommand = c({
                     currentLevelXp: playerData.xp.currentLevelXp,
                     totalLevelXp: playerData.xp.totalLevelXp,
                     level: playerData.xp.level,
+                    profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAccountName)}`,
                     topPerformances: playerData.bestPerformances
                         .sort((a, b) => b.pp - a.pp)
                         .map((performance) => {

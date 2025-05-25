@@ -33,16 +33,22 @@ export interface IPlayerProfileData {
     }[];
 }
 
-export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: TSearchParams }) {
+export default async function Page({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ accountName: string }>;
+    searchParams: TSearchParams;
+}) {
     const [paramsAwaited, searchParamsAwaited] = await Promise.all([params, searchParams]);
-    const { id: playerId } = paramsAwaited;
+    const { accountName: playerName } = paramsAwaited;
     const { m: mode, l: language } = searchParamsAwaited;
 
     const selectedLanguage = isValidLanguageParam(language) ? language : null;
     const selectedMode = isValidGameModeParam(mode) ? mode : null;
 
     const playerDataResponse = await getFromApi(
-        `/player-profile?playerId=${playerId}${selectedLanguage ? `&language=${selectedLanguage}` : ""}${selectedMode ? `&mode=${selectedMode}` : ""}`,
+        `/player-profile?accountName=${playerName}${selectedLanguage ? `&language=${selectedLanguage}` : ""}${selectedMode ? `&mode=${selectedMode}` : ""}`,
     );
     const playerData: IPlayerProfileData = await playerDataResponse.json();
 

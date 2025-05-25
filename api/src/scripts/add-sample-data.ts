@@ -114,6 +114,12 @@ function getRandomName() {
     }`;
 }
 
+function getRandomAccountName() {
+    return `${firstNames[Math.floor(Math.random() * firstNames.length)]}${
+        lastNames[Math.floor(Math.random() * lastNames.length)]
+    }`.toLowerCase();
+}
+
 const exampleWords: string[] = [
     "apple",
     "banana",
@@ -157,9 +163,9 @@ let modeArray = Object.values(GameMode);
     });
 
     let players = await prisma.player.createManyAndReturn({
-        data: Array.from({ length: 200 }, () => {
+        data: Array.from({ length: 200 }, (_, index) => {
             return {
-                account_name: getRandomName(),
+                account_name: getRandomAccountName() + index,
             };
         }),
     });

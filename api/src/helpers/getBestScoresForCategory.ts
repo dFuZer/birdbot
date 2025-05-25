@@ -23,11 +23,18 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             score: number;
             record_type: GameRecapRecordField;
             avatar_url: string;
+            account_name: string;
             xp: number;
         }[];
 
         const bestScores: Results = await prisma.$queryRaw`
-            SELECT l.player_id, l.score, l.record_type, p.xp, p.metadata->>'avatar_url' as avatar_url, p.metadata->>'latest_username' as player_username
+            SELECT l.player_id,
+                l.score,
+                l.record_type,
+                p.xp,
+                p.metadata->>'avatar_url' as avatar_url,
+                p.metadata->>'latest_username' as player_username,
+                p.account_name
             FROM leaderboard l
             INNER JOIN player p
             ON l.player_id = p.id
@@ -38,8 +45,11 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
 
         return {
             bestScores: bestScores.map((score) => ({
-                ...score,
-                record_type: databaseFieldToRecordEnumMap[score.record_type],
+                id: score.player_id,
+                name: score.player_username,
+                accountName: score.account_name,
+                score: score.score,
+                recordType: databaseFieldToRecordEnumMap[score.record_type],
                 xp: getLevelDataFromXp(score.xp),
             })),
             maxPage: 1,
@@ -55,10 +65,17 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             rank: number;
             xp: number;
             avatar_url: string;
+            account_name: string;
         }[];
 
         const bestScores: Results = await prisma.$queryRaw`
-            SELECT l.player_id, l.score, l.rank, p.xp, p.metadata->>'avatar_url' as avatar_url, p.metadata->>'latest_username' as player_username
+            SELECT l.player_id,
+                l.score,
+                l.rank,
+                p.xp,
+                p.metadata->>'avatar_url' as avatar_url,
+                p.metadata->>'latest_username' as player_username,
+                p.account_name
             FROM leaderboard l
             INNER JOIN player p
             ON l.player_id = p.id
@@ -88,6 +105,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             bestScores: bestScores.map((score) => ({
                 id: score.player_id,
                 name: score.player_username,
+                accountName: score.account_name,
                 score: score.score,
                 rank: score.rank,
                 xp: getLevelDataFromXp(score.xp),

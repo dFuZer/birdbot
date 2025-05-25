@@ -94,8 +94,8 @@ export const portugueseTexts = {
             description: "Mostra o perfil de um jogador.",
             noUsernameNotConnected:
                 "Você precisa estar conectado ao Croco.games para verificar seu próprio perfil. Se você quiser verificar o perfil de outro jogador, use a sintaxe /p [nome de usuário].",
-            resultMode: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}",
-            result: "[{{languageFlag}}] {{playerUsername}}: Classificação #{{rank}} com {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, nível {{level}}. Top 5 desempenhos: {{topPerformances}}",
+            resultMode: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}. {{profileLink}}",
+            result: "[{{languageFlag}}] {{playerUsername}}: Classificação #{{rank}} com {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, nível {{level}}. Top 5 desempenhos: {{topPerformances}}. {{profileLink}}",
             noRecords: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: Não há records nesta categoria",
         },
         rareSyllables: {

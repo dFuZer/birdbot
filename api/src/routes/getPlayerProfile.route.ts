@@ -8,20 +8,28 @@ import { languageEnumSchema, modeEnumSchema } from "../schemas/records.zod";
 
 export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (req, res) {
     const requestQuery = req.query;
-    const parsedData = z
-        .object({
-            name: z.string(),
-            language: languageEnumSchema.optional(),
-            mode: modeEnumSchema.optional(),
+
+    const base = z.object({
+        language: languageEnumSchema.optional(),
+        mode: modeEnumSchema.optional(),
+    });
+
+    const schema = base
+        .extend({
+            playerId: z.string(),
         })
         .or(
-            z.object({
-                playerId: z.string(),
-                language: languageEnumSchema.optional(),
-                mode: modeEnumSchema.optional(),
+            base.extend({
+                accountName: z.string(),
             })
         )
-        .safeParse(requestQuery);
+        .or(
+            base.extend({
+                searchByName: z.string(),
+            })
+        );
+
+    const parsedData = schema.safeParse(requestQuery);
 
     if (!parsedData.success) {
         return res.status(400).send({ message: "Invalid params" });
@@ -32,8 +40,23 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
 
     if ("playerId" in parsedData.data) {
         searchPlayerId = parsedData.data.playerId;
-    } else {
-        const bestPlayerMatch = await findPlayerByUsername(parsedData.data.name);
+    } else if ("accountName" in parsedData.data) {
+        const player: { id: string }[] = await prisma.$queryRaw`
+            SELECT id 
+            FROM player
+            WHERE account_name = ${parsedData.data.accountName}
+            LIMIT 1;
+        `;
+
+        if (!player[0]) {
+            return res.status(404).send({ message: "Player not found" });
+        }
+
+        console.log(parsedData.data, player);
+
+        searchPlayerId = player[0].id;
+    } else if ("searchByName" in parsedData.data) {
+        const bestPlayerMatch = await findPlayerByUsername(parsedData.data.searchByName);
 
         if (!bestPlayerMatch) {
             return res.status(404).send({ message: "Player not found" });
@@ -41,6 +64,10 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
 
         searchPlayerId = bestPlayerMatch.id;
         foundUsername = bestPlayerMatch.username;
+
+        console.log(parsedData.data);
+    } else {
+        return res.status(500).send({ message: "Internal Server Error" });
     }
 
     const playerVerificationQuery: { id: string }[] =

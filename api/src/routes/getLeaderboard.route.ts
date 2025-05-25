@@ -32,11 +32,13 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             language: PrismaLanguage;
             avatar_url: string;
             username: string;
+            account_name: string;
             xp: number;
         }[] = await prisma.$queryRaw`
             SELECT
                 ppl.player_id,
                 ppl.pp_sum,
+                p.account_name,
                 p.metadata->>'latest_username' as username,
                 p.metadata->>'avatar_url' as avatar_url,
                 ppl.language,
@@ -73,6 +75,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 pp: row.pp_sum,
                 rank: row.rank,
                 name: row.username,
+                accountName: row.account_name,
                 avatarUrl: row.avatar_url,
                 xp: getLevelDataFromXp(row.xp),
                 language: databaseEnumToLanguageEnumMap[row.language],
@@ -84,11 +87,13 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             xp: number;
             rank: number;
             username: string;
+            account_name: string;
             avatar_url: string;
         }[] = await prisma.$queryRaw`
             SELECT
                 p.id AS player_id,
                 p.xp,
+                p.account_name,
                 p.metadata->>'latest_username' as username,
                 p.metadata->>'avatar_url' as avatar_url,
                 CAST(ROW_NUMBER() OVER (
@@ -117,6 +122,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 id: row.player_id,
                 xp: getLevelDataFromXp(row.xp),
                 rank: row.rank,
+                accountName: row.account_name,
                 name: row.username,
                 avatarUrl: row.avatar_url,
             })),
@@ -126,6 +132,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             player_id: string;
             records_count: number;
             xp: number;
+            account_name: string;
             username: string;
             avatar_url: string;
             rank: number;
@@ -137,6 +144,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 records_count)
             l.player_id,
                 p.xp,
+                p.account_name,
                 p.metadata->>'latest_username' as username,
                 p.metadata->>'avatar_url' as avatar_url,
                 CAST(count(*) OVER (PARTITION BY l.player_id) AS int) AS records_count
@@ -168,6 +176,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 id: row.player_id,
                 recordsCount: row.records_count,
                 xp: getLevelDataFromXp(row.xp),
+                accountName: row.account_name,
                 name: row.username,
                 rank: row.rank,
                 avatarUrl: row.avatar_url,
