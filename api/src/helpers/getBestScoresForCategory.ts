@@ -79,6 +79,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             WHERE "mode" = ${enumMode}::"game_mode"
             AND "language" = ${enumLang}::"language"
             AND "record_type" = ${enumRecord}
+            AND score > 0
         `;
 
         const maxPage = Math.ceil(totalCount[0].count / perPage);
