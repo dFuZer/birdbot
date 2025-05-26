@@ -36,6 +36,7 @@ export default function ScoreDisplayComponent({ score, recordType }: ScoreDispla
             recordsEnumSchema.Values.ethnonym,
             recordsEnumSchema.Values.chemical,
             recordsEnumSchema.Values.plant,
+            recordsEnumSchema.Values.food,
             recordsEnumSchema.Values.adverb,
         ].includes(recordType)
     ) {

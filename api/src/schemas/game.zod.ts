@@ -32,6 +32,7 @@ let gameRecap = z.object({
     ethnonymsCount: z.number(),
     chemicalsCount: z.number(),
     plantsCount: z.number(),
+    foodsCount: z.number(),
     adverbsCount: z.number(),
 });
 

@@ -23,6 +23,7 @@ export const recordEnumToDatabaseFieldMap = {
     chemical: Prisma.GameRecapScalarFieldEnum.chemicals_count,
     plant: Prisma.GameRecapScalarFieldEnum.plants_count,
     adverb: Prisma.GameRecapScalarFieldEnum.adverbs_count,
+    food: Prisma.GameRecapScalarFieldEnum.foods_count,
     time: "time",
 } satisfies { [key in TRecord]: Prisma.GameRecapScalarFieldEnum | "time" };
 
@@ -44,6 +45,7 @@ export const databaseFieldToRecordEnumMap = {
     ethnonyms_count: "ethnonym",
     chemicals_count: "chemical",
     plants_count: "plant",
+    foods_count: "food",
     adverbs_count: "adverb",
 } satisfies { [key in GameRecapRecordField]: TRecord };
 

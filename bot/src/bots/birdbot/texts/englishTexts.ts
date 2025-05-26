@@ -210,6 +210,7 @@ export const englishTexts = {
                 creature: "placed a creature",
                 ethnonym: "placed an ethnonym",
                 plant: "placed a plant",
+                food: "placed a food",
                 slur: "placed a slur",
             } satisfies Record<ListedRecord, string>,
         },
@@ -330,6 +331,13 @@ export const englishTexts = {
                 score_other: "{{count}} plants",
                 score_specific_one: "{{count}} plant",
                 score_specific_other: "{{count}} plants",
+            },
+            food: {
+                recordName: "Foods",
+                score_one: "{{count}} food",
+                score_other: "{{count}} foods",
+                score_specific_one: "{{count}} food",
+                score_specific_other: "{{count}} foods",
             },
             slur: {
                 recordName: "Slurs",

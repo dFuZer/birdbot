@@ -49,6 +49,7 @@ export type PlayerGameScores = {
     ethnonyms: number;
     chemicals: number;
     plants: number;
+    foods: number;
     adverbs: number;
 };
 
@@ -64,6 +65,7 @@ export type GlobalGameScores = {
     ethnonyms: number;
     chemicals: number;
     plants: number;
+    foods: number;
     adverbs: number;
 };
 
@@ -126,5 +128,6 @@ export type BirdBotGameRecap = {
     ethnonymsCount: number;
     chemicalsCount: number;
     plantsCount: number;
+    foodsCount: number;
     adverbsCount: number;
 };

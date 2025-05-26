@@ -118,6 +118,7 @@ export const recordsEnumSchema = z.enum([
     "ethnonym",
     "chemical",
     "plant",
+    "food",
     "adverb",
 ]);
 
@@ -136,7 +137,15 @@ export const languageAliases = {
 export const semiListedRecords = ["hyphen", "more_than_20_letters"] satisfies BirdBotRecordType[];
 export type SemiListedRecord = (typeof semiListedRecords)[number];
 
-export const listedRecords = ["slur", "creature", "ethnonym", "chemical", "plant", "adverb"] satisfies BirdBotRecordType[];
+export const listedRecords = [
+    "slur",
+    "creature",
+    "ethnonym",
+    "chemical",
+    "plant",
+    "adverb",
+    "food",
+] satisfies BirdBotRecordType[];
 export type ListedRecord = (typeof listedRecords)[number];
 
 export const semiListedRecordsPerLanguage = {
@@ -155,14 +164,15 @@ export const scoreKeyPerListedRecord = {
     chemical: "chemicals",
     plant: "plants",
     adverb: "adverbs",
+    food: "foods",
 } satisfies Record<ListedRecord, keyof PlayerGameScores>;
 
 export const listedRecordsPerLanguage: Record<BirdBotLanguage, ListedRecord[]> = {
     brpt: [],
     de: [],
-    en: ["adverb", "slur", "plant", "creature", "chemical"],
-    es: ["ethnonym", "adverb", "creature", "chemical"],
-    fr: ["slur", "creature", "ethnonym", "adverb", "plant"],
+    en: ["adverb", "slur", "plant", "creature", "chemical", "food"],
+    es: ["ethnonym", "adverb", "creature", "chemical", "food"],
+    fr: ["slur", "creature", "ethnonym", "adverb", "plant", "food"],
     it: [],
 };
 
@@ -182,6 +192,7 @@ export const recordAliases = {
     ethnonym: ["ethnonym", "ethnonyms", "e", "eth", "gentilicio", "gentilicios", "gentilicio", "gentilicios"],
     chemical: ["chemical", "chemicals", "ch", "che", "quimica", "quimicas", "quimica", "quimicas"],
     plant: ["plant", "plants", "p", "pl", "planta", "plantas", "planta", "plantas"],
+    food: ["food", "foods", "f", "fo", "alimento", "alimentos", "nourriture", "aliment"],
     adverb: ["adverb", "adverbs", "ad", "adv", "adverbe"],
 } satisfies Record<BirdBotRecordType, string[]>;
 
@@ -195,6 +206,7 @@ export const filterWordsModeRecords = [
     "creature",
     "ethnonym",
     "slur",
+    "food",
 ] satisfies BirdBotRecordType[];
 
 export const recordsUtils = {
@@ -258,9 +270,13 @@ export const recordsUtils = {
         format: (score) => score.toString(),
         order: 15,
     },
-    adverb: {
+    food: {
         format: (score) => score.toString(),
         order: 16,
+    },
+    adverb: {
+        format: (score) => score.toString(),
+        order: 17,
     },
 } satisfies Record<
     BirdBotRecordType,

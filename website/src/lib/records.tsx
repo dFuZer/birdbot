@@ -18,6 +18,7 @@ export const recordsEnumSchema = z.enum([
     "ethnonym",
     "chemical",
     "plant",
+    "food",
     "adverb",
 ]);
 
@@ -46,15 +47,15 @@ interface IGameModeData {
     displayName: string;
 }
 
-export const listedRecords = ["plant", "creature", "ethnonym", "chemical", "adverb", "slur"] satisfies RecordsEnum[];
+export const listedRecords = ["plant", "creature", "ethnonym", "chemical", "adverb", "slur", "food"] satisfies RecordsEnum[];
 type ListedRecord = (typeof listedRecords)[number];
 
 export const listedRecordsPerLanguage: Record<LanguageEnum, ListedRecord[]> = {
     brpt: [],
     de: [],
-    en: ["adverb", "slur", "plant", "creature", "chemical"],
-    es: ["ethnonym", "adverb", "creature", "chemical"],
-    fr: ["slur", "creature", "ethnonym", "adverb", "plant"],
+    en: ["adverb", "slur", "plant", "creature", "chemical", "food"],
+    es: ["ethnonym", "adverb", "creature", "chemical", "food"],
+    fr: ["slur", "creature", "ethnonym", "adverb", "plant", "food"],
     it: [],
 };
 
@@ -74,6 +75,7 @@ export const RECORDS_DATA: { [key in RecordsEnum]: IRecordData } = {
     ethnonym: { displayName: "Ethnonym" },
     chemical: { displayName: "Chemical" },
     plant: { displayName: "Plant" },
+    food: { displayName: "Food" },
     adverb: { displayName: "Adverb" },
 };
 

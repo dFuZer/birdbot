@@ -234,6 +234,7 @@ let modeArray = Object.values(GameMode);
                 ethnonyms_count: Math.floor(Math.random() * 500),
                 chemicals_count: Math.floor(Math.random() * 500),
                 plants_count: Math.floor(Math.random() * 500),
+                foods_count: Math.floor(Math.random() * 500),
                 adverbs_count: Math.floor(Math.random() * 500),
             };
         })

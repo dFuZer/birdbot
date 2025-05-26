@@ -19,6 +19,7 @@ const recordsEnumSchema = z.enum([
     "ethnonym",
     "chemical",
     "plant",
+    "food",
     "adverb",
 ]);
 

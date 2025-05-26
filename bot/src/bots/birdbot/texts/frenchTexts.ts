@@ -211,6 +211,7 @@ export const frenchTexts = {
                 ethnonym: "a placé un gentilé",
                 plant: "a placé une plante",
                 slur: "a placé une insulte",
+                food: "a placé un aliment",
             },
         },
     },
@@ -330,6 +331,13 @@ export const frenchTexts = {
                 score_other: "{{count}} plantes",
                 score_specific_one: "{{count}} plante",
                 score_specific_other: "{{count}} plantes",
+            },
+            food: {
+                recordName: "Aliments",
+                score_one: "{{count}} aliment",
+                score_other: "{{count}} aliments",
+                score_specific_one: "{{count}} aliment",
+                score_specific_other: "{{count}} aliments",
             },
             slur: {
                 recordName: "Insultes",

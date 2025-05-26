@@ -153,6 +153,10 @@ async function seed() {
                         gr.plants_count
                     ),
                     (
+                        'foods_count',
+                        gr.foods_count
+                    ),
+                    (
                         'adverbs_count',
                         gr.adverbs_count
                     ),
@@ -206,6 +210,7 @@ async function seed() {
                         WHEN "record_type" = 'ethnonyms_count' THEN (500 / 1500::FLOAT)
                         WHEN "record_type" = 'chemicals_count' THEN (500 / 1500::FLOAT)
                         WHEN "record_type" = 'plants_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'foods_count' THEN (500 / 1500::FLOAT)
                         WHEN "record_type" = 'adverbs_count' THEN (500 / 1500::FLOAT)
                         ELSE 0
                     END

@@ -57,6 +57,7 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             ethnonyms_count,
             chemicals_count,
             plants_count,
+            foods_count,
             adverbs_count)
             VALUES (gen_random_uuid(),
             ${game.id}::UUID,
@@ -76,6 +77,7 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             ${gameRecapData.ethnonymsCount},
             ${gameRecapData.chemicalsCount},
             ${gameRecapData.plantsCount},
+            ${gameRecapData.foodsCount},
             ${gameRecapData.adverbsCount})
         `;
 
@@ -97,6 +99,7 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
                 gameRecapData.ethnonymsCount +
                 gameRecapData.chemicalsCount +
                 gameRecapData.plantsCount +
+                gameRecapData.foodsCount +
                 gameRecapData.adverbsCount,
         });
 

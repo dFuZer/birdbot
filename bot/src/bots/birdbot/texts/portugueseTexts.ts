@@ -211,6 +211,7 @@ export const portugueseTexts = {
                 ethnonym: "colocou um gentílico",
                 plant: "colocou uma planta",
                 slur: "colocou uma palavra ofensiva",
+                food: "colocou um alimento",
             },
         },
     },
@@ -330,6 +331,13 @@ export const portugueseTexts = {
                 score_other: "{{count}} plantas",
                 score_specific_one: "{{count}} planta",
                 score_specific_other: "{{count}} plantas",
+            },
+            food: {
+                recordName: "Alimentos",
+                score_one: "{{count}} alimento",
+                score_other: "{{count}} alimentos",
+                score_specific_one: "{{count}} alimento",
+                score_specific_other: "{{count}} alimentos",
             },
             slur: {
                 recordName: "Ofensas",

@@ -282,6 +282,7 @@ export default class BirdBotUtils {
             ethnonymsCount: playerScores.ethnonyms,
             chemicalsCount: playerScores.chemicals,
             plantsCount: playerScores.plants,
+            foodsCount: playerScores.foods,
             adverbsCount: playerScores.adverbs,
         };
     };
@@ -600,6 +601,7 @@ export default class BirdBotUtils {
             ethnonyms: 0,
             chemicals: 0,
             plants: 0,
+            foods: 0,
             adverbs: 0,
         };
     };
@@ -829,6 +831,7 @@ export default class BirdBotUtils {
             ethnonyms: 0,
             chemicals: 0,
             plants: 0,
+            foods: 0,
             adverbs: 0,
         };
         roomMetadata.hostLeftIteration = 0;
@@ -861,6 +864,7 @@ export default class BirdBotUtils {
             ["ethnonym", playerStats.ethnonyms],
             ["chemical", playerStats.chemicals],
             ["plant", playerStats.plants],
+            ["food", playerStats.foods],
             ["adverb", playerStats.adverbs],
         ] satisfies [BirdBotRecordType, number][];
 
@@ -893,6 +897,7 @@ export default class BirdBotUtils {
             ethnonyms: 0,
             chemicals: 0,
             plants: 0,
+            foods: 0,
             adverbs: 0,
         };
         for (const player of ctx.room.roomState.gameData!.players) {

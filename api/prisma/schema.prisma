@@ -106,6 +106,7 @@ model GameRecap {
     chemicals_count Int @default(0)
     plants_count    Int @default(0)
     adverbs_count   Int @default(0)
+    foods_count     Int @default(0)
 
     game   Game   @relation(fields: [game_id], references: [id])
     player Player @relation(fields: [player_id], references: [id])

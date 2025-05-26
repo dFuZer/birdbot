@@ -211,6 +211,7 @@ export const spanishTexts = {
                 creature: "ha colocado una criatura",
                 ethnonym: "ha colocado un gentilicio",
                 plant: "ha colocado una planta",
+                food: "ha colocado un alimento",
                 slur: "ha colocado una palabra ofensiva",
             },
         },
@@ -331,6 +332,13 @@ export const spanishTexts = {
                 score_other: "{{count}} plantas",
                 score_specific_one: "{{count}} planta",
                 score_specific_other: "{{count}} plantas",
+            },
+            food: {
+                recordName: "Alimentos",
+                score_one: "{{count}} alimento",
+                score_other: "{{count}} alimentos",
+                score_specific_one: "{{count}} alimento",
+                score_specific_other: "{{count}} alimentos",
             },
             slur: {
                 recordName: "Insultos",
