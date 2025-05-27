@@ -55,19 +55,30 @@ const birdbotEventHandlers: BotEventHandlers = {
         setRole: CommonTEH.setRole,
         addGamer: [
             CommonTEH.addGamer,
-            (ctx) => {
+            (ctx, previousHandlersCtx) => {
+                const newGamerId = previousHandlersCtx.newGamerId as number;
                 const roomOwner = ctx.room.constantRoomData.roomCreatorUsername;
                 if (!roomOwner) return;
 
-                const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.identity.name === roomOwner);
-                if (!gamer) return;
-                if (gamer.role === "moderator") return;
+                const roomOwnerGamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.identity.name === roomOwner);
+                if (!roomOwnerGamer) return;
+                if (roomOwnerGamer.role === "moderator") return;
 
                 const message = ctx.bot.networkAdapter.getSetGamerRoleMessage({
-                    gamerId: gamer.id,
+                    gamerId: roomOwnerGamer.id,
                     role: "moderator" satisfies RoomRole,
                 });
                 ctx.room.ws!.send(message);
+
+                const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+                if (!roomMetadata.greetedGamersById.has(newGamerId.toString())) {
+                    roomMetadata.greetedGamersById.add(newGamerId.toString());
+                    ctx.utils.sendChatMessage(
+                        t("general.greet", {
+                            lng: l(ctx),
+                        })
+                    );
+                }
             },
         ],
         setGamerOnline: CommonTEH.setGamerOnline,

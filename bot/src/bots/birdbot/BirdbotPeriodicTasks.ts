@@ -17,7 +17,8 @@ import { t } from "./texts/BirdBotTextUtils";
 export const birdbotPeriodicTasks: PeriodicTask[] = [
     {
         intervalInMs: 10000,
-        timeout: undefined,
+        setIntervalTimeout: undefined,
+        setTimeoutTimeout: undefined,
         fn: (ctx) => {
             const { bot } = ctx;
             for (const roomId in bot.rooms) {
@@ -49,7 +50,8 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
     },
     {
         intervalInMs: 5000,
-        timeout: undefined,
+        setIntervalTimeout: undefined,
+        setTimeoutTimeout: undefined,
         fn: async (ctx) => {
             const bot = ctx.bot as BirdBot;
             const currentMainRoomLanguages = Object.entries(bot.rooms)
@@ -85,7 +87,8 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
     },
     {
         intervalInMs: 1000 * 3,
-        timeout: undefined,
+        setIntervalTimeout: undefined,
+        setTimeoutTimeout: undefined,
         fn: (ctx) => {
             const { bot } = ctx;
             const rooms = Object.values(bot.rooms);
@@ -106,10 +109,6 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     ws.off("pong", listener as any);
                 });
                 ws.once("pong", () => {
-                    // Logger.log({
-                    //     message: `Room ${room.id} received pong. Resetting unanswered pings counter.`,
-                    //     path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
-                    // });
                     room.roomState.unansweredPings = 0;
                 });
                 ws.ping();
@@ -118,7 +117,8 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
     },
     {
         intervalInMs: 30 * 1000,
-        timeout: undefined,
+        setIntervalTimeout: undefined,
+        setTimeoutTimeout: undefined,
         fn: async (ctx) => {
             const languages = languageEnumSchema.options satisfies BirdBotLanguage[];
             for (const language of languages) {
@@ -148,11 +148,44 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                                 topFlipWords: dictionaryMetadata.topFlipWords,
                                 topSnWords: dictionaryMetadata.topSnWords,
                             } satisfies CacheableDictionaryMetadata),
-                        ].join("\n"),
+                        ].join("\n")
                     );
 
                     return;
                 }
+            }
+        },
+    },
+    {
+        intervalInMs: 1000 * 60 * 90,
+        offsetInMs: 1000 * 60 * (90 / 2),
+        setIntervalTimeout: undefined,
+        setTimeoutTimeout: undefined,
+        fn: (ctx) => {
+            const { bot } = ctx;
+            const rooms = Object.values(bot.rooms);
+            for (const room of rooms) {
+                const roomLanguage = room.roomState.gameData?.rules.dictionaryId;
+                if (roomLanguage === undefined) continue;
+                const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomLanguage as BirdBotSupportedDictionaryId];
+                const messageContent = t(`periodic.support.star`, { lng: roomBirdBotLanguage });
+                room.ws?.send(bot.networkAdapter.getSendChatMessage(messageContent));
+            }
+        },
+    },
+    {
+        intervalInMs: 1000 * 60 * 90,
+        setIntervalTimeout: undefined,
+        setTimeoutTimeout: undefined,
+        fn: (ctx) => {
+            const { bot } = ctx;
+            const rooms = Object.values(bot.rooms);
+            for (const room of rooms) {
+                const roomLanguage = room.roomState.gameData?.rules.dictionaryId;
+                if (roomLanguage === undefined) continue;
+                const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomLanguage as BirdBotSupportedDictionaryId];
+                const messageContent = t(`periodic.support.donate`, { lng: roomBirdBotLanguage });
+                room.ws?.send(bot.networkAdapter.getSendChatMessage(messageContent));
             }
         },
     },

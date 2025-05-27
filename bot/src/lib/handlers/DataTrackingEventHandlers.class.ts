@@ -44,11 +44,13 @@ export default class CommonPlayerDataTrackingEventHandlers {
         }
     };
 
-    public static addGamer: BotEventHandlerFn = (ctx) => {
+    public static addGamer: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
         const data = ctx.bot.networkAdapter.readAddGamerData(ctx.message);
         const { newPlayerData } = data;
 
         ctx.room.roomState.roomData!.gamers.push(newPlayerData);
+
+        previousHandlersCtx.newGamerId = newPlayerData.id;
     };
 
     public static setGamerOnline: BotEventHandlerFn = (ctx) => {

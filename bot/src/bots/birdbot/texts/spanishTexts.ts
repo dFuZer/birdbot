@@ -1,4 +1,5 @@
 import { crocoDomain } from "../../../lib/constants/gameConstants";
+import { DISCORD_SERVER_LINK, GITHUB_REPO_LINK, PAYPAL_DONATE_LINK, WEBSITE_LINK } from "../BirdBotConstants";
 import { ResourceText } from "./englishTexts";
 
 export const spanishTexts = {
@@ -48,6 +49,12 @@ export const spanishTexts = {
         },
         platform: {
             mustBeLoggedIn: `$t(intro) Tienes que estar conectado a Croco.games para usar este comando. Para conectarte, ve a la página principal https://${crocoDomain}/ y haz clic en "Iniciar sesión" si tienes una cuenta o "Nueva cuenta" si no tienes.`,
+        },
+    },
+    periodic: {
+        support: {
+            star: `Hey! Si te gusta BirdBot y quieres apoyar el proyecto, ¡dame una estrella en GitHub! ¡Muchas gracias! ${GITHUB_REPO_LINK}`,
+            donate: `Hey! Si te gusta BirdBot y quieres apoyar el proyecto, puedes hacer una donación en PayPal! ¡Muchas gracias! ${PAYPAL_DONATE_LINK}`,
         },
     },
     command: {
@@ -183,6 +190,7 @@ export const spanishTexts = {
             gameModeSet: "Modo de juego cambiado a {{gameMode}}.",
         },
         scorePresentation: "{{username}} con {{score}}",
+        greet: `Bienvenido! Discord: ${DISCORD_SERVER_LINK}. Para más info, usa /help o ve a ${WEBSITE_LINK}`,
     },
     eventHandler: {
         chat: {

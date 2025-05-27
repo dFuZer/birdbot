@@ -835,6 +835,7 @@ export default class BirdBotUtils {
             adverbs: 0,
         };
         roomMetadata.hostLeftIteration = 0;
+        roomMetadata.greetedGamersById = new Set();
         this.initializeScoresForAllPlayers(ctx);
         const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
         roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);

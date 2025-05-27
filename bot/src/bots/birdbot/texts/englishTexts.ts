@@ -1,5 +1,5 @@
 import { crocoDomain } from "../../../lib/constants/gameConstants";
-import { ListedRecord } from "../BirdBotConstants";
+import { DISCORD_SERVER_LINK, GITHUB_REPO_LINK, ListedRecord, PAYPAL_DONATE_LINK, WEBSITE_LINK } from "../BirdBotConstants";
 import { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType } from "../BirdBotTypes";
 
 export const englishTexts = {
@@ -182,6 +182,7 @@ export const englishTexts = {
             gameModeSet: "Game mode set to {{gameMode}}.",
         },
         scorePresentation: "{{username}} with {{score}}",
+        greet: `Welcome! Discord server: ${DISCORD_SERVER_LINK}. For more info, use /help or go to ${WEBSITE_LINK}`,
     },
     eventHandler: {
         chat: {
@@ -213,6 +214,12 @@ export const englishTexts = {
                 food: "placed a food",
                 slur: "placed a slur",
             } satisfies Record<ListedRecord, string>,
+        },
+    },
+    periodic: {
+        support: {
+            star: `Hey! If you like BirdBot, please consider giving it a star on GitHub! It would help me a lot! ${GITHUB_REPO_LINK}`,
+            donate: `Hey! If you like BirdBot, please consider donating to support the project! ${PAYPAL_DONATE_LINK}`,
         },
     },
     lib: {

@@ -20,7 +20,9 @@ export type PeriodicTaskCtx = {
 
 export type PeriodicTask = {
     intervalInMs: number;
-    timeout: NodeJS.Timeout | undefined;
+    offsetInMs?: number;
+    setIntervalTimeout: NodeJS.Timeout | undefined;
+    setTimeoutTimeout: NodeJS.Timeout | undefined;
     fn: (ctx: PeriodicTaskCtx) => void;
 };
 
@@ -72,15 +74,18 @@ export default class Bot {
     public startPeriodicTasks() {
         const thisBot = this;
         thisBot.periodicTasks.forEach((task) => {
-            task.timeout = setInterval(() => {
-                task.fn({ bot: thisBot });
-            }, task.intervalInMs);
+            task.setTimeoutTimeout = setTimeout(() => {
+                task.setIntervalTimeout = setInterval(() => {
+                    task.fn({ bot: thisBot });
+                }, task.intervalInMs);
+            }, task.offsetInMs ?? 0);
         });
     }
 
     public clearPeriodicTasks() {
         this.periodicTasks.forEach((task) => {
-            if (task.timeout) clearInterval(task.timeout);
+            if (task.setIntervalTimeout) clearInterval(task.setIntervalTimeout);
+            if (task.setTimeoutTimeout) clearTimeout(task.setTimeoutTimeout);
         });
     }
 

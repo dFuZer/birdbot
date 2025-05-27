@@ -1,4 +1,5 @@
 import { crocoDomain } from "../../../lib/constants/gameConstants";
+import { DISCORD_SERVER_LINK, GITHUB_REPO_LINK, PAYPAL_DONATE_LINK, WEBSITE_LINK } from "../BirdBotConstants";
 import { ResourceText } from "./englishTexts";
 
 export const portugueseTexts = {
@@ -182,6 +183,7 @@ export const portugueseTexts = {
             gameModeSet: "Modo de jogo mudado para {{gameMode}}.",
         },
         scorePresentation: "{{username}} com {{score}}",
+        greet: `Bem-vindo! Servidor Discord: ${DISCORD_SERVER_LINK}. Para mais informações, use /help ou vá para ${WEBSITE_LINK}`,
     },
     eventHandler: {
         chat: {
@@ -213,6 +215,12 @@ export const portugueseTexts = {
                 slur: "colocou uma palavra ofensiva",
                 food: "colocou um alimento",
             },
+        },
+    },
+    periodic: {
+        support: {
+            star: `Hey! Se você gosta de BirdBot e quer nos apoiar, dê uma estrela no GitHub! Isso significa muito para nós! ${GITHUB_REPO_LINK}`,
+            donate: `Hey! Se você gosta de BirdBot e quer nos apoiar, faça um doação no PayPal! Muito obrigado! ${PAYPAL_DONATE_LINK}`,
         },
     },
     lib: {

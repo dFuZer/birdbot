@@ -80,6 +80,7 @@ export type BirdBotRoomMetadata = {
     remainingSyllables: Record<string, number>;
     wasInitialized: boolean;
     hostLeftIteration: number;
+    greetedGamersById: Set<string>;
 };
 
 export type ExperienceData = {
