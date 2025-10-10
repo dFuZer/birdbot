@@ -1,9 +1,31 @@
 "use client";
 
+import { isChromiumAtom } from "@/lib/atoms";
+import { useAtom } from "jotai";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Blobs() {
     const pathname = usePathname();
+
+    const [isChromium, setIsChromium] = useAtom(isChromiumAtom);
+
+    useEffect(() => {
+        if (isChromium === null && typeof window !== "undefined") {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isChromiumBased = userAgent.includes("chrome");
+            console.log({ isChromiumBased });
+            setIsChromium(isChromiumBased);
+        } else if (isChromium === null) {
+            setIsChromium(false);
+        }
+    }, [isChromium, setIsChromium]);
+
+    if (isChromium === null || !isChromium) {
+        console.log({ isChromium });
+        return <></>;
+    }
+
     if (pathname !== "/")
         return (
             <div className="absolute top-0 right-0 left-0 -z-10 hidden h-full overflow-hidden sm:block">

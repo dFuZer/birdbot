@@ -6,6 +6,7 @@ import Link from "next/link";
 import LandingBird from "~/public/landingBird.svg";
 import LandingInstructionsSection from "./LandingInstructionsSection";
 import LandingPageFeaturesSection from "./LandingPageFeaturesSection";
+import ConditionalLandingBlob from "./ConditionalLandingBlob";
 
 export default function LandingPage() {
     return (
@@ -34,7 +35,7 @@ export default function LandingPage() {
                     </div>
                 </div>
                 <div className="relative -z-10 hidden size-[20rem] h-[10rem] md:block">
-                    <div className="bg-primary-500 absolute top-1/2 left-1/2 h-40 w-[25rem] -translate-x-1/2 -translate-y-1/2 blur-[180px] lg:left-10 lg:translate-x-0"></div>
+                    <ConditionalLandingBlob />
                     <LandingBird className="absolute top-1/2 left-1/2 size-[20rem] -translate-x-1/2 -translate-y-1/2 lg:left-10 lg:size-[25rem] lg:translate-x-0" />
                 </div>
             </div>
