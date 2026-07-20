@@ -41,6 +41,9 @@ export type DictionaryManifest = {
     };
 };
 
+/** jklm `customBonusAlphabet` rule: letter → enabled count (0 = disabled). */
+export type CustomBonusAlphabet = Record<string, number>;
+
 export type BombPartyRules = {
     dictionaryId: DictionaryId;
     minTurnDuration: number;
@@ -49,9 +52,10 @@ export type BombPartyRules = {
     maxPromptAge: number;
     startingLives: number;
     maxLives: number;
+    customBonusAlphabet: CustomBonusAlphabet;
 };
 
-export type DictionaryLessGameRules = Omit<BombPartyRules, "dictionaryId">;
+export type DictionaryLessGameRules = Omit<BombPartyRules, "dictionaryId" | "customBonusAlphabet">;
 export type GameRules = BombPartyRules;
 export type BombPartyRuleKey = keyof BombPartyRules;
 
@@ -102,9 +106,6 @@ export type GameData = {
     leaderPeerId: number;
     selfRoles: string[];
 };
-
-/** @deprecated alias kept for gradual product remaps — use Chatter */
-export type Gamer = Chatter & { id: number; identity: { name: string | null; nickname: string }; role: string };
 
 export function bonusAlphabetToLetters(bonusAlphabet: Record<string, number> | string | undefined): string {
     if (!bonusAlphabet) return "";

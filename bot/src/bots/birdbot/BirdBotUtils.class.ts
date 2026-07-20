@@ -3,8 +3,15 @@ import type z from "zod";
 import { CommandOrEventCtx } from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
-import { dictionaryManifests } from "../../lib/constants/gameConstants";
-import type { Chatter, DictionaryId, DictionaryLessGameRules, GameRules } from "../../lib/types/gameTypes";
+import { defaultBonusAlphabetsByDictionaryId, dictionaryManifests } from "../../lib/constants/gameConstants";
+import type {
+    Chatter,
+    CustomBonusAlphabet,
+    DictionaryId,
+    DictionaryLessGameRules,
+    GameRules,
+} from "../../lib/types/gameTypes";
+import { bonusAlphabetToLetters } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
 import { birdbotLanguageToDictionaryId, birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
@@ -325,42 +332,118 @@ export default class BirdBotUtils {
         } as BirdBotGameData;
     };
 
+    public static isMainRoom = (ctx: CommandOrEventCtx) => {
+        return ctx.room.constantRoomData.roomCreatorAuthId === null;
+    };
+
+    public static bonusAlphabetsEqual = (a: CustomBonusAlphabet | undefined, b: CustomBonusAlphabet | undefined) => {
+        return JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
+    };
+
+    public static getDefaultBonusAlphabet = (dictionaryId: DictionaryId): CustomBonusAlphabet => {
+        return { ...defaultBonusAlphabetsByDictionaryId[dictionaryId] };
+    };
+
+    public static applyLocalRuleUpdates = (ctx: CommandOrEventCtx, updates: Record<string, unknown>) => {
+        const gameData = ctx.room.roomState.gameData!;
+        Object.assign(gameData.rules, updates);
+        if (updates.customBonusAlphabet && typeof updates.customBonusAlphabet === "object") {
+            const letters = bonusAlphabetToLetters(updates.customBonusAlphabet as CustomBonusAlphabet);
+            gameData.dictionaryManifest.bonusLetters = letters;
+            if (gameData.milestone.dictionaryManifest) {
+                gameData.milestone.dictionaryManifest.bonusLetters = letters;
+            }
+        }
+    };
+
     public static setRoomGameMode = (ctx: CommandOrEventCtx, mode: DictionaryLessGameRules) => {
-        for (const rule of Object.keys(mode)) {
-            this.setRoomGameRuleIfDifferent(
-                ctx,
-                rule as keyof DictionaryLessGameRules,
-                mode[rule as keyof DictionaryLessGameRules]
-            );
+        const gameData = ctx.room.roomState.gameData!;
+        const updates: Record<string, unknown> = {};
+        for (const rule of Object.keys(mode) as (keyof DictionaryLessGameRules)[]) {
+            if (gameData.rules[rule] !== mode[rule]) {
+                updates[rule] = mode[rule];
+            }
+        }
+        const expectedAlphabet = this.getDefaultBonusAlphabet(gameData.rules.dictionaryId);
+        if (!this.bonusAlphabetsEqual(gameData.rules.customBonusAlphabet, expectedAlphabet)) {
+            updates.customBonusAlphabet = expectedAlphabet;
+        }
+        if (Object.keys(updates).length > 0) {
+            Logger.log({
+                message: `Setting game mode rules: ${JSON.stringify(updates)}`,
+                path: "BirdBotUtils.class.ts",
+            });
+            this.applyLocalRuleUpdates(ctx, updates);
+            ctx.utils.setRules(updates);
+        }
+    };
+
+    public static setRoomDictionary = (ctx: CommandOrEventCtx, dictionaryId: DictionaryId) => {
+        const gameData = ctx.room.roomState.gameData!;
+        const updates: Record<string, unknown> = {};
+        if (gameData.rules.dictionaryId !== dictionaryId) {
+            updates.dictionaryId = dictionaryId;
+        }
+        const expectedAlphabet = this.getDefaultBonusAlphabet(dictionaryId);
+        if (!this.bonusAlphabetsEqual(gameData.rules.customBonusAlphabet, expectedAlphabet)) {
+            updates.customBonusAlphabet = expectedAlphabet;
+        }
+        if (Object.keys(updates).length > 0) {
+            Logger.log({
+                message: `Setting dictionary to ${dictionaryId}`,
+                path: "BirdBotUtils.class.ts",
+            });
+            this.applyLocalRuleUpdates(ctx, updates);
+            ctx.utils.setRules(updates);
         }
     };
 
     public static setRoomGameRuleIfDifferent = (ctx: CommandOrEventCtx, rule: keyof GameRules, value: any) => {
+        if (rule === "dictionaryId") {
+            this.setRoomDictionary(ctx, value as DictionaryId);
+            return;
+        }
+        if (rule === "customBonusAlphabet") {
+            if (!this.bonusAlphabetsEqual(ctx.room.roomState.gameData!.rules.customBonusAlphabet, value)) {
+                const updates = { customBonusAlphabet: value };
+                this.applyLocalRuleUpdates(ctx, updates);
+                ctx.utils.setRules(updates);
+            }
+            return;
+        }
         if (ctx.room.roomState.gameData!.rules[rule] !== value) {
             Logger.log({
                 message: `Setting rule ${rule} to value ${value}`,
-                path: "BirdBotEventHandlers.ts",
+                path: "BirdBotUtils.class.ts",
             });
-            ctx.utils.setRules({ [rule]: value });
+            const updates = { [rule]: value };
+            this.applyLocalRuleUpdates(ctx, updates);
+            ctx.utils.setRules(updates);
         } else {
             Logger.log({
                 message: `Rule ${rule} is already set to the correct value. Skipping.`,
-                path: "BirdBotEventHandlers.ts",
+                path: "BirdBotUtils.class.ts",
             });
         }
     };
 
     public static detectRoomGameMode = (ctx: EventCtx) => {
+        const gameData = ctx.room.roomState.gameData!;
+        const expectedAlphabet = this.getDefaultBonusAlphabet(gameData.rules.dictionaryId);
+        const alphabetMatches = this.bonusAlphabetsEqual(gameData.rules.customBonusAlphabet, expectedAlphabet);
+
         let foundCorrespondingGameMode = false;
         for (const gameModeKey in birdbotModeRules) {
             const gameMode = birdbotModeRules[gameModeKey as BirdBotGameMode];
-            let isGameModeMatching = true;
-            for (const ruleKey in gameMode) {
-                type Rule = keyof typeof gameMode;
-                const ruleValue = gameMode[ruleKey as Rule];
-                if (ctx.room.roomState.gameData!.rules[ruleKey as Rule] !== ruleValue) {
-                    isGameModeMatching = false;
-                    break;
+            let isGameModeMatching = alphabetMatches;
+            if (isGameModeMatching) {
+                for (const ruleKey in gameMode) {
+                    type Rule = keyof typeof gameMode;
+                    const ruleValue = gameMode[ruleKey as Rule];
+                    if (gameData.rules[ruleKey as Rule] !== ruleValue) {
+                        isGameModeMatching = false;
+                        break;
+                    }
                 }
             }
             if (isGameModeMatching) {

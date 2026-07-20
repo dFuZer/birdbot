@@ -1,4 +1,5 @@
 import Utilitary from "../class/Utilitary.class";
+import { defaultBonusAlphabetsByDictionaryId } from "../constants/gameConstants";
 import {
     bonusAlphabetToLetters,
     extractRulesValues,
@@ -76,14 +77,22 @@ function normalizeMilestone(raw: any, previous?: Milestone | null): Milestone {
 
 function rulesFromSetup(rawRules: Record<string, { value: unknown }>): GameRules {
     const values = extractRulesValues(rawRules);
+    const dictionaryId = (values.dictionaryId as DictionaryId) ?? "en";
+    const customBonusAlphabet =
+        values.customBonusAlphabet && typeof values.customBonusAlphabet === "object"
+            ? (values.customBonusAlphabet as GameRules["customBonusAlphabet"])
+            : undefined;
     return {
-        dictionaryId: (values.dictionaryId as DictionaryId) ?? "en",
+        dictionaryId,
         minTurnDuration: Number(values.minTurnDuration ?? 5),
-        promptDifficulty: (values.promptDifficulty as PromptDifficulty) ?? "beginner",
-        customPromptDifficulty: Number(values.customPromptDifficulty ?? 500),
-        maxPromptAge: Number(values.maxPromptAge ?? 2),
+        promptDifficulty: (values.promptDifficulty as PromptDifficulty) ?? "custom",
+        customPromptDifficulty: Number(values.customPromptDifficulty ?? 1),
+        maxPromptAge: Number(values.maxPromptAge ?? 16),
         startingLives: Number(values.startingLives ?? 2),
         maxLives: Number(values.maxLives ?? 3),
+        customBonusAlphabet: customBonusAlphabet
+            ? { ...customBonusAlphabet }
+            : { ...defaultBonusAlphabetsByDictionaryId[dictionaryId] },
     };
 }
 
@@ -121,6 +130,14 @@ export default class CommonPlayerDataTrackingEventHandlers {
             leaderPeerId: data.leaderPeerId,
             selfRoles: data.selfRoles ?? [],
         };
+
+        if (rules.customBonusAlphabet) {
+            const letters = bonusAlphabetToLetters(rules.customBonusAlphabet);
+            gameData.dictionaryManifest.bonusLetters = letters;
+            if (milestone.dictionaryManifest) {
+                milestone.dictionaryManifest.bonusLetters = letters;
+            }
+        }
 
         ctx.room.roomState.gameData = gameData;
         ctx.room.roomState.myPeerId = data.selfPeerId ?? ctx.room.roomState.myPeerId;
@@ -165,6 +182,12 @@ export default class CommonPlayerDataTrackingEventHandlers {
             for (const [key, value] of Object.entries(data)) {
                 if (key in gameData.rules) {
                     (gameData.rules as any)[key] = value;
+                }
+            }
+            if (data.customBonusAlphabet && typeof data.customBonusAlphabet === "object") {
+                gameData.dictionaryManifest.bonusLetters = bonusAlphabetToLetters(data.customBonusAlphabet);
+                if (gameData.milestone.dictionaryManifest) {
+                    gameData.milestone.dictionaryManifest.bonusLetters = gameData.dictionaryManifest.bonusLetters;
                 }
             }
         }

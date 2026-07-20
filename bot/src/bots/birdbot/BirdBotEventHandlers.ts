@@ -254,7 +254,7 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
 
 const birdbotEventHandlers: BotEventHandlers = {
     chatDisconnect: [CommonEH.chatDisconnect, CommonEH.attemptToReconnectOnDisconnect],
-    gameDisconnect: CommonEH.gameDisconnect,
+    gameDisconnect: [CommonEH.gameDisconnect, CommonEH.attemptToReconnectOnDisconnect],
     chat: {
         chat: (ctx) => {
             const author = ctx.message.args[0];
@@ -327,9 +327,9 @@ const birdbotEventHandlers: BotEventHandlers = {
 
                 if (isFirstSetup && ctx.room.constantRoomData.targetConfig) {
                     const birdbotTargetConfig = ctx.room.constantRoomData.targetConfig as BirdbotRoomTargetConfig;
-                    const targetGameMode = birdbotTargetConfig.birdbotGameMode;
+                    const targetGameMode = BirdBotUtils.isMainRoom(ctx) ? "regular" : birdbotTargetConfig.birdbotGameMode;
                     BirdBotUtils.setRoomGameMode(ctx, birdbotModeRules[targetGameMode]);
-                    BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "dictionaryId", birdbotTargetConfig.dictionaryId);
+                    BirdBotUtils.setRoomDictionary(ctx, birdbotTargetConfig.dictionaryId);
                     ctx.utils.joinRound();
                 } else {
                     BirdBotUtils.detectRoomGameMode(ctx);

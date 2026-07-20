@@ -85,6 +85,7 @@ export const spanishTexts = {
         },
         setRoomLanguage: {
             description: "Cambia el idioma de la sala.",
+            alreadySet: "El idioma de la sala ya es {{language}}.",
             setting: "La sala ahora está en {{language}}.",
         },
         searchWords: {

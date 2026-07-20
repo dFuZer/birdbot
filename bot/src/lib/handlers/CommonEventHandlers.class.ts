@@ -21,25 +21,36 @@ export class CommonEventHandlers {
         const room = ctx.room.rawRoom;
         const bot = ctx.bot.rawBot;
         if (!bot.rooms[room.id]) return;
-        if (!room.hasEverConnected) {
-            Logger.log({
-                message: `Room ${room.constantRoomData.roomCode} never fully connected. Destroying.`,
-                path: "CommonEventHandlers.class.ts",
-            });
-            Utilitary.destroyRoom(bot, room);
-            return;
-        }
-        Logger.log({
-            message: `Attempting to reconnect to ${room.constantRoomData.roomCode}...`,
-            path: "CommonEventHandlers.class.ts",
-        });
-        Utilitary.destroyRoom(bot, room);
-        bot.joinRoom({
+
+        const snapshot = {
             roomCode: room.constantRoomData.roomCode,
             targetConfig: room.constantRoomData.targetConfig,
             roomCreatorAuthId: room.constantRoomData.roomCreatorAuthId,
             userToken: room.constantRoomData.userToken,
-            serverUrl: room.constantRoomData.serverUrl ?? undefined,
+            serverUrl: room.constantRoomData.serverUrl,
+            hasEverConnected: room.hasEverConnected,
+        };
+
+        Utilitary.destroyRoom(bot, room);
+
+        if (!snapshot.hasEverConnected) {
+            Logger.log({
+                message: `Room ${snapshot.roomCode} never fully connected. Not reconnecting.`,
+                path: "CommonEventHandlers.class.ts",
+            });
+            return;
+        }
+
+        Logger.log({
+            message: `Attempting to reconnect to ${snapshot.roomCode}...`,
+            path: "CommonEventHandlers.class.ts",
+        });
+        bot.joinRoom({
+            roomCode: snapshot.roomCode,
+            targetConfig: snapshot.targetConfig,
+            roomCreatorAuthId: snapshot.roomCreatorAuthId,
+            userToken: snapshot.userToken,
+            serverUrl: snapshot.serverUrl ?? undefined,
         });
     };
 }

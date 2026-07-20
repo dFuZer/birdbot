@@ -30,7 +30,7 @@ export const englishTexts = {
         "404": {
             word: "$t(error.intro) Word not found in dictionary.",
             player: "$t(error.intro) Player not found.",
-            gamer: "$t(error.intro) Gamer not found in room. This should not happen.",
+            gamer: "$t(error.intro) Player not found in room. This should not happen.",
             dictionaryResource: "$t(error.intro) Could not find dictionary resource for this language. This should not happen.",
             playerStats: "$t(error.intro) Player stats not found for this player. This should not happen.",
             currentPlayer: "$t(error.intro) No current player.",
@@ -79,6 +79,7 @@ export const englishTexts = {
         },
         setRoomLanguage: {
             description: "Sets the language of the room.",
+            alreadySet: "Room language is already {{language}}.",
             setting: "Setting language to {{language}}.",
         },
         searchWords: {

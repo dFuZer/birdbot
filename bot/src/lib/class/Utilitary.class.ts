@@ -65,7 +65,8 @@ export default class Utilitary {
     }
 
     public static createUserToken(): string {
-        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        // Same charset as BBv7 / jklm client tokens
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
         let token = "";
         for (let i = 0; i < 16; i++) {
             token += chars[Math.floor(Math.random() * chars.length)];
@@ -277,6 +278,8 @@ export default class Utilitary {
                     Utilitary.executeEventHandlers(bot.handlers.chatConnect, Utilitary.buildEventCtx(bot, room, "chatConnect", []));
                 }
 
+                Utilitary.bindSocketHandlers(bot, room, "chat", chatSocket);
+
                 chatSocket.emit("getChatterProfiles", (profiles: any[]) => {
                     if (Array.isArray(profiles) && room.roomState.roomData) {
                         room.roomState.roomData.chatters = profiles.map((p) => Utilitary.profileToChatter(p));
@@ -291,7 +294,6 @@ export default class Utilitary {
                 room.gameSocket = gameSocket;
 
                 gameSocket.on("connect", () => {
-                    Utilitary.bindSocketHandlers(bot, room, "chat", chatSocket);
                     Utilitary.bindSocketHandlers(bot, room, "game", gameSocket);
 
                     if (bot.handlers.gameConnect) {
@@ -453,16 +455,15 @@ export default class Utilitary {
             if (command.adminRequired && !ctx.utils.userIsAdmin(chatter.authId)) {
                 return "not-admin";
             }
-            if (
-                !(
-                    (command.roomCreatorRequired &&
-                        ctx.room.constantRoomData.roomCreatorAuthId === chatter.authId &&
-                        chatter.authId !== null) ||
-                    ctx.utils.userIsAdmin(chatter.authId) ||
-                    !command.roomCreatorRequired
-                )
-            ) {
-                return "not-room-creator";
+            if (command.roomCreatorRequired && !ctx.utils.userIsAdmin(chatter.authId)) {
+                const roomCreatorAuthId = ctx.room.constantRoomData.roomCreatorAuthId;
+                // Main rooms (no creator) are admin-only for room-creator commands
+                if (roomCreatorAuthId === null) {
+                    return "not-admin";
+                }
+                if (chatter.authId === null || roomCreatorAuthId !== chatter.authId) {
+                    return "not-room-creator";
+                }
             }
 
             Logger.log({
