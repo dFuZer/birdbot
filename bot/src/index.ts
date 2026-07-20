@@ -12,7 +12,8 @@ import Utilitary from "./lib/class/Utilitary.class";
 import { resourcesPath } from "./lib/paths";
 
 async function start() {
-    const permanentRoomLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt"];
+    // const permanentRoomLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt"];
+    const permanentRoomLanguages: BirdBotLanguage[] = ["fr"];
     const allowedLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt", "de", "it"];
     const bot = new BirdBot({
         periodicTasks: birdbotPeriodicTasks,
@@ -42,7 +43,7 @@ async function start() {
     {
         const s1 = performance.now();
         const loadedResources = await Promise.all(
-            allowedLanguages.map((lang) => loadDictionaryResource(lang, `${lang}.dictionary.txt`))
+            allowedLanguages.map((lang) => loadDictionaryResource(lang, `${lang}.dictionary.txt`)),
         );
         const s2 = performance.now();
         Logger.log({
