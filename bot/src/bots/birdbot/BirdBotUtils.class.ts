@@ -1,12 +1,10 @@
 import { createHash } from "crypto";
-import type WebSocket from "ws";
 import type z from "zod";
-import type AbstractNetworkAdapter from "../../lib/abstract/AbstractNetworkAdapter.class";
 import { CommandOrEventCtx } from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { dictionaryManifests } from "../../lib/constants/gameConstants";
-import type { DictionaryId, DictionaryLessGameRules, Gamer, GameRules } from "../../lib/types/gameTypes";
+import type { Chatter, DictionaryId, DictionaryLessGameRules, GameRules } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
 import { birdbotLanguageToDictionaryId, birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
 import { API_KEY, API_URL } from "./BirdBotEnv";
@@ -52,14 +50,16 @@ export default class BirdBotUtils {
     public static handleMyTurn: BotEventHandlerFn = (ctx) => {
         const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
         if (!currentPlayer) {
-            throw new Error("Current player is not set");
+            return;
         }
-        if (currentPlayer.gamerId !== ctx.room.roomState.myGamerId) return;
+        if (currentPlayer.peerId !== ctx.room.roomState.myPeerId) return;
         const myPlayer = currentPlayer;
         const dictionaryResource = this.getCurrentDictionaryResource(ctx);
         const history = ctx.room.roomState.wordHistory;
-        const prompt = ctx.room.roomState.gameData!.round.prompt;
-        const ws = ctx.room.ws!;
+        const prompt = ctx.room.roomState.gameData!.milestone.name === "round"
+            ? ctx.room.roomState.gameData!.milestone.syllable
+            : "";
+        if (!prompt) return;
 
         const isWordValid = (word: string) => {
             return word.indexOf(prompt) !== -1 && history.indexOf(word) === -1;
@@ -84,8 +84,7 @@ export default class BirdBotUtils {
             });
             this.submitWord({
                 word: foundWord ?? "/suicide",
-                ws,
-                adapter: ctx.bot.networkAdapter,
+                setWord: ctx.utils.setWord,
             });
         } else if (mode === "random") {
             const testList = dictionaryResource.metadata.testWords;
@@ -93,8 +92,7 @@ export default class BirdBotUtils {
                 if (isWordValid(testWord.word)) {
                     this.submitWord({
                         word: testWord.word,
-                        ws,
-                        adapter: ctx.bot.networkAdapter,
+                        setWord: ctx.utils.setWord,
                     });
                     return;
                 }
@@ -105,8 +103,7 @@ export default class BirdBotUtils {
             });
             this.submitWord({
                 word: foundWord ?? "/suicide",
-                ws,
-                adapter: ctx.bot.networkAdapter,
+                setWord: ctx.utils.setWord,
             });
         }
     };
@@ -161,27 +158,27 @@ export default class BirdBotUtils {
             .slice(0, n);
     };
 
-    public static getApiPlayerData = (player: Gamer) => {
+    public static getApiPlayerData = (player: Chatter) => {
         return {
-            accountName: player.identity.name,
-            nickname: player.identity.nickname,
+            accountName: player.authId ?? "",
+            nickname: player.nickname,
         } as BirdBotPlayerData;
     };
 
-    public static handlePlayerDeath = async (ctx: EventCtx, gamerId: number) => {
-        const gameRecap = BirdBotUtils.getApiGameRecap(ctx, gamerId);
-        const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === gamerId);
+    public static handlePlayerDeath = async (ctx: EventCtx, peerId: number) => {
+        const gameRecap = BirdBotUtils.getApiGameRecap(ctx, peerId);
+        const gamer = ctx.room.roomState.roomData!.chatters.find((c) => c.peerId === peerId);
 
         if (!gamer) {
             Logger.error({
-                message: `Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`,
+                message: `Chatter ${peerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`,
                 path: "BirdBotUtils.class.ts",
             });
             throw new Error(
-                `Gamer ${gamerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`
+                `Chatter ${peerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`
             );
         }
-        const timeSurvived = gameRecap.diedAt - ctx.room.roomState.gameData!.round.startTimestamp;
+        const timeSurvived = gameRecap.diedAt - ctx.room.roomState.roundStartTimestamp;
 
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
 
@@ -192,16 +189,16 @@ export default class BirdBotUtils {
             if (gameRecap.wordsCount === 0) {
                 ctx.utils.sendChatMessage(
                     t("general.playerStats.diedNoWords", {
-                        username: gamer.identity.nickname,
+                        username: gamer.nickname,
                         lng: l(ctx),
                     })
                 );
             } else {
-                const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByGamerId[gamerId], l(ctx));
+                const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByPeerId[peerId], l(ctx));
                 if (data.oldXpData.level < data.newXpData.level) {
                     ctx.utils.sendChatMessage(
                         t("general.playerStats.diedLevelUp", {
-                            username: gamer.identity.nickname,
+                            username: gamer.nickname,
                             time: recordsUtils.time.format(timeSurvived),
                             scores,
                             gainedXp: data.newXpData.xp - data.oldXpData.xp,
@@ -217,7 +214,7 @@ export default class BirdBotUtils {
                 } else {
                     ctx.utils.sendChatMessage(
                         t("general.playerStats.died", {
-                            username: gamer.identity.nickname,
+                            username: gamer.nickname,
                             time: recordsUtils.time.format(timeSurvived),
                             scores,
                             gainedXp: data.newXpData.xp - data.oldXpData.xp,
@@ -247,19 +244,13 @@ export default class BirdBotUtils {
         return targetItems;
     };
 
-    public static getApiGameRecap = (ctx: EventCtx, gamerId: number): BirdBotGameRecap => {
-        const gameData = ctx.room.roomState.gameData!;
-
-        const player = gameData.players.find((player) => player.gamerId === gamerId);
-        if (!player) {
-            throw new Error("Player not found");
-        }
-        const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === player.gamerId);
+    public static getApiGameRecap = (ctx: EventCtx, peerId: number): BirdBotGameRecap => {
+        const gamer = ctx.room.roomState.roomData!.chatters.find((c) => c.peerId === peerId);
         if (!gamer) {
-            throw new Error("Gamer not found");
+            throw new Error("Chatter not found");
         }
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-        const playerScores = roomMetadata.scoresByGamerId[gamerId];
+        const playerScores = roomMetadata.scoresByPeerId[peerId];
         if (!playerScores) {
             throw new Error("Player scores not found");
         }
@@ -328,7 +319,7 @@ export default class BirdBotUtils {
             throw new Error(`Language ${gameData.rules.dictionaryId} not supported. This should never happen.`);
         }
         return {
-            id: Utilitary.valueToUUID(gameData.round.startTimestamp.toString()),
+            id: Utilitary.valueToUUID(ctx.room.roomState.roundStartTimestamp.toString()),
             lang: language,
             mode: roomMetadata.gameMode,
         } as BirdBotGameData;
@@ -350,7 +341,7 @@ export default class BirdBotUtils {
                 message: `Setting rule ${rule} to value ${value}`,
                 path: "BirdBotEventHandlers.ts",
             });
-            ctx.room.ws!.send(ctx.bot.networkAdapter.getSetupMessage(rule, value));
+            ctx.utils.setRules({ [rule]: value });
         } else {
             Logger.log({
                 message: `Rule ${rule} is already set to the correct value. Skipping.`,
@@ -476,23 +467,20 @@ export default class BirdBotUtils {
         return null;
     };
 
-    public static findBestUsernameMatch = (str: string, gamers: Gamer[]): Gamer | null => {
-        const perfectMatch = gamers.find((gamer) => gamer.identity.nickname === str);
+    public static findBestUsernameMatch = (str: string, chatters: Chatter[]): Chatter | null => {
+        const perfectMatch = chatters.find((c) => c.nickname === str);
         if (perfectMatch) return perfectMatch;
-        const perfectCaseInsensitiveMatch = gamers.find((gamer) => gamer.identity.nickname.toLowerCase() === str.toLowerCase());
+        const perfectCaseInsensitiveMatch = chatters.find((c) => c.nickname.toLowerCase() === str.toLowerCase());
         if (perfectCaseInsensitiveMatch) return perfectCaseInsensitiveMatch;
-        const startsWithMatch = gamers.find((gamer) => gamer.identity.nickname.toLowerCase().startsWith(str.toLowerCase()));
+        const startsWithMatch = chatters.find((c) => c.nickname.toLowerCase().startsWith(str.toLowerCase()));
         if (startsWithMatch) return startsWithMatch;
-        const includeMatch = gamers.find((gamer) => gamer.identity.nickname.toLowerCase().includes(str.toLowerCase()));
+        const includeMatch = chatters.find((c) => c.nickname.toLowerCase().includes(str.toLowerCase()));
         if (includeMatch) return includeMatch;
         return null;
     };
 
-    public static submitWord = ({ adapter, word, ws }: { adapter: AbstractNetworkAdapter; word: string; ws: WebSocket }) => {
-        const typeMessage = adapter.getTypeMessage({ word });
-        const submitMessage = adapter.getSubmitWordMessage();
-        ws.send(typeMessage);
-        ws.send(submitMessage);
+    public static submitWord = ({ word, setWord }: { word: string; setWord: (word: string) => void }) => {
+        setWord(word);
     };
 
     public static getRandomValidWord = ({
@@ -583,8 +571,8 @@ export default class BirdBotUtils {
         return bestWord ? bestWord[0] : null;
     };
 
-    public static initializeScoresForPlayerId = (roomMetadata: BirdBotRoomMetadata, gamerId: number) => {
-        roomMetadata.scoresByGamerId[gamerId] = {
+    public static initializeScoresForPlayerId = (roomMetadata: BirdBotRoomMetadata, peerId: number) => {
+        roomMetadata.scoresByPeerId[peerId] = {
             alpha: 0,
             words: 0,
             flips: 0,
@@ -818,7 +806,7 @@ export default class BirdBotUtils {
         });
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         this.detectRoomGameMode(ctx);
-        roomMetadata.scoresByGamerId = {};
+        roomMetadata.scoresByPeerId = {};
         roomMetadata.globalScores = {
             flips: 0,
             previousSyllables: 0,
@@ -835,7 +823,7 @@ export default class BirdBotUtils {
             adverbs: 0,
         };
         roomMetadata.hostLeftIteration = 0;
-        roomMetadata.greetedGamersById = new Set();
+        roomMetadata.greetedPeerIds = new Set();
         this.initializeScoresForAllPlayers(ctx);
         const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
         roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);
@@ -844,8 +832,15 @@ export default class BirdBotUtils {
 
     public static initializeScoresForAllPlayers = (ctx: EventCtx) => {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-        for (const player of ctx.room.roomState.gameData!.players) {
-            this.initializeScoresForPlayerId(roomMetadata, player.gamerId);
+        const gameData = ctx.room.roomState.gameData!;
+        if (gameData.milestone.name === "round") {
+            for (const peerId of Object.keys(gameData.milestone.playerStatesByPeerId)) {
+                this.initializeScoresForPlayerId(roomMetadata, Number(peerId));
+            }
+        } else {
+            for (const player of gameData.players) {
+                this.initializeScoresForPlayerId(roomMetadata, player.profile.peerId);
+            }
         }
     };
 
@@ -885,7 +880,7 @@ export default class BirdBotUtils {
 
     public static resetRoomMetadata = (ctx: EventCtx) => {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-        roomMetadata.scoresByGamerId = {};
+        roomMetadata.scoresByPeerId = {};
         roomMetadata.globalScores = {
             flips: 0,
             previousSyllables: 0,
@@ -902,7 +897,7 @@ export default class BirdBotUtils {
             adverbs: 0,
         };
         for (const player of ctx.room.roomState.gameData!.players) {
-            this.initializeScoresForPlayerId(roomMetadata, player.gamerId);
+            this.initializeScoresForPlayerId(roomMetadata, player.profile.peerId);
         }
         const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
         roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);

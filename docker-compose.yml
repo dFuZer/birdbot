@@ -28,8 +28,10 @@ services:
         environment:
             API_URL: ${API_URL}
             API_KEY: ${API_KEY}
-            USERNAME: ${CROCO_USERNAME}
-            PASSWORD: ${CROCO_PASSWORD}
+            JKLM_AUTH_TOKEN: ${JKLM_AUTH_TOKEN:-}
+            JKLM_AUTH_USERNAME: ${JKLM_AUTH_USERNAME:-}
+            JKLM_NICKNAME: ${JKLM_NICKNAME:-BirdBot}
+            JKLM_LANGUAGE: ${JKLM_LANGUAGE:-en-US}
             NAMESPACE_UUID: ${NAMESPACE_UUID}
     api:
         build:

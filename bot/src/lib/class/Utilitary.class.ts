@@ -2,19 +2,29 @@ import { randomUUID } from "crypto";
 import fs, { createReadStream, readFileSync } from "fs";
 import path from "path";
 import readline from "readline";
+import { io, type Socket } from "socket.io-client";
 import { v5 as uuidv5 } from "uuid";
-import WebSocket from "ws";
-import type AbstractNetworkAdapter from "../abstract/AbstractNetworkAdapter.class";
-import { crocoDomain } from "../constants/gameConstants";
+import { jklmDomain } from "../constants/gameConstants";
 import { NAMESPACE_UUID } from "../env";
 import { dataPath } from "../paths";
-import type { GameData, Gamer, Player } from "../types/gameTypes";
+import type { Chatter, GameData, MilestoneRound } from "../types/gameTypes";
 import type { BotEventHandler, BotEventPreviousHandlersCtx, EventCtx } from "../types/libEventTypes";
 import type Bot from "./Bot.class";
 import type { Command, CommandHandlerCtx } from "./CommandUtils.class";
 import Logger from "./Logger.class";
 import type Room from "./Room.class";
+
+type QueuedRequest = {
+    fn: () => Promise<void>;
+    resolve: () => void;
+    reject: (err: unknown) => void;
+};
+
 export default class Utilitary {
+    private static requestQueue: QueuedRequest[] = [];
+    private static queueRunning = false;
+    private static readonly QUEUE_DELAY_MS = 2800;
+
     public static formatTime(time: number) {
         const milliseconds = time;
         let seconds = Math.floor(milliseconds / 1000);
@@ -54,25 +64,21 @@ export default class Utilitary {
         fs.writeFileSync(path.join(dataPath, fileName), content);
     }
 
-    public static sendChatMessage(ws: WebSocket, message: string, adapter: AbstractNetworkAdapter) {
-        let cutTxt = message.split(" ");
-        let buffer = "";
-        let chunks = [];
-        let charLengthLimit = 298;
-        for (let textChunk of cutTxt) {
-            if (buffer.length + textChunk.length < charLengthLimit) {
-                buffer += " " + textChunk;
-            } else {
-                chunks.push(buffer);
-                buffer = textChunk;
-            }
+    public static createUserToken(): string {
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let token = "";
+        for (let i = 0; i < 16; i++) {
+            token += chars[Math.floor(Math.random() * chars.length)];
         }
-        if (buffer.length) {
-            chunks.push(buffer);
-        }
-        for (let chunk of chunks) {
-            const message = adapter.getSendChatMessage(chunk);
-            ws.send(message);
+        return token;
+    }
+
+    public static sendChatMessage(room: Room, message: string) {
+        const chatSocket = room.chatSocket;
+        if (!chatSocket?.connected) return;
+        const chunks = Utilitary.cutMessage(message, 298);
+        for (const chunk of chunks) {
+            chatSocket.emit("chat", chunk, {});
         }
     }
 
@@ -91,37 +97,70 @@ export default class Utilitary {
         return uuidv5(value, NAMESPACE_UUID);
     }
 
-    public static async getJson<T>(path: string): Promise<T> {
-        const res = await fetch(`https://${crocoDomain}${path}`, {
-            method: "GET",
-        });
-        const data = await res.json();
-        return data as T;
-    }
-
-    public static async postJson<T>(path: string, obj: Record<string, any>): Promise<T> {
-        const res = await fetch(`https://${crocoDomain}${path}`, {
+    public static async postJson<T>(apiPath: string, obj: Record<string, any>): Promise<T> {
+        const res = await fetch(`https://${jklmDomain}${apiPath}`, {
             method: "POST",
             body: JSON.stringify(obj),
             headers: {
                 "Content-Type": "application/json",
             },
         });
-        const data = await res.json();
-        return data as T;
+        const text = await res.text();
+        try {
+            return JSON.parse(text) as T;
+        } catch {
+            throw new Error(`jklm API ${apiPath} failed: ${text}`);
+        }
     }
 
-    public static getCurrentPlayer(gameData: GameData) {
-        if (gameData.step.value !== "round") {
-            Logger.error({
-                message: `Trying to get current player while step is ${gameData.step.value} instead of round.`,
-                path: "Utilitary.class.ts",
+    public static queuedPostJson<T>(apiPath: string, obj: Record<string, any>): Promise<T> {
+        return new Promise((resolve, reject) => {
+            Utilitary.requestQueue.push({
+                fn: async () => {
+                    const result = await Utilitary.postJson<T>(apiPath, obj);
+                    resolve(result);
+                },
+                resolve: () => {},
+                reject,
             });
+            Utilitary.pumpQueue();
+        });
+    }
+
+    private static async pumpQueue() {
+        if (Utilitary.queueRunning) return;
+        Utilitary.queueRunning = true;
+        while (Utilitary.requestQueue.length > 0) {
+            const item = Utilitary.requestQueue.shift()!;
+            try {
+                await item.fn();
+            } catch (err) {
+                item.reject(err);
+            }
+            await new Promise((r) => setTimeout(r, Utilitary.QUEUE_DELAY_MS));
+        }
+        Utilitary.queueRunning = false;
+    }
+
+    public static async resolveRoomServerUrl(room: Room) {
+        if (room.constantRoomData.serverUrl) return;
+        const response = await Utilitary.queuedPostJson<{ url: string }>("/api/joinRoom", {
+            roomCode: room.constantRoomData.roomCode,
+        });
+        if (!response.url) {
+            throw new Error(`Could not resolve server URL for room ${room.constantRoomData.roomCode}`);
+        }
+        room.constantRoomData.serverUrl = response.url;
+    }
+
+    public static getCurrentPlayer(gameData: GameData): (MilestoneRound["playerStatesByPeerId"][string] & { peerId: number }) | null {
+        if (gameData.milestone.name !== "round") {
             return null;
         }
-        const { round } = gameData;
-        const index = (round.startPlayerIndex + round.turnIndex) % gameData.players.length;
-        return gameData.players[index]!;
+        const peerId = gameData.milestone.currentPlayerPeerId;
+        const state = gameData.milestone.playerStatesByPeerId[String(peerId)];
+        if (!state) return null;
+        return { ...state, peerId };
     }
 
     public static executeEventHandlers(eventHandler: BotEventHandler, ctx: EventCtx) {
@@ -135,119 +174,199 @@ export default class Utilitary {
         }
     }
 
-    public static resetPlayer(player: Player) {
-        player.justExploded = false;
-        player.lives = 0;
-        player.points = 0;
-        player.usedLetters = "";
-        player.lastPrompt = "";
-        player.lastSubmit = null;
-        player.text = "";
-    }
-
     public static destroyRoom(bot: Bot, room: Room) {
-        const ws = room.ws;
-        if (ws) {
-            ws.listeners("close").forEach((listener) => {
-                ws.off("close", listener as any);
-            });
-            ws.listeners("open").forEach((listener) => {
-                ws.off("open", listener as any);
-            });
-            ws.listeners("message").forEach((listener) => {
-                ws.off("message", listener as any);
-            });
-            ws.terminate();
-        }
+        const cleanupSocket = (socket: Socket | null) => {
+            if (!socket) return;
+            socket.removeAllListeners();
+            socket.disconnect();
+        };
+        cleanupSocket(room.chatSocket);
+        cleanupSocket(room.gameSocket);
+        room.chatSocket = null;
+        room.gameSocket = null;
         delete bot.rooms[room.id];
     }
 
-    public static initializeRoomSocket(bot: Bot, room: Room) {
-        const ws = new WebSocket(`wss://${room.nodeHost}/api/websocket`, {
-            perMessageDeflate: false,
-        });
-        room.ws = ws;
+    private static buildEventCtx(bot: Bot, room: Room, event: string, args: any[]): EventCtx {
+        return {
+            bot: {
+                getResource: bot.resourceManager.get.bind(bot.resourceManager),
+                session: bot.botData!.session,
+                rooms: bot.rooms,
+                rawBot: bot,
+            },
+            message: { event, args },
+            utils: {
+                sendChatMessage: (m: string) => Utilitary.sendChatMessage(room, m),
+                userIsAdmin: (authId: string | null | undefined) => {
+                    if (!authId) return false;
+                    return bot.botData!.adminAuthIds.includes(authId);
+                },
+                setWord: (word: string) => {
+                    room.gameSocket?.emit("setWord", word, true);
+                },
+                joinRound: () => {
+                    room.gameSocket?.emit("joinRound");
+                },
+                startRoundNow: () => {
+                    room.gameSocket?.emit("startRoundNow");
+                },
+                setRules: (rules: Record<string, unknown>) => {
+                    room.gameSocket?.emit("setRulesLocked", false);
+                    room.gameSocket?.emit("setRules", rules);
+                    room.gameSocket?.emit("setRulesLocked", true);
+                },
+                setRulesLocked: (locked: boolean) => {
+                    room.gameSocket?.emit("setRulesLocked", locked);
+                },
+                setRoomPublic: (isPublic: boolean) => {
+                    room.chatSocket?.emit("setRoomPublic", isPublic);
+                },
+                setUserModerator: (peerId: number, isModerator: boolean) => {
+                    room.chatSocket?.emit("setUserModerator", peerId, isModerator, () => {});
+                },
+            },
+            room: {
+                roomState: room.roomState,
+                constantRoomData: room.constantRoomData,
+                rawRoom: room,
+                isHealthy: () => {
+                    const botRoom = bot.rooms[room.id];
+                    return botRoom !== undefined && botRoom.isConnected();
+                },
+            },
+        };
+    }
 
-        const getEventCtx = (buffer: Buffer): EventCtx => {
-            const ctx: EventCtx = {
-                bot: {
-                    getResource: bot.resourceManager.get.bind(bot.resourceManager),
-                    session: bot.botData!.session,
-                    networkAdapter: bot.networkAdapter,
-                    rooms: bot.rooms,
-                    rawBot: bot,
-                },
-                message: buffer,
-                utils: {
-                    sendChatMessage: (m: string) => {
-                        Utilitary.sendChatMessage(room.ws!, m, bot.networkAdapter);
-                    },
-                    userIsAdmin: (username: string) => {
-                        return bot.botData!.adminAccountUsernames.includes(username);
-                    },
-                },
-                room: {
-                    roomState: room.roomState,
-                    constantRoomData: room.constantRoomData,
-                    ws: room.ws!,
-                    rawRoom: room,
-                    isHealthy: () => {
-                        const botRoom = bot.rooms[room.id];
+    public static initializeRoomSockets(bot: Bot, room: Room) {
+        const url = room.constantRoomData.serverUrl;
+        if (!url) {
+            throw new Error("Room server URL is not set");
+        }
 
-                        return botRoom !== undefined && botRoom.ws !== null && botRoom.ws.readyState === WebSocket.OPEN;
-                    },
-                },
-            };
-            return ctx;
+        const session = bot.botData!.session;
+        const joinData = {
+            auth: session.getJoinAuth(),
+            language: session.language,
+            nickname: session.nickname,
+            picture: session.picture,
+            roomCode: room.constantRoomData.roomCode,
+            userToken: room.constantRoomData.userToken,
+            takeOver: false,
+            isUsernameHidden: false,
         };
 
-        ws.on("open", () => {
-            if (!bot.handlers.open) {
-                Logger.error({
-                    message: "No open handler",
-                    path: "Utilitary.class.ts",
-                });
-                return;
-            }
+        const chatSocket = io(url, {
+            transports: ["websocket"],
+            reconnection: false,
+            timeout: 8000,
+        });
+        room.chatSocket = chatSocket;
 
-            Utilitary.executeEventHandlers(bot.handlers.open, getEventCtx(new Buffer("")));
+        chatSocket.on("connect", () => {
+            chatSocket.emit("joinRoom", joinData, (ack: { selfPeerId: number; roomEntry?: { isPublic?: boolean } }) => {
+                room.roomState.myPeerId = ack.selfPeerId;
+                room.roomState.roomData = {
+                    code: room.constantRoomData.roomCode,
+                    isPublic: ack.roomEntry?.isPublic ?? room.constantRoomData.targetConfig.isPublic,
+                    chatters: [],
+                };
+                room.roomState.lastActivityAt = Date.now();
+
+                if (bot.handlers.chatConnect) {
+                    Utilitary.executeEventHandlers(bot.handlers.chatConnect, Utilitary.buildEventCtx(bot, room, "chatConnect", []));
+                }
+
+                chatSocket.emit("getChatterProfiles", (profiles: any[]) => {
+                    if (Array.isArray(profiles) && room.roomState.roomData) {
+                        room.roomState.roomData.chatters = profiles.map((p) => Utilitary.profileToChatter(p));
+                    }
+                });
+
+                const gameSocket = io(url, {
+                    transports: ["websocket"],
+                    reconnection: false,
+                    timeout: 8000,
+                });
+                room.gameSocket = gameSocket;
+
+                gameSocket.on("connect", () => {
+                    Utilitary.bindSocketHandlers(bot, room, "chat", chatSocket);
+                    Utilitary.bindSocketHandlers(bot, room, "game", gameSocket);
+
+                    if (bot.handlers.gameConnect) {
+                        Utilitary.executeEventHandlers(
+                            bot.handlers.gameConnect,
+                            Utilitary.buildEventCtx(bot, room, "gameConnect", [])
+                        );
+                    }
+
+                    gameSocket.emit(
+                        "joinGame",
+                        "bombparty",
+                        room.constantRoomData.roomCode,
+                        room.constantRoomData.userToken,
+                        true
+                    );
+                });
+
+                gameSocket.on("disconnect", () => {
+                    if (bot.handlers.gameDisconnect) {
+                        Utilitary.executeEventHandlers(
+                            bot.handlers.gameDisconnect,
+                            Utilitary.buildEventCtx(bot, room, "gameDisconnect", [])
+                        );
+                    }
+                });
+
+                gameSocket.on("connect_error", (err) => {
+                    Logger.error({
+                        message: `Game socket connect error for ${room.constantRoomData.roomCode}: ${err.message}`,
+                        path: "Utilitary.class.ts",
+                    });
+                });
+            });
         });
 
-        ws.on("close", () => {
-            if (!bot.handlers.close) {
-                Logger.error({
-                    message: "No close handler",
-                    path: "Utilitary.class.ts",
-                });
-                return;
+        chatSocket.on("disconnect", () => {
+            if (bot.handlers.chatDisconnect) {
+                Utilitary.executeEventHandlers(
+                    bot.handlers.chatDisconnect,
+                    Utilitary.buildEventCtx(bot, room, "chatDisconnect", [])
+                );
             }
-            Utilitary.executeEventHandlers(bot.handlers.close, getEventCtx(new Buffer("")));
         });
 
-        ws.on("message", (message: Buffer) => {
-            const baseMessageData = bot.networkAdapter.readNodeMessageBaseData(message);
-            let handler: BotEventHandler | undefined;
-            let eventName: string;
-
-            if (baseMessageData.eventType === "session") {
-                const sessionEventType = baseMessageData.sessionEventType;
-                handler = bot.handlers.message.session[sessionEventType];
-                eventName = `session-${sessionEventType}`;
-            } else {
-                handler = bot.handlers.message[baseMessageData.eventType];
-                eventName = `node-${baseMessageData.eventType}`;
-            }
-
-            if (!handler) {
-                Logger.error({
-                    message: `No handler for event type ${eventName}`,
-                    path: "Utilitary.class.ts",
-                });
-                return;
-            }
-
-            Utilitary.executeEventHandlers(handler, getEventCtx(message));
+        chatSocket.on("connect_error", (err) => {
+            Logger.error({
+                message: `Chat socket connect error for ${room.constantRoomData.roomCode}: ${err.message}`,
+                path: "Utilitary.class.ts",
+            });
         });
+    }
+
+    private static bindSocketHandlers(bot: Bot, room: Room, side: "chat" | "game", socket: Socket) {
+        const handlers = bot.handlers[side];
+        for (const eventName of Object.keys(handlers)) {
+            if (eventName === "disconnect") continue;
+            const handler = handlers[eventName as keyof typeof handlers];
+            if (!handler) continue;
+            socket.on(eventName, (...args: any[]) => {
+                room.roomState.lastActivityAt = Date.now();
+                if (!bot.rooms[room.id]) return;
+                Utilitary.executeEventHandlers(handler, Utilitary.buildEventCtx(bot, room, eventName, args));
+            });
+        }
+    }
+
+    public static profileToChatter(profile: any): Chatter {
+        return {
+            peerId: profile.peerId,
+            nickname: profile.nickname ?? "?",
+            authId: profile.auth?.id ?? null,
+            isOnline: profile.isOnline !== false,
+            isModerator: Array.isArray(profile.roles) && profile.roles.includes("moderator"),
+        };
     }
 
     public static cutMessage(message: string, maxLength: number) {
@@ -256,7 +375,7 @@ export default class Utilitary {
         let messages: string[] = [];
         for (let letterGroup of splitText) {
             if (buffer.length + letterGroup.length < maxLength) {
-                buffer += " " + letterGroup;
+                buffer += (buffer ? " " : "") + letterGroup;
             } else {
                 messages.push(buffer);
                 buffer = letterGroup;
@@ -306,7 +425,7 @@ export default class Utilitary {
     public static handleCommandIfExists(
         ctx: EventCtx,
         rawMessage: string,
-        gamer: Gamer,
+        chatter: Chatter,
         commands: Command[]
     ):
         | "no-command-given"
@@ -331,13 +450,15 @@ export default class Utilitary {
                 .map((arg) => arg.toLowerCase());
             const command = commands.find((c) => c.aliases.includes(requestedCommand));
             if (!command) return "command-not-found";
-            if (command.adminRequired && !ctx.utils.userIsAdmin(gamer.identity.name)) {
+            if (command.adminRequired && !ctx.utils.userIsAdmin(chatter.authId)) {
                 return "not-admin";
             }
             if (
                 !(
-                    (command.roomCreatorRequired && ctx.room.constantRoomData.roomCreatorUsername === gamer.identity.name) ||
-                    ctx.utils.userIsAdmin(gamer.identity.name) ||
+                    (command.roomCreatorRequired &&
+                        ctx.room.constantRoomData.roomCreatorAuthId === chatter.authId &&
+                        chatter.authId !== null) ||
+                    ctx.utils.userIsAdmin(chatter.authId) ||
                     !command.roomCreatorRequired
                 )
             ) {
@@ -355,7 +476,7 @@ export default class Utilitary {
                 rawMessage,
                 params,
                 args: commandArgs,
-                gamer,
+                gamer: chatter,
                 normalizedMessage,
                 usedAlias: requestedCommand,
                 normalizedTextAfterCommand: normalizedMessage.slice(requestedCommand.length + 1).trim(),

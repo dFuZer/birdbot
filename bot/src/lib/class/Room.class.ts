@@ -1,80 +1,80 @@
-import WebSocket from "ws";
-import * as CrocoTypes from "../types/gameTypes";
-import Utilitary from "./Utilitary.class";
+import type { Socket } from "socket.io-client";
+import * as JklmTypes from "../types/gameTypes";
 
 export type RoomMetadata = Record<string, any>;
 
 export type RoomState = {
     wordHistory: string[];
-    gameData: CrocoTypes.GameData | null;
-    roomData: CrocoTypes.RoomData | null;
-    currentTurnIndex: number;
-    myGamerId: number;
+    gameData: JklmTypes.GameData | null;
+    roomData: JklmTypes.RoomData | null;
+    myPeerId: number;
     metadata: RoomMetadata;
-    unansweredPings: number;
+    /** Round start time for API game ids (set when entering round milestone) */
+    roundStartTimestamp: number;
+    lastActivityAt: number;
 };
 
 export type ConstantRoomData = {
     roomCode: string;
     targetConfig: RoomTargetConfig;
-    roomCreatorUsername: string | null;
+    roomCreatorAuthId: string | null;
+    userToken: string;
+    serverUrl: string | null;
 };
 
 export type RoomTargetConfig = {
-    gameMode: CrocoTypes.GameMode;
-    dictionaryId: CrocoTypes.DictionaryId;
+    dictionaryId: JklmTypes.DictionaryId;
     isPublic: boolean;
     roomName: string;
     [key: string]: any;
 };
 
 export default class Room {
-    public ws: WebSocket | null;
+    public chatSocket: Socket | null;
+    public gameSocket: Socket | null;
     public roomState: RoomState;
     public constantRoomData: ConstantRoomData;
-    public nodeHost: string | null;
     public id: string;
+    public hasEverConnected: boolean;
 
     constructor({
         roomCode,
         id,
         targetConfig,
-        roomCreatorUsername,
+        roomCreatorAuthId,
+        userToken,
+        serverUrl,
     }: {
         roomCode: string;
         id: string;
         targetConfig: RoomTargetConfig;
-        roomCreatorUsername: string | null;
+        roomCreatorAuthId: string | null;
+        userToken: string;
+        serverUrl?: string | null;
     }) {
-        this.ws = null;
-        this.nodeHost = null;
+        this.chatSocket = null;
+        this.gameSocket = null;
         this.id = id;
+        this.hasEverConnected = false;
         this.constantRoomData = {
-            roomCode: roomCode,
-            targetConfig: targetConfig,
-            roomCreatorUsername: roomCreatorUsername,
+            roomCode,
+            targetConfig,
+            roomCreatorAuthId,
+            userToken,
+            serverUrl: serverUrl ?? null,
         };
         this.roomState = {
             gameData: null,
             roomData: null,
-            currentTurnIndex: -1,
-            myGamerId: -1,
+            myPeerId: -1,
             wordHistory: [],
             metadata: {},
-            unansweredPings: 0,
+            roundStartTimestamp: 0,
+            lastActivityAt: Date.now(),
         };
     }
 
-    public async init({ sessionSecret }: { sessionSecret: string }) {
-        const joinRoomResponse = await Utilitary.postJson<{
-            code: string;
-            nodeHost: string;
-        }>("/api/rooms/join", {
-            secret: sessionSecret,
-            gameId: "bombParty",
-            code: this.constantRoomData.roomCode,
-        });
-
-        this.nodeHost = joinRoomResponse.nodeHost;
+    public isConnected(): boolean {
+        return !!(this.chatSocket?.connected && this.gameSocket?.connected);
     }
 }

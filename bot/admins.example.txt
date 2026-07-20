@@ -1,1 +1,1 @@
-dfuzer
+# One jklm auth.id per line (logged-in account ids that have admin powers)

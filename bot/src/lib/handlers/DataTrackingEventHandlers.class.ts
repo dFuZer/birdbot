@@ -1,391 +1,353 @@
 import Utilitary from "../class/Utilitary.class";
-import { resultPoints } from "../constants/gameConstants";
-import * as CrocoTypes from "../types/gameTypes";
+import {
+    bonusAlphabetToLetters,
+    extractRulesValues,
+    type DictionaryId,
+    type GameData,
+    type GameRules,
+    type Milestone,
+    type MilestoneRound,
+    type PlayerState,
+    type PromptDifficulty,
+} from "../types/gameTypes";
 import type { BotEventHandlerFn } from "../types/libEventTypes";
 
+function normalizePlayerState(peerId: number | string, raw: any): PlayerState {
+    return {
+        peerId: Number(peerId),
+        lives: raw.lives ?? 0,
+        word: (raw.word ?? "").toString(),
+        usedLetters: raw.usedLetters ?? "",
+        bonusLetters: raw.bonusLetters,
+        wasWordValidated: raw.wasWordValidated,
+    };
+}
+
+function normalizeMilestone(raw: any, previous?: Milestone | null): Milestone {
+    if (raw.name === "round") {
+        const playerStatesByPeerId: Record<string, PlayerState> = {};
+        const rawStates = raw.playerStatesByPeerId ?? {};
+        for (const [id, state] of Object.entries(rawStates)) {
+            const prev =
+                previous?.name === "round" ? previous.playerStatesByPeerId[id]?.usedLetters : undefined;
+            const normalized = normalizePlayerState(id, state);
+            if (prev !== undefined && !normalized.usedLetters) {
+                normalized.usedLetters = prev;
+            }
+            playerStatesByPeerId[id] = normalized;
+        }
+        return {
+            name: "round",
+            syllable: (raw.syllable ?? "").toString().toLowerCase(),
+            promptAge: raw.promptAge,
+            currentPlayerPeerId: raw.currentPlayerPeerId,
+            playerStatesByPeerId,
+            dictionaryManifest: raw.dictionaryManifest
+                ? {
+                      name: raw.dictionaryManifest.name,
+                      bonusLetters: bonusAlphabetToLetters(
+                          raw.dictionaryManifest.bonusAlphabet ?? raw.dictionaryManifest.bonusLetters
+                      ),
+                      promptDifficulties: raw.dictionaryManifest.promptDifficulties,
+                  }
+                : previous?.name === "round"
+                  ? previous.dictionaryManifest
+                  : undefined,
+            startTimestamp:
+                previous?.name === "round" && previous.startTimestamp
+                    ? previous.startTimestamp
+                    : Date.now(),
+        };
+    }
+    return {
+        name: "seating",
+        rulesLocked: raw.rulesLocked,
+        dictionaryManifest: raw.dictionaryManifest
+            ? {
+                  name: raw.dictionaryManifest.name,
+                  bonusLetters: bonusAlphabetToLetters(
+                      raw.dictionaryManifest.bonusAlphabet ?? raw.dictionaryManifest.bonusLetters
+                  ),
+                  promptDifficulties: raw.dictionaryManifest.promptDifficulties,
+              }
+            : undefined,
+    };
+}
+
+function rulesFromSetup(rawRules: Record<string, { value: unknown }>): GameRules {
+    const values = extractRulesValues(rawRules);
+    return {
+        dictionaryId: (values.dictionaryId as DictionaryId) ?? "en",
+        minTurnDuration: Number(values.minTurnDuration ?? 5),
+        promptDifficulty: (values.promptDifficulty as PromptDifficulty) ?? "beginner",
+        customPromptDifficulty: Number(values.customPromptDifficulty ?? 500),
+        maxPromptAge: Number(values.maxPromptAge ?? 2),
+        startingLives: Number(values.startingLives ?? 2),
+        maxLives: Number(values.maxLives ?? 3),
+    };
+}
+
 export default class CommonPlayerDataTrackingEventHandlers {
-    public static helloOk: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readHelloOkMessageData(ctx.message);
-        const { myGamerId, roomData, gameData } = data;
-
-        ctx.room.roomState.roomData = roomData;
-        ctx.room.roomState.gameData = gameData;
-        ctx.room.roomState.currentTurnIndex = gameData.round.turnIndex;
-        ctx.room.roomState.myGamerId = myGamerId;
-    };
-
-    public static setRoomAccessMode: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readSetRoomAccessModeData(ctx.message);
-        const { roomAccessMode } = data;
-
-        ctx.room.roomState.roomData!.access.mode = roomAccessMode as CrocoTypes.RoomAccessMode;
-    };
-
-    public static setRole: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readSetRoleData(ctx.message);
-        const { gamerId, role } = data;
-
-        const roomData = ctx.room.roomState.roomData!;
-
-        if (role === "host") {
-            const currentHost = roomData.gamers.find((gamer) => gamer.role === "host");
-            if (currentHost) {
-                currentHost.role = "";
-            }
-
-            const newHost = roomData.gamers.find((gamer) => gamer.id === gamerId);
-            if (newHost) {
-                newHost.role = "host";
-            }
-        }
-        const gamer = roomData.gamers.find((gamer) => gamer.id === gamerId);
-        if (gamer) {
-            gamer.role = role as CrocoTypes.RoomRole;
-        }
-    };
-
-    public static addGamer: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
-        const data = ctx.bot.networkAdapter.readAddGamerData(ctx.message);
-        const { newPlayerData } = data;
-
-        ctx.room.roomState.roomData!.gamers.push(newPlayerData);
-
-        previousHandlersCtx.newGamerId = newPlayerData.id;
-    };
-
-    public static setGamerOnline: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readSetGamerOnlineData(ctx.message);
-        const { gamerId, online, playerData } = data;
-
-        const roomData = ctx.room.roomState.roomData!;
-        const gamer = roomData.gamers.find((y) => y.id === gamerId);
-
-        if (gamer) {
-            gamer.isOnline = online;
-            if (online && playerData) {
-                gamer.identity = playerData;
-            }
-        }
-    };
-
     public static setup: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
-        const isInitialSetup = ctx.room.roomState.gameData!.step.value === "initialSetup";
-        const data = ctx.bot.networkAdapter.readSetupData(ctx.message, isInitialSetup);
+        const data = ctx.message.args[0];
+        const wasUninitialized = ctx.room.roomState.gameData === null;
+        previousHandlersCtx.isFirstSetup = wasUninitialized;
 
-        if (isInitialSetup) {
-            previousHandlersCtx.initialSetup = true;
-            if (data.initialSetup) {
-                const { gameMode, dictionaryId, dictionaryManifest } = data;
+        const rules = rulesFromSetup(data.rules);
+        const milestone = normalizeMilestone(data.milestone, ctx.room.roomState.gameData?.milestone);
+        const dictionaryManifest =
+            milestone.dictionaryManifest ??
+            (data.milestone?.dictionaryManifest
+                ? {
+                      name: data.milestone.dictionaryManifest.name,
+                      bonusLetters: bonusAlphabetToLetters(
+                          data.milestone.dictionaryManifest.bonusAlphabet ??
+                              data.milestone.dictionaryManifest.bonusLetters
+                      ),
+                      promptDifficulties: data.milestone.dictionaryManifest.promptDifficulties,
+                  }
+                : { bonusLetters: "" });
 
-                ctx.room.roomState.gameData!.rules.gameMode = gameMode;
-                ctx.room.roomState.gameData!.rules.dictionaryId = dictionaryId;
-                ctx.room.roomState.gameData!.dictionaryManifest = dictionaryManifest;
-                ctx.room.roomState.gameData!.step = {
-                    value: "pregame",
-                    timestamp: data.timestamp,
-                };
-            }
-        } else {
-            if (!data.initialSetup) {
-                const { rule, value } = data;
+        const players = (data.players ?? []).map((p: any) => ({
+            profile: p.profile,
+            isOnline: p.isOnline !== false,
+        }));
 
-                if (rule === "gameMode") {
-                    ctx.room.roomState.gameData!.rules.gameMode = value;
-                } else if (rule === "dictionaryId") {
-                    ctx.room.roomState.gameData!.rules.dictionaryId = value.dictionaryId;
-                    ctx.room.roomState.gameData!.dictionaryManifest = value.dictionaryManifest;
-                } else if (rule === "promptDifficulty") {
-                    ctx.room.roomState.gameData!.rules.promptDifficulty = value;
-                } else if (rule === "customPromptDifficulty") {
-                    ctx.room.roomState.gameData!.rules.customPromptDifficulty = value;
-                } else if (rule === "bombDuration") {
-                    ctx.room.roomState.gameData!.rules.bombDuration = value;
-                } else if (rule === "roundsToWin") {
-                    ctx.room.roomState.gameData!.rules.roundsToWin = value;
-                } else if (rule === "scoreGoal") {
-                    ctx.room.roomState.gameData!.rules.scoreGoal = value;
-                } else if (rule === "startingLives") {
-                    ctx.room.roomState.gameData!.rules.startingLives = value;
-                } else if (rule === "maxLives") {
-                    ctx.room.roomState.gameData!.rules.maxLives = value;
-                } else if (rule === "minWordLengthOption") {
-                    ctx.room.roomState.gameData!.rules.minWordLengthOption = value;
+        const gameData: GameData = {
+            rules,
+            dictionaryManifest,
+            milestone,
+            players,
+            leaderPeerId: data.leaderPeerId,
+            selfRoles: data.selfRoles ?? [],
+        };
+
+        ctx.room.roomState.gameData = gameData;
+        ctx.room.roomState.myPeerId = data.selfPeerId ?? ctx.room.roomState.myPeerId;
+        ctx.room.rawRoom.hasEverConnected = true;
+
+        if (milestone.name === "round") {
+            ctx.room.roomState.roundStartTimestamp = milestone.startTimestamp;
+        }
+
+        previousHandlersCtx.selfPeerId = data.selfPeerId;
+        previousHandlersCtx.leaderPeerId = data.leaderPeerId;
+    };
+
+    public static setMilestone: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const newMilestoneRaw = ctx.message.args[0];
+        const gameData = ctx.room.roomState.gameData!;
+        const previousName = gameData.milestone.name;
+        const milestone = normalizeMilestone(newMilestoneRaw, gameData.milestone);
+        previousHandlersCtx.previousMilestoneName = previousName;
+        previousHandlersCtx.newMilestoneName = milestone.name;
+
+        if (previousName === "round" && milestone.name === "seating") {
+            previousHandlersCtx.roundEnded = true;
+            ctx.room.roomState.wordHistory.length = 0;
+        }
+        if (previousName === "seating" && milestone.name === "round") {
+            previousHandlersCtx.roundStarted = true;
+            (milestone as MilestoneRound).startTimestamp = Date.now();
+            ctx.room.roomState.roundStartTimestamp = (milestone as MilestoneRound).startTimestamp;
+        }
+
+        gameData.milestone = milestone;
+        if (milestone.dictionaryManifest) {
+            gameData.dictionaryManifest = milestone.dictionaryManifest;
+        }
+    };
+
+    public static setRules: BotEventHandlerFn = (ctx) => {
+        const data = ctx.message.args[0];
+        const gameData = ctx.room.roomState.gameData!;
+        if (data && typeof data === "object") {
+            for (const [key, value] of Object.entries(data)) {
+                if (key in gameData.rules) {
+                    (gameData.rules as any)[key] = value;
                 }
             }
         }
     };
 
-    public static toggleCountdown: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readToggleCountdownData(ctx.message);
-        const { enabled, timestamp } = data;
-
-        ctx.room.roomState.gameData!.countdown.enabled = enabled;
-        ctx.room.roomState.gameData!.countdown.timestamp = enabled ? timestamp : null;
-    };
-
-    public static removePlayer: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readRemovePlayerData(ctx.message);
-        const { removedGamerId } = data;
-
+    public static setDictionaryManifest: BotEventHandlerFn = (ctx) => {
+        const manifest = ctx.message.args[0];
         const gameData = ctx.room.roomState.gameData!;
-        gameData.players = gameData.players.filter((player) => player.gamerId !== removedGamerId);
+        gameData.dictionaryManifest = {
+            name: manifest.name,
+            bonusLetters: bonusAlphabetToLetters(manifest.bonusAlphabet ?? manifest.bonusLetters),
+            promptDifficulties: manifest.promptDifficulties,
+        };
+        if (gameData.milestone.name === "round" || gameData.milestone.name === "seating") {
+            gameData.milestone.dictionaryManifest = gameData.dictionaryManifest;
+        }
     };
 
     public static addPlayer: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readAddPlayerData(ctx.message);
-        const { playerData } = data;
-
-        ctx.room.roomState.gameData!.players.push(playerData);
-    };
-
-    public static oneVOneAnnouncement: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readOneVOneAnnouncementData(ctx.message);
-
-        ctx.room.roomState.gameData!.step = {
-            value: "1v1Announcement",
-            timestamp: data.timestamp,
-        };
-    };
-
-    public static roundIntro: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readRoundIntroData(ctx.message);
-        const { startPlayerIndex, timestamp } = data;
-
+        const player = ctx.message.args[0];
         const gameData = ctx.room.roomState.gameData!;
+        gameData.players.push({
+            profile: player.profile,
+            isOnline: player.isOnline !== false,
+        });
+    };
 
-        if (gameData.round.index === 0) {
-            gameData.countdown.timestamp = null;
+    public static updatePlayer: BotEventHandlerFn = (ctx) => {
+        const playerPeerId = ctx.message.args[0];
+        const profile = ctx.message.args[1];
+        const isOnline = ctx.message.args[2];
+        const gameData = ctx.room.roomState.gameData!;
+        const player = gameData.players.find((p) => p.profile.peerId === playerPeerId);
+        if (player) {
+            if (profile) player.profile = profile;
+            if (typeof isOnline === "boolean") player.isOnline = isOnline;
         }
-
-        gameData.step = {
-            value: "roundIntro",
-            timestamp: timestamp,
-        };
-
-        gameData.round.turnIndex = -1;
-        ctx.room.roomState.currentTurnIndex = -1;
-        gameData.round.startPlayerIndex = startPlayerIndex;
-        gameData.round.wordsPlayed = 0;
-
-        for (const gamer of gameData.players) {
-            gamer.lastPrompt = "";
-            gamer.lastSubmit = null;
-            gamer.text = "";
-            gamer.lives = gameData.rules.startingLives;
-            gamer.points = 0;
-            gamer.usedLetters = "";
-        }
-    };
-
-    public static round: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readRoundData(ctx.message);
-        const { prompt, minWordLength, timestamp } = data;
-
-        const gameData = ctx.room.roomState.gameData!;
-
-        gameData.step = {
-            value: "round",
-            timestamp: timestamp,
-        };
-        gameData.round.turnIndex = 0;
-        ctx.room.roomState.currentTurnIndex = gameData.players.length - 1;
-        gameData.round.state = {
-            value: "bombTicking",
-            timestamp: timestamp,
-        };
-        gameData.round.prompt = prompt;
-        gameData.round.minWordLength = minWordLength;
-        gameData.round.promptAge = 0;
-        gameData.round.startTimestamp = timestamp;
-        gameData.round.wordsPlayed = 0;
-        const startPlayer = gameData.players[gameData.round.startPlayerIndex]!;
-        startPlayer.lastPrompt = prompt;
-        startPlayer.lastSubmit = null;
-    };
-
-    public static roundOver: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
-        const data = ctx.bot.networkAdapter.readRoundOverData(ctx.message);
-        const { lastRoundWinnerId, timestamp } = data;
-        previousHandlersCtx.deadPlayerIds = [];
-
-        const gameData = ctx.room.roomState.gameData!;
-        for (const d of gameData.players)
-            if (d.justExploded) {
-                d.lives--;
-                d.justExploded = false;
-                if (d.lives === 0) {
-                    previousHandlersCtx.deadPlayerIds.push(d.gamerId);
-                }
+        const chatter = ctx.room.roomState.roomData?.chatters.find((c) => c.peerId === playerPeerId);
+        if (chatter) {
+            if (profile) {
+                chatter.nickname = profile.nickname ?? chatter.nickname;
+                chatter.authId = profile.auth?.id ?? chatter.authId;
             }
-        gameData.step = {
-            value: "roundOver",
-            timestamp: timestamp,
-        };
-        gameData.round.index++;
-        gameData.game.duration += timestamp - gameData.round.startTimestamp;
-        gameData.game.wordsPlayed += gameData.round.wordsPlayed;
-        gameData.lastRoundWinnerId = lastRoundWinnerId;
+            if (typeof isOnline === "boolean") chatter.isOnline = isOnline;
+        }
     };
 
-    public static explodeBomb: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readExplodeBombData(ctx.message);
-
+    public static removePlayer: BotEventHandlerFn = (ctx) => {
+        const playerPeerId = ctx.message.args[0];
         const gameData = ctx.room.roomState.gameData!;
-        const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
-        if (!currentPlayer) {
-            throw new Error("Current player is not set");
-        }
-        currentPlayer.justExploded = true;
-        currentPlayer.points = Math.max(0, currentPlayer.points + resultPoints.bombExploded);
-        currentPlayer.lastSubmit = {
-            timestamp: data.timestamp,
-            result: "bombExploded",
-            points: resultPoints.bombExploded,
-        };
-        gameData.round.state = {
-            value: "bombExploded",
-            timestamp: data.timestamp,
-        };
+        gameData.players = gameData.players.filter((p) => p.profile.peerId !== playerPeerId);
+    };
+
+    public static clearUsedWords: BotEventHandlerFn = (ctx) => {
+        ctx.room.roomState.wordHistory.length = 0;
     };
 
     public static nextTurn: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
-        const data = ctx.bot.networkAdapter.readNextTurnData(ctx.message);
-        const { prompt, promptAge, minWordLength, timestamp } = data;
-
+        const playerPeerId = ctx.message.args[0];
+        const syllable = (ctx.message.args[1] ?? "").toString().toLowerCase();
+        const promptAge = ctx.message.args[2];
         const gameData = ctx.room.roomState.gameData!;
-        ctx.room.roomState.currentTurnIndex = gameData.round.turnIndex;
-        let currentPlayer;
+        if (gameData.milestone.name !== "round") return;
 
-        let playerIndex = (gameData.round.startPlayerIndex + gameData.round.turnIndex) % gameData.players.length;
-        previousHandlersCtx.previousGamerId = gameData.players[playerIndex]!.gamerId;
-        previousHandlersCtx.previousPrompt = gameData.round.prompt;
-        previousHandlersCtx.deadPlayerIds = [] as number[];
-        previousHandlersCtx.lostLifePlayerIds = [] as number[];
+        previousHandlersCtx.previousPeerId = gameData.milestone.currentPlayerPeerId;
+        previousHandlersCtx.previousPrompt = gameData.milestone.syllable;
 
-        do {
-            gameData.round.turnIndex++;
-            if (gameData.round.turnIndex >= 0 && gameData.round.turnIndex % gameData.players.length === 0) {
-                const shouldRemoveLives =
-                    gameData.players.filter((player) => player.lives > 1 || (player.lives === 1 && !player.justExploded)).length >
-                    0;
-                if (shouldRemoveLives) {
-                    for (const player of gameData.players)
-                        if (player.justExploded) {
-                            player.lives--;
-                            previousHandlersCtx.lostLifePlayerIds.push(player.gamerId);
-                            if (player.lives === 0) {
-                                previousHandlersCtx.deadPlayerIds.push(player.gamerId);
-                            }
-                        }
-                }
-                for (const player of gameData.players) {
-                    player.justExploded = false;
-                }
-            }
-            playerIndex = (gameData.round.startPlayerIndex + gameData.round.turnIndex) % gameData.players.length;
-            currentPlayer = gameData.players[playerIndex]!;
-            currentPlayer.text = "";
-        } while (currentPlayer.lives === 0);
-
-        ctx.room.roomState.currentTurnIndex = gameData.round.turnIndex;
-
-        gameData.round.prompt = prompt;
-        gameData.round.promptAge = promptAge;
-        gameData.round.minWordLength = minWordLength;
-        currentPlayer.lastPrompt = gameData.round.prompt;
+        gameData.milestone.currentPlayerPeerId = playerPeerId;
+        gameData.milestone.syllable = syllable;
+        gameData.milestone.promptAge = promptAge;
+        const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
+        if (state) {
+            state.word = "";
+        }
     };
 
-    public static submit: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
-        const data = ctx.bot.networkAdapter.readSubmitData(ctx.message);
-        const { result, points, timestamp } = data;
-
-        const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
-        if (!currentPlayer) {
-            throw new Error("Current player is not set");
-        }
+    public static livesLost: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const playerPeerId = ctx.message.args[0];
+        const lives = ctx.message.args[1];
         const gameData = ctx.room.roomState.gameData!;
-
-        currentPlayer.points = Math.max(0, currentPlayer.points + points);
-        currentPlayer.lastSubmit = {
-            points,
-            result: result as CrocoTypes.SubmitResultType,
-            timestamp: timestamp,
-        };
-        if (result === "success") {
-            gameData.round.wordsPlayed++;
-            ctx.room.roomState.wordHistory.push(currentPlayer.text);
-            let currentUsedLetters = currentPlayer.usedLetters;
-            for (const letter of currentPlayer.text) {
-                if (!currentUsedLetters.includes(letter) && gameData.dictionaryManifest.bonusLetters.includes(letter)) {
-                    currentUsedLetters += letter;
-                }
-            }
-            currentPlayer.usedLetters = currentUsedLetters;
-            const isLifeGain = gameData.dictionaryManifest.bonusLetters.length === currentUsedLetters.length;
-            if (isLifeGain) {
-                previousHandlersCtx.isLifeGain = true;
-                currentPlayer.lives = Math.min(gameData.rules.maxLives, currentPlayer.lives + 1);
-                currentPlayer.usedLetters = "";
+        if (gameData.milestone.name !== "round") return;
+        const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
+        if (state) {
+            const previousLives = state.lives;
+            state.lives = lives;
+            state.usedLetters = "";
+            previousHandlersCtx.lostLifePeerId = playerPeerId;
+            if (previousLives > 0 && lives === 0) {
+                previousHandlersCtx.deadPeerId = playerPeerId;
             }
         }
     };
 
-    public static type: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readTypeData(ctx.message);
-        const { typedWord } = data;
-
-        const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
-        if (!currentPlayer) {
-            throw new Error("Current player is not set");
+    public static bonusAlphabetCompleted: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const playerPeerId = ctx.message.args[0];
+        const lives = ctx.message.args[1];
+        const gameData = ctx.room.roomState.gameData!;
+        if (gameData.milestone.name !== "round") return;
+        const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
+        if (state) {
+            state.lives = lives;
+            state.usedLetters = "";
+            previousHandlersCtx.isLifeGain = true;
+            previousHandlersCtx.lifeGainPeerId = playerPeerId;
         }
-        currentPlayer.text = typedWord;
     };
 
-    public static gameOver: BotEventHandlerFn = (ctx) => {
-        const data = ctx.bot.networkAdapter.readGameOverData(ctx.message);
-        const { gameOverData, shouldResetPlayers, timestamp } = data;
-
-        const roomData = ctx.room.roomState.roomData!;
+    public static setPlayerWord: BotEventHandlerFn = (ctx) => {
+        const playerPeerId = ctx.message.args[0];
+        const word = ctx.message.args[1] ?? "";
         const gameData = ctx.room.roomState.gameData!;
-        if (roomData.access.mode === "playlist") {
-            if (roomData.access.playlistType === "ranked1v1") {
-                gameData.step = {
-                    value: "matchOver",
-                    timestamp: timestamp,
-                };
+        if (gameData.milestone.name !== "round") return;
+        const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
+        if (state) {
+            state.word = word.toString();
+        }
+    };
+
+    public static failWord: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const playerPeerId = ctx.message.args[0];
+        const reason = ctx.message.args[1];
+        previousHandlersCtx.playerPeerId = playerPeerId;
+        previousHandlersCtx.reason = reason;
+        previousHandlersCtx.success = false;
+    };
+
+    public static correctWord: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const wordData = ctx.message.args[0] ?? {};
+        const playerPeerId = wordData.playerPeerId ?? ctx.message.args[0];
+        const gameData = ctx.room.roomState.gameData!;
+        if (gameData.milestone.name !== "round") return;
+
+        const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
+        if (!state) return;
+
+        const rawWord = state.word;
+        const word = rawWord.toLowerCase().replace(/[^a-z'-]/gi, "");
+        ctx.room.roomState.wordHistory.push(word);
+
+        const bonusLetters = gameData.dictionaryManifest.bonusLetters;
+        let used = state.usedLetters;
+        for (const letter of word) {
+            if (bonusLetters.includes(letter) && !used.includes(letter)) {
+                used += letter;
             }
+        }
+        state.usedLetters = used;
+        const isLifeGain = bonusLetters.length > 0 && used.length >= bonusLetters.length;
+        if (isLifeGain) {
+            previousHandlersCtx.isLifeGain = true;
+            state.usedLetters = "";
+        }
+
+        previousHandlersCtx.playerPeerId = playerPeerId;
+        previousHandlersCtx.word = word;
+        previousHandlersCtx.rawWord = rawWord;
+        previousHandlersCtx.success = true;
+    };
+
+    public static chatterAdded: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const profile = ctx.message.args[0];
+        const chatter = Utilitary.profileToChatter(profile);
+        if (!ctx.room.roomState.roomData) {
+            ctx.room.roomState.roomData = {
+                code: ctx.room.constantRoomData.roomCode,
+                isPublic: ctx.room.constantRoomData.targetConfig.isPublic,
+                chatters: [],
+            };
+        }
+        const existing = ctx.room.roomState.roomData.chatters.find((c) => c.peerId === chatter.peerId);
+        if (existing) {
+            Object.assign(existing, chatter);
         } else {
-            gameData.step = {
-                value: "pregame",
-                timestamp: timestamp,
-            };
-            gameData.round = {
-                index: 0,
-                startPlayerIndex: 0,
-                turnIndex: 0,
-                state: {
-                    value: "bombTicking",
-                    timestamp: 0,
-                },
-                prompt: "",
-                promptAge: 0,
-                minWordLength: 0,
-                startTimestamp: 0,
-                wordsPlayed: 0,
-            };
-            if (shouldResetPlayers) {
-                gameData.players.length = 0;
-            }
-            for (const gamer of roomData.gamers) gamer.roundsWon = 0;
-            for (const player of gameData.players) Utilitary.resetPlayer(player);
+            ctx.room.roomState.roomData.chatters.push(chatter);
         }
-        gameData.game = {
-            duration: 0,
-            wordsPlayed: 0,
-        };
+        previousHandlersCtx.newPeerId = chatter.peerId;
+        previousHandlersCtx.chatter = chatter;
     };
 
-    public static updatePlaylistRatings: BotEventHandlerFn = (ctx) => {
-        ctx.bot.networkAdapter.readUpdatePlaylistRatingsData(ctx.message);
+    public static chatterRemoved: BotEventHandlerFn = (ctx) => {
+        const peerId = typeof ctx.message.args[0] === "object" ? ctx.message.args[0]?.peerId : ctx.message.args[0];
+        if (ctx.room.roomState.roomData) {
+            ctx.room.roomState.roomData.chatters = ctx.room.roomState.roomData.chatters.filter((c) => c.peerId !== peerId);
+        }
     };
 }

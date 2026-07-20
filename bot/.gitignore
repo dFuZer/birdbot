@@ -4,9 +4,6 @@ node_modules
 # Environment variables
 .env
 
-# Private classes, like the working network adapter
-src/lib/class/private/
-
 # Unstable scripts that change very often
 src/index.unstable.ts
 
@@ -18,7 +15,3 @@ dist/
 
 # Resources
 resources/*
-
-# Admins
-admins.txt
-!admins.example.txt

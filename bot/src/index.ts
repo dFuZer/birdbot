@@ -7,79 +7,38 @@ import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import getBirdBotHttpServer from "./bots/birdbot/BirdBotServer";
 import { BirdBotLanguage, DictionaryResource, ListedRecordListResource } from "./bots/birdbot/BirdBotTypes";
 import { birdbotTextResource } from "./bots/birdbot/texts/BirdBotTextUtils";
-import AbstractNetworkAdapter from "./lib/abstract/AbstractNetworkAdapter.class";
 import Logger from "./lib/class/Logger.class";
 import Utilitary from "./lib/class/Utilitary.class";
 import { resourcesPath } from "./lib/paths";
 
-async function tryGetNetworkAdapter() {
-    try {
-        const module = (await import(
-            // @ts-ignore
-            "./lib/class/private/NetworkAdapter.class"
-        )) as any;
-        try {
-            const instance = new module.default();
-            instance.getJoinMessage();
-            return module.default as new () => AbstractNetworkAdapter;
-        } catch (e) {
-            Logger.error({
-                path: "index.ts",
-                message:
-                    "Found an implementation of the NetworkAdapter class, but it is not working properly.\n" +
-                    "Are you sure you implemented all the class methods correctly ?",
-            });
-            console.error(e);
-            process.exit(1);
-        }
-    } catch (e) {
-        Logger.error({
-            path: "index.ts",
-            message:
-                "To run the bot, you must create a working implementation of the NetworkAdapter class\n" +
-                "in the lib/class/private/NetworkAdapter.class.ts file.\n" +
-                "See the README.md of the github repository for more information.\n" +
-                "Link of the repository: https://github.com/dFuZer/birdbot",
-        });
-        process.exit(1);
-    }
-}
-
 async function start() {
-    const NetworkAdapterClass = await tryGetNetworkAdapter();
-
-    // Initialize bot
     const permanentRoomLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt"];
     const allowedLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt", "de", "it"];
     const bot = new BirdBot({
-        networkAdapter: new NetworkAdapterClass(),
         periodicTasks: birdbotPeriodicTasks,
         mainRoomLanguages: permanentRoomLanguages,
     });
 
-    // Initialize bot HTTP server for communication with the API
     bot.initServer({
         app: getBirdBotHttpServer(bot),
         port: 3001,
     });
 
-    // Initialize bot admins
     let admins: string[];
     try {
         admins = Utilitary.readArrayFromFile("./admins.txt");
         Logger.log({
             message: `Starting bot with admins: ${admins.join(", ")}`,
-            path: "index.unstable.ts",
+            path: "index.ts",
         });
     } catch (e) {
         admins = [];
         Logger.error({
             message: `No admins.txt file found. Running the bot with no admins.`,
-            path: "index.unstable.ts",
+            path: "index.ts",
         });
     }
 
-    // Load dictionaries
     {
         const s1 = performance.now();
         const loadedResources = await Promise.all(
@@ -87,8 +46,8 @@ async function start() {
         );
         const s2 = performance.now();
         Logger.log({
-            message: `Time taken to load 6 dictionaries in parallel: ${(s2 - s1).toFixed(2)} milliseconds`,
-            path: "index.unstable.ts",
+            message: `Time taken to load dictionaries in parallel: ${(s2 - s1).toFixed(2)} milliseconds`,
+            path: "index.ts",
         });
 
         loadedResources.forEach((resource) => {
@@ -96,7 +55,6 @@ async function start() {
         });
     }
 
-    // Load lists for listed records
     {
         const s1 = performance.now();
         const records = Object.entries(listedRecordsPerLanguage)
@@ -124,12 +82,11 @@ async function start() {
         }
         const s2 = performance.now();
         Logger.log({
-            message: `Time taken to load 6 dictionaries in parallel: ${(s2 - s1).toFixed(2)} milliseconds`,
-            path: "index.unstable.ts",
+            message: `Time taken to load listed records: ${(s2 - s1).toFixed(2)} milliseconds`,
+            path: "index.ts",
         });
     }
 
-    // Load i18n text resources
     {
         await i18next.init({
             lng: "en",
@@ -141,24 +98,21 @@ async function start() {
         });
     }
 
-    // Initialize bot session
     while (true) {
         try {
-            await bot.init({ adminAccountUsernames: admins });
+            await bot.init({ adminAuthIds: admins });
             break;
         } catch (e) {
             Logger.error({
                 message: `Error while initializing bot. Retrying in 1 second...`,
-                path: "index.unstable.ts",
+                path: "index.ts",
+                error: e,
             });
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
     }
 
-    // Start periodic tasks
     await bot.startPeriodicTasks();
-
-    // Start server
     bot.startServer();
 }
 

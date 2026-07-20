@@ -75,12 +75,12 @@ export type BirdbotRoomTargetConfig = {
 
 export type BirdBotRoomMetadata = {
     gameMode: BirdBotGameMode | "custom";
-    scoresByGamerId: Record<string, PlayerGameScores>;
+    scoresByPeerId: Record<string, PlayerGameScores>;
     globalScores: GlobalGameScores;
     remainingSyllables: Record<string, number>;
     wasInitialized: boolean;
     hostLeftIteration: number;
-    greetedGamersById: Set<string>;
+    greetedPeerIds: Set<string>;
 };
 
 export type ExperienceData = {

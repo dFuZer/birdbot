@@ -1,82 +1,37 @@
-import Utilitary from "./Utilitary.class";
+import { JKLM_AUTH_EXPIRATION, JKLM_AUTH_TOKEN, JKLM_AUTH_USERNAME, JKLM_LANGUAGE, JKLM_NICKNAME, JKLM_PICTURE } from "../env";
+import type { JklmAuth } from "../types/gameTypes";
 
-type SessionResult = {
-    account: any;
-    session: TSession;
-};
-
-type SessionResultError = {
-    errId: string;
-};
-
-type TSession = {
-    accountName: string;
-    secret: string;
-    timestamp: number;
-    type: "account";
-};
-
+/**
+ * jklm identity used when joining rooms.
+ * Guest mode (auth null) works for hosting via creatorUserToken.
+ * Optional account auth enables logged-in features and stable auth.id.
+ */
 export class Session {
-    public account: any | null;
-    public session: TSession | null;
+    public nickname: string;
+    public language: string;
+    public picture: string | null;
+    public auth: JklmAuth;
 
     constructor() {
-        this.account = null;
-        this.session = null;
+        this.nickname = JKLM_NICKNAME;
+        this.language = JKLM_LANGUAGE;
+        this.picture = JKLM_PICTURE;
+        this.auth =
+            JKLM_AUTH_TOKEN && JKLM_AUTH_USERNAME
+                ? {
+                      expiration: JKLM_AUTH_EXPIRATION,
+                      service: "jklm",
+                      token: JKLM_AUTH_TOKEN,
+                      username: JKLM_AUTH_USERNAME,
+                  }
+                : null;
     }
 
     public async init() {
-        const session = await this.getLoggedInSession();
-        this.account = session.account;
-        this.session = session.session;
+        // No HTTP session restore on jklm; identity is env-driven.
     }
 
-    private getSecret() {
-        const secret = Utilitary.readFileInDataFolder("sessionSecret.txt");
-        return secret;
-    }
-
-    private deleteSecret() {
-        Utilitary.writeFileInDataFolder("sessionSecret.txt", "");
-    }
-
-    private async getSession(retry = false): Promise<SessionResult> {
-        const secret = await this.getSecret();
-        if (secret) {
-            const res = await Utilitary.postJson<SessionResult | SessionResultError>("/api/central/restoreSession", {
-                secret,
-            });
-            if ("errId" in res) {
-                if (retry) {
-                    throw new Error("Failed to restore session");
-                }
-                this.deleteSecret();
-                return await this.getSession(true);
-            }
-            return res;
-        }
-
-        const res = await Utilitary.postJson<TSession>("/api/central/createSession", {});
-        Utilitary.writeFileInDataFolder("sessionSecret.txt", res.secret);
-        return { account: null, session: res };
-    }
-
-    private async logIn() {
-        const res = await Utilitary.postJson<SessionResult>("/api/central/logIn", {
-            secret: this.getSecret()!,
-            name: process.env.USERNAME!,
-            password: process.env.PASSWORD!,
-        });
-        return res;
-    }
-
-    private async getLoggedInSession() {
-        const restoredSession = await this.getSession();
-        if (restoredSession.account) {
-            return restoredSession;
-        }
-
-        const loggedInSession = await this.logIn();
-        return loggedInSession;
+    public getJoinAuth(): JklmAuth {
+        return this.auth;
     }
 }

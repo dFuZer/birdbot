@@ -1,189 +1,126 @@
-import {
-    bombpartySessionMessageKinds,
-    centralMessageKinds,
-    defaultBombPartyRules,
-    dictionaryIds,
-    gameModes,
-    minWordLengthOptions,
-    nodeMessageKinds,
-    promptDifficulties,
-    roomRoles,
-    submitResults,
-} from "../constants/gameConstants";
+import { dictionaryIds, failWordReasons, promptDifficulties, submitResults } from "../constants/gameConstants";
 
-export interface AvatarPart {
-    partName: string;
-    variantName: string | null;
-}
-
-export interface Avatar {
-    head?: AvatarPart;
-    eyes?: AvatarPart;
-    body?: AvatarPart;
-    top?: AvatarPart;
-    bottom?: AvatarPart;
-    eyewear?: AvatarPart;
-    gloves?: AvatarPart;
-    hat?: AvatarPart;
-    neckwear?: AvatarPart;
-}
-
-export interface Roles {
-    supporter: string | null;
-    content: string | null;
-    platform: string | null;
-}
-
-export interface GameStats {
-    bombParty: {
-        gamesPlayed: number;
-        playTime: number;
-        achievements: string[];
-    };
-}
-
-export interface Identity {
-    name: string | null;
-    nickname: string;
-    signUpTimestamp: number;
-    awards: string[];
-    picture: string | null;
-    avatar: Avatar;
-    roles: Roles;
-    gameStats: GameStats;
-}
-
-export interface PlaylistRating {
-    start: number;
-    end: number;
-}
-
-export interface Gamer {
-    id: number;
-    identity: Identity;
-    role: RoomRole;
-    isOnline: boolean;
-    roundsWon: number;
-    playlistRating: PlaylistRating;
-}
-
-export type RoomAccessMode = "public" | "private" | "locked" | "playlist";
-export type PlaylistType = "quickPlay" | "ranked1v1";
 export type DictionaryId = (typeof dictionaryIds)[number];
 export type PromptDifficulty = (typeof promptDifficulties)[number];
-export type MinWordLengthOption = (typeof minWordLengthOptions)[number];
+export type SubmitResultType = (typeof submitResults)[number];
+export type FailWordReason = (typeof failWordReasons)[number] | string;
 
-export interface RoomData {
-    code: string;
-    gamers: Gamer[];
-    access: {
-        mode: RoomAccessMode;
-        dictionaryId: DictionaryId;
-        host: Identity;
-        playlistType: PlaylistType;
-    };
-}
+export type JklmAuth = {
+    expiration: number;
+    service: string;
+    token: string;
+    username: string;
+    id?: string;
+} | null;
 
-export interface GameRules {
-    gameMode: GameMode;
-    dictionaryId: DictionaryId;
-    promptDifficulty: PromptDifficulty;
-    bombDuration: number;
-    customPromptDifficulty: number;
-    roundsToWin: number;
-    minWordLengthOption: MinWordLengthOption;
-    scoreGoal: number;
-    startingLives: number;
-    maxLives: number;
-}
+export type ChatterProfile = {
+    peerId: number;
+    nickname: string;
+    auth: JklmAuth;
+    roles?: string[];
+    picture?: string | null;
+};
 
-export type DictionaryLessGameRules = Omit<GameRules, "dictionaryId">;
+/** Room participant (chat-side identity). */
+export type Chatter = {
+    peerId: number;
+    nickname: string;
+    /** jklm auth.id when logged in; null for guests */
+    authId: string | null;
+    isOnline: boolean;
+    isModerator: boolean;
+};
 
-export interface GameStep {
-    value: "pregame" | "initialSetup" | "1v1Announcement" | "round" | "matchOver" | "roundIntro" | "roundOver";
-    timestamp: number;
-}
-
-export interface DictionaryManifest {
+export type DictionaryManifest = {
+    name?: string;
     bonusLetters: string;
-    difficultyPresets: {
+    promptDifficulties?: {
         beginner: number;
         medium: number;
         hard: number;
     };
-}
+};
 
-export interface RoundState {
-    value: string;
-    timestamp: number;
-}
-
-export interface Round {
-    index: number;
-    startPlayerIndex: number;
-    turnIndex: number;
-    state: RoundState;
-    prompt: string;
-    promptAge: number;
-    minWordLength: number;
-    startTimestamp: number;
-    wordsPlayed: number;
-}
-
-export interface Countdown {
-    enabled: boolean;
-    timestamp: number | null;
-}
-
-export interface Game {
-    duration: number;
-    wordsPlayed: number;
-}
-
-export interface Player {
-    gamerId: number;
-    justExploded: boolean;
-    lives: number;
-    points: number;
-    usedLetters: string;
-    text: string;
-    lastPrompt: string;
-    lastSubmit: {
-        timestamp: number;
-        result: SubmitResultType;
-        points: number;
-    } | null;
-    isLongOffline: boolean;
-}
-
-export interface GameData {
-    rules: GameRules;
-    step: GameStep;
-    dictionaryManifest: DictionaryManifest;
-    players: Player[];
-    countdown: Countdown;
-    game: Game;
-    round: Round;
-    lastRoundWinnerId: number | null;
-}
-
-export type NodeMessageKind = (typeof nodeMessageKinds)[number];
-export type BombpartySessionMessageKind = (typeof bombpartySessionMessageKinds)[number];
-export type CentralMessageKind = (typeof centralMessageKinds)[number];
-export type RoomRole = (typeof roomRoles)[number];
-export type SubmitResultType = (typeof submitResults)[number];
-export type BombPartyRuleKey = keyof typeof defaultBombPartyRules;
-export type AnyMessageKind = NodeMessageKind | BombpartySessionMessageKind | CentralMessageKind;
-export type GameMode = (typeof gameModes)[number];
 export type BombPartyRules = {
-    gameMode: GameMode;
     dictionaryId: DictionaryId;
+    minTurnDuration: number;
     promptDifficulty: PromptDifficulty;
-    bombDuration: number;
     customPromptDifficulty: number;
-    roundsToWin: number;
-    minWordLengthOption: MinWordLengthOption;
-    scoreGoal: number;
+    maxPromptAge: number;
     startingLives: number;
     maxLives: number;
 };
+
+export type DictionaryLessGameRules = Omit<BombPartyRules, "dictionaryId">;
+export type GameRules = BombPartyRules;
+export type BombPartyRuleKey = keyof BombPartyRules;
+
+export type PlayerState = {
+    peerId: number;
+    lives: number;
+    word: string;
+    /** Letters collected toward bonus alphabet this life */
+    usedLetters: string;
+    bonusLetters?: Record<string, number> | string;
+    wasWordValidated?: boolean;
+};
+
+export type MilestoneSeating = {
+    name: "seating";
+    rulesLocked?: boolean;
+    dictionaryManifest?: DictionaryManifest;
+};
+
+export type MilestoneRound = {
+    name: "round";
+    syllable: string;
+    promptAge?: number;
+    currentPlayerPeerId: number;
+    playerStatesByPeerId: Record<string, PlayerState>;
+    dictionaryManifest?: DictionaryManifest;
+    startTimestamp: number;
+};
+
+export type Milestone = MilestoneSeating | MilestoneRound;
+
+export type RoomPlayer = {
+    profile: ChatterProfile;
+    isOnline: boolean;
+};
+
+export type RoomData = {
+    code: string;
+    isPublic: boolean;
+    chatters: Chatter[];
+};
+
+export type GameData = {
+    rules: GameRules;
+    dictionaryManifest: DictionaryManifest;
+    milestone: Milestone;
+    players: RoomPlayer[];
+    leaderPeerId: number;
+    selfRoles: string[];
+};
+
+/** @deprecated alias kept for gradual product remaps — use Chatter */
+export type Gamer = Chatter & { id: number; identity: { name: string | null; nickname: string }; role: string };
+
+export function bonusAlphabetToLetters(bonusAlphabet: Record<string, number> | string | undefined): string {
+    if (!bonusAlphabet) return "";
+    if (typeof bonusAlphabet === "string") return bonusAlphabet;
+    return Object.entries(bonusAlphabet)
+        .filter(([, count]) => count > 0)
+        .map(([letter]) => letter)
+        .join("");
+}
+
+export function extractRulesValues(rawRules: Record<string, { value: unknown }>): Partial<GameRules> & Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(rawRules)) {
+        if (entry && typeof entry === "object" && "value" in entry) {
+            out[key] = entry.value;
+        }
+    }
+    return out;
+}

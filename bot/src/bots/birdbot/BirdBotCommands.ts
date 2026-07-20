@@ -2,7 +2,6 @@ import type { Command } from "../../lib/class/CommandUtils.class";
 import CommandUtils from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
-import { RoomRole } from "../../lib/types/gameTypes";
 import BirdBot from "./BirdBot.class";
 import {
     birdbotLanguageToDictionaryId,
@@ -234,7 +233,7 @@ const currentGameScoresCommand = c({
     exampleUsage: "/score - /score dfuzer",
     handler: (ctx) => {
         const targetPlayerName = ctx.normalizedMessage.slice(ctx.usedAlias.length + 2);
-        if (ctx.room.roomState.gameData!.step.value !== "round") {
+        if (ctx.room.roomState.gameData!.milestone.name !== "round") {
             ctx.utils.sendChatMessage(
                 t("error.roomState.noGameInProgress", {
                     lng: l(ctx),
@@ -264,10 +263,10 @@ const currentGameScoresCommand = c({
         }
 
         if (targetPlayerName.length) {
-            const bestMatch = BirdBotUtils.findBestUsernameMatch(targetPlayerName, ctx.room.roomState.roomData!.gamers);
+            const bestMatch = BirdBotUtils.findBestUsernameMatch(targetPlayerName, ctx.room.roomState.roomData!.chatters);
             if (bestMatch) {
                 const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-                const playerStats = roomMetadata.scoresByGamerId[bestMatch.id];
+                const playerStats = roomMetadata.scoresByPeerId[bestMatch.peerId];
 
                 if (playerStats === undefined) {
                     ctx.utils.sendChatMessage(
@@ -277,7 +276,7 @@ const currentGameScoresCommand = c({
                     );
                     return;
                 }
-                sendResults(bestMatch.identity.nickname, playerStats);
+                sendResults(bestMatch.nickname, playerStats);
             } else {
                 ctx.utils.sendChatMessage(
                     t("error.404.player", {
@@ -288,9 +287,9 @@ const currentGameScoresCommand = c({
         } else {
             const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
 
-            if (roomMetadata.scoresByGamerId[ctx.gamer.id] !== undefined) {
-                const playerStats = roomMetadata.scoresByGamerId[ctx.gamer.id];
-                sendResults(ctx.gamer.identity.nickname, playerStats);
+            if (roomMetadata.scoresByPeerId[ctx.gamer.peerId] !== undefined) {
+                const playerStats = roomMetadata.scoresByPeerId[ctx.gamer.peerId];
+                sendResults(ctx.gamer.nickname, playerStats);
                 return;
             } else {
                 const currentPlayer = Utilitary.getCurrentPlayer(ctx.room.roomState.gameData!);
@@ -302,7 +301,7 @@ const currentGameScoresCommand = c({
                     );
                     return;
                 }
-                const playerStats = roomMetadata.scoresByGamerId[currentPlayer.gamerId];
+                const playerStats = roomMetadata.scoresByPeerId[currentPlayer.peerId];
                 if (playerStats === undefined) {
                     ctx.utils.sendChatMessage(
                         t("error.404.playerStats", {
@@ -311,7 +310,7 @@ const currentGameScoresCommand = c({
                     );
                     return;
                 }
-                const gamer = ctx.room.roomState.roomData!.gamers.find((gamer) => gamer.id === currentPlayer.gamerId);
+                const gamer = ctx.room.roomState.roomData!.chatters.find((gamer) => gamer.peerId === currentPlayer.peerId);
                 if (gamer === undefined) {
                     ctx.utils.sendChatMessage(
                         t("error.404.gamer", {
@@ -320,7 +319,7 @@ const currentGameScoresCommand = c({
                     );
                     return;
                 }
-                sendResults(gamer.identity.nickname, playerStats);
+                sendResults(gamer.nickname, playerStats);
             }
         }
     },
@@ -333,7 +332,7 @@ const startGameCommand = c({
     roomCreatorRequired: true,
     exampleUsage: "/sn",
     handler: (ctx) => {
-        if (ctx.room.roomState.gameData!.step.value !== "pregame") {
+        if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
             ctx.utils.sendChatMessage(
                 t("error.roomState.notInPregame", {
                     lng: l(ctx),
@@ -349,8 +348,7 @@ const startGameCommand = c({
             );
             return;
         }
-        const startGameMessage = ctx.bot.networkAdapter.getStartGameMessage();
-        ctx.room.ws!.send(startGameMessage);
+        ctx.utils.startRoundNow();
         ctx.utils.sendChatMessage(
             t("command.startGame.starting", {
                 lng: l(ctx),
@@ -366,7 +364,7 @@ const setGameModeCommand = c({
     exampleUsage: "/mode survival",
     roomCreatorRequired: true,
     handler: (ctx) => {
-        if (ctx.room.roomState.gameData!.step.value !== "pregame") {
+        if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
             ctx.utils.sendChatMessage(
                 t("error.roomState.cannotSetMode", {
                     lng: l(ctx),
@@ -410,7 +408,7 @@ const setRoomLanguageCommand = c({
     exampleUsage: "/language fr",
     roomCreatorRequired: true,
     handler: (ctx) => {
-        if (ctx.room.roomState.gameData!.step.value !== "pregame") {
+        if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
             ctx.utils.sendChatMessage(
                 t("error.roomState.cannotSetLanguage", {
                     lng: l(ctx),
@@ -610,7 +608,7 @@ const searchWordsCommand = c({
         const otherRoomPrompts: string[] = [];
         const rooms = Object.values(ctx.bot.rooms);
         for (const room of rooms) {
-            const roomSyllable = room.roomState.gameData?.round.prompt;
+            const roomSyllable = room.roomState.gameData?.milestone.name === "round" ? room.roomState.gameData.milestone.syllable : null;
             if (roomSyllable) {
                 otherRoomPrompts.push(roomSyllable);
             }
@@ -734,7 +732,7 @@ const playerProfileCommand = c({
     usageDesc: "/p (username) (-language -mode)",
     exampleUsage: "/p - /p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
     handler: async (ctx) => {
-        const targetUsername = ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.identity.name;
+        const targetUsername = ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.authId;
         if (!targetUsername) {
             ctx.utils.sendChatMessage(
                 t("command.playerProfile.noUsernameNotConnected", {
@@ -984,7 +982,7 @@ const linkAccountCommand = c({
     aliases: ["link"],
     usageDesc: "/link [token]",
     handler: async (ctx) => {
-        if (!ctx.gamer.identity.name) {
+        if (!ctx.gamer.authId) {
             ctx.utils.sendChatMessage(t("error.platform.mustBeLoggedIn", { lng: l(ctx) }));
             return;
         }
@@ -1003,9 +1001,9 @@ const linkAccountCommand = c({
                     Authorization: `Bearer ${API_KEY}`,
                 },
                 body: JSON.stringify({
-                    accountName: ctx.gamer.identity.name,
+                    accountName: ctx.gamer.authId,
                     token,
-                    currentNickname: ctx.gamer.identity.nickname,
+                    currentNickname: ctx.gamer.nickname,
                 }),
             });
 
@@ -1035,8 +1033,8 @@ const broadcastCommand = c({
         const message = ctx.args.join(" ");
         for (const roomId in ctx.bot.rooms) {
             const room = ctx.bot.rooms[roomId];
-            if (room.ws && room.ws.readyState === WebSocket.OPEN) {
-                room.ws.send(ctx.bot.networkAdapter.getSendChatMessage(t("command.broadcast.message", { message, lng: l(ctx) })));
+            if (room.isConnected()) {
+                Utilitary.sendChatMessage(room, t("command.broadcast.message", { message, lng: l(ctx) }));
             }
         }
     },
@@ -1116,7 +1114,7 @@ const modUserCommand = c({
             return;
         }
 
-        const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.gamers);
+        const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.chatters);
         if (!gamer) {
             ctx.utils.sendChatMessage(
                 t("error.404.player", {
@@ -1126,22 +1124,14 @@ const modUserCommand = c({
             return;
         }
 
-        const gamerId = gamer.id;
-        const role = "moderator" as RoomRole;
-
-        const message = ctx.bot.networkAdapter.getSetGamerRoleMessage({
-            gamerId,
-            role,
-        });
-
+        ctx.utils.setUserModerator(gamer.peerId, true);
+        gamer.isModerator = true;
         ctx.utils.sendChatMessage(
             t("command.modUser.modding", {
-                username: gamer.identity.nickname,
+                username: gamer.nickname,
                 lng: l(ctx),
             })
         );
-
-        ctx.room.ws.send(message);
     },
 }) satisfies Command;
 
@@ -1161,7 +1151,7 @@ const unmodUserCommand = c({
             return;
         }
 
-        const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.gamers);
+        const gamer = BirdBotUtils.findBestUsernameMatch(username, ctx.room.roomState.roomData!.chatters);
         if (!gamer) {
             ctx.utils.sendChatMessage(
                 t("error.404.player", {
@@ -1171,22 +1161,14 @@ const unmodUserCommand = c({
             return;
         }
 
-        const gamerId = gamer.id;
-        const role = "" as RoomRole;
-
-        const message = ctx.bot.networkAdapter.getSetGamerRoleMessage({
-            gamerId,
-            role,
-        });
-
+        ctx.utils.setUserModerator(gamer.peerId, false);
+        gamer.isModerator = false;
         ctx.utils.sendChatMessage(
             t("command.unmodUser.unmodding", {
-                username: gamer.identity.nickname,
+                username: gamer.nickname,
                 lng: l(ctx),
             })
         );
-
-        ctx.room.ws.send(message);
     },
 }) satisfies Command;
 
@@ -1197,15 +1179,12 @@ const privateRoomCommand = c({
     adminRequired: true,
     hidden: true,
     handler: (ctx) => {
-        const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
-            accessMode: "private",
-        });
+        ctx.utils.setRoomPublic(false);
         ctx.utils.sendChatMessage(
             t("command.privateRoom.setting", {
                 lng: l(ctx),
             })
         );
-        ctx.room.ws.send(message);
     },
 }) satisfies Command;
 
@@ -1216,15 +1195,12 @@ const publicRoomCommand = c({
     adminRequired: true,
     hidden: true,
     handler: (ctx) => {
-        const message = ctx.bot.networkAdapter.getSetRoomAccessModeMessage({
-            accessMode: "public",
-        });
+        ctx.utils.setRoomPublic(true);
         ctx.utils.sendChatMessage(
             t("command.publicRoom.setting", {
                 lng: l(ctx),
             })
         );
-        ctx.room.ws.send(message);
     },
 }) satisfies Command;
 
@@ -1238,13 +1214,12 @@ const destroyAllRoomsCommand = c({
         for (const roomId in ctx.bot.rooms) {
             const room = ctx.bot.rooms[roomId];
 
-            if (room.ws && room.ws.readyState === WebSocket.OPEN) {
-                room.ws.send(
-                    ctx.bot.networkAdapter.getSendChatMessage(
-                        t("command.destroyAllRooms.message", {
-                            lng: l(ctx),
-                        })
-                    )
+            if (room.isConnected()) {
+                Utilitary.sendChatMessage(
+                    room,
+                    t("command.destroyAllRooms.destroying", {
+                        lng: dictionaryIdToBirdbotLanguage[room.roomState.gameData?.rules.dictionaryId as BirdBotSupportedDictionaryId] ?? "en",
+                    })
                 );
             }
 
@@ -1262,7 +1237,7 @@ const showAllRoomsCommand = c({
     handler: (ctx) => {
         const roomsList = Object.values(ctx.bot.rooms)
             .map((room) => {
-                return `${room.constantRoomData.roomCode}: ${room.roomState.gameData?.step.value ?? "gameData unknown"}`;
+                return `${room.constantRoomData.roomCode}: ${room.roomState.gameData?.milestone.name ?? "gameData unknown"}`;
             })
             .join(" - ");
 
@@ -1277,7 +1252,7 @@ const createRoomCommand = c({
     handler: (ctx) => {
         const gamer = ctx.gamer;
         const bot = ctx.bot.rawBot as BirdBot;
-        if (!gamer.identity.name) {
+        if (!gamer.authId) {
             ctx.utils.sendChatMessage(
                 t("error.platform.mustBeLoggedIn", {
                     lng: l(ctx),
@@ -1286,7 +1261,7 @@ const createRoomCommand = c({
             return;
         }
         {
-            if (bot.creatingRoomQueue.includes(gamer.identity.name)) {
+            if (bot.creatingRoomQueue.includes(gamer.authId)) {
                 ctx.utils.sendChatMessage(
                     t("command.createRoom.roomBeingCreated", {
                         lng: l(ctx),
@@ -1296,7 +1271,7 @@ const createRoomCommand = c({
             }
             for (const roomId in bot.rooms) {
                 const room = bot.rooms[roomId];
-                if (room.constantRoomData.roomCreatorUsername === gamer.identity.name) {
+                if (room.constantRoomData.roomCreatorAuthId === gamer.authId) {
                     ctx.utils.sendChatMessage(
                         t("command.createRoom.roomAlreadyExists", {
                             code: room.constantRoomData.roomCode,
@@ -1331,45 +1306,31 @@ const createRoomCommand = c({
             return;
         }
 
-        bot.creatingRoomQueue.push(gamer.identity.name);
+        bot.creatingRoomQueue.push(gamer.authId);
 
         setTimeout(() => {
             if (!bot || typeof bot.creatingRoomQueue !== "object") return;
-            bot.creatingRoomQueue = bot.creatingRoomQueue.filter((name) => name !== gamer.identity.name);
+            bot.creatingRoomQueue = bot.creatingRoomQueue.filter((name) => name !== gamer.authId);
         }, 1000 * 10);
 
         bot.createRoom({
             targetConfig: {
                 dictionaryId: targetDictionaryId,
-                gameMode: "survival",
-                birdbotGameMode: targetMode ?? defaultMode,
+                                birdbotGameMode: targetMode ?? defaultMode,
                 isPublic: true,
-                roomName: `🐤 BirdBot x ${gamer.identity.nickname}`,
+                roomName: `🐤 BirdBot x ${gamer.nickname}`,
             },
-            roomCreatorUsername: gamer.identity.name,
+            roomCreatorAuthId: gamer.authId,
             callback: (roomCode) => {
-                bot.creatingRoomQueue = bot.creatingRoomQueue.filter((name) => name !== gamer.identity.name);
+                bot.creatingRoomQueue = bot.creatingRoomQueue.filter((name) => name !== gamer.authId);
                 if (ctx.room.isHealthy()) {
-                    ctx.room.ws.send(
-                        ctx.bot.networkAdapter.getSendChatMessage(
-                            t("command.createRoom.roomCreated", {
-                                roomCode,
-                                lng: l(ctx),
-                            })
-                        )
-                    );
+                    ctx.utils.sendChatMessage(t("command.createRoom.roomCreated", { roomCode, lng: l(ctx) }));
                 }
             },
             errorCallback: () => {
-                bot.creatingRoomQueue = bot.creatingRoomQueue.filter((name) => name !== gamer.identity.name);
+                bot.creatingRoomQueue = bot.creatingRoomQueue.filter((name) => name !== gamer.authId);
                 if (ctx.room.isHealthy()) {
-                    ctx.room.ws.send(
-                        ctx.bot.networkAdapter.getSendChatMessage(
-                            t("command.createRoom.unknownError", {
-                                lng: l(ctx),
-                            })
-                        )
-                    );
+                    ctx.utils.sendChatMessage(t("command.createRoom.unknownError", { lng: l(ctx) }));
                 }
             },
         });

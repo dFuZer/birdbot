@@ -23,26 +23,23 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
             const { bot } = ctx;
             for (const roomId in bot.rooms) {
                 const room = bot.rooms[roomId];
-                const hostName = room.constantRoomData.roomCreatorUsername;
+                const hostAuthId = room.constantRoomData.roomCreatorAuthId;
                 const roomMetadata = room.roomState.metadata as BirdBotRoomMetadata;
-                const gamers = room.roomState.roomData?.gamers;
+                const chatters = room.roomState.roomData?.chatters;
 
-                if (!room.ws || room.ws.readyState !== WebSocket.OPEN) continue;
+                if (!room.isConnected()) continue;
                 if (roomMetadata.hostLeftIteration === undefined) continue;
-                if (gamers === undefined) continue;
-                if (hostName === null) continue;
+                if (chatters === undefined) continue;
+                if (hostAuthId === null) continue;
 
-                const host = gamers.find((gamer) => gamer.identity.name === hostName);
-                if ((host === undefined || !host.isOnline) && room.roomState.gameData?.round.state.value !== "round") {
-                    // Host left the room
+                const host = chatters.find((c) => c.authId === hostAuthId);
+                const inRound = room.roomState.gameData?.milestone.name === "round";
+                if ((host === undefined || !host.isOnline) && !inRound) {
                     roomMetadata.hostLeftIteration++;
                     if (roomMetadata.hostLeftIteration >= 6) {
-                        // Host left the room for more than 6 iterations (60 seconds)
-                        // We need to destroy the room
                         Utilitary.destroyRoom(bot, room);
                     }
                 } else {
-                    // Host is present, reset the counter
                     roomMetadata.hostLeftIteration = 0;
                 }
             }
@@ -55,10 +52,10 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
         fn: async (ctx) => {
             const bot = ctx.bot as BirdBot;
             const currentMainRoomLanguages = Object.entries(bot.rooms)
-                .filter(([roomId, room]) => {
-                    return room.constantRoomData.roomCreatorUsername === null;
+                .filter(([, room]) => {
+                    return room.constantRoomData.roomCreatorAuthId === null;
                 })
-                .map(([roomId, room]) => {
+                .map(([, room]) => {
                     return room.roomState.gameData?.rules.dictionaryId;
                 })
                 .filter((lang) => lang !== undefined && lang in dictionaryIdToBirdbotLanguage)
@@ -73,10 +70,9 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
                 });
                 await bot.createRoom({
-                    roomCreatorUsername: null,
+                    roomCreatorAuthId: null,
                     targetConfig: {
                         dictionaryId: birdbotLanguageToDictionaryId[missingMainRoomLanguages[0]],
-                        gameMode: "survival",
                         birdbotGameMode: "regular",
                         isPublic: true,
                         roomName: `🐤 BirdBot ${t(`lib.language.${missingMainRoomLanguages[0]}.flag`, { lng: "en" })}`,
@@ -93,25 +89,21 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
             const { bot } = ctx;
             const rooms = Object.values(bot.rooms);
             for (const room of rooms) {
-                room.roomState.unansweredPings++;
-                if (room.roomState.unansweredPings >= 4) {
-                    Logger.log({
-                        message: `Room ${room.id} appears to be dead. Destroying...`,
-                        path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
-                    });
-                    Utilitary.destroyRoom(bot, room);
+                if (!room.isConnected()) {
+                    room.roomState.lastActivityAt = room.roomState.lastActivityAt || Date.now();
+                    if (Date.now() - room.roomState.lastActivityAt > 12000) {
+                        Logger.log({
+                            message: `Room ${room.id} appears to be dead. Destroying...`,
+                            path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
+                        });
+                        Utilitary.destroyRoom(bot, room);
+                    }
                     continue;
                 }
-
-                const ws = room.ws;
-                if (!ws || ws.readyState !== WebSocket.OPEN) continue;
-                ws.listeners("pong").forEach((listener) => {
-                    ws.off("pong", listener as any);
-                });
-                ws.once("pong", () => {
-                    room.roomState.unansweredPings = 0;
-                });
-                ws.ping();
+                if (Date.now() - room.roomState.lastActivityAt > 60000) {
+                    // Socket still reports connected but no events — keep alive via activity touch on any event
+                    room.roomState.lastActivityAt = Date.now();
+                }
             }
         },
     },
@@ -168,8 +160,9 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                 const roomLanguage = room.roomState.gameData?.rules.dictionaryId;
                 if (roomLanguage === undefined) continue;
                 const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomLanguage as BirdBotSupportedDictionaryId];
+                if (!roomBirdBotLanguage) continue;
                 const messageContent = t(`periodic.support.star`, { lng: roomBirdBotLanguage });
-                room.ws?.send(bot.networkAdapter.getSendChatMessage(messageContent));
+                Utilitary.sendChatMessage(room, messageContent);
             }
         },
     },
@@ -184,8 +177,9 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                 const roomLanguage = room.roomState.gameData?.rules.dictionaryId;
                 if (roomLanguage === undefined) continue;
                 const roomBirdBotLanguage = dictionaryIdToBirdbotLanguage[roomLanguage as BirdBotSupportedDictionaryId];
+                if (!roomBirdBotLanguage) continue;
                 const messageContent = t(`periodic.support.donate`, { lng: roomBirdBotLanguage });
-                room.ws?.send(bot.networkAdapter.getSendChatMessage(messageContent));
+                Utilitary.sendChatMessage(room, messageContent);
             }
         },
     },

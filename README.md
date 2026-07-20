@@ -7,7 +7,7 @@
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
 
-> BirdBot is an automated player for BombParty on the Croco.games platform, designed to help players improve their skills through practice and analysis.
+> BirdBot is an automated player for BombParty on [jklm.fun](https://jklm.fun), designed to help players improve their skills through practice and analysis.
 
 ## ✨ Features
 
@@ -44,7 +44,7 @@
 | Database | PostgreSQL |
 | API | Fastify (TypeScript) + Prisma |
 | Website | Next.js (TypeScript) |
-| Bot | TypeScript + WebSocket + Rust |
+| Bot | TypeScript + Socket.IO + Rust |
 | Runtime | Docker + Node.js 23.7 (Alpine) |
 
 ## Development Guide
@@ -120,11 +120,12 @@ npm run u
 
 Note that, contrary to the API and website modules, you must fully restart the script everytime you make a change to the code.
 
-### Important Note for Developers
+### Bot configuration
 
-The functional `NetworkAdapter` class implementation is intentionally gitignored to comply with the Croco.games platform policy. Developers must implement this class by reverse-engineering the croco.games protocol themselves.
+- `admins.txt`: one jklm `auth.id` per line for admin commands
+- Optional `JKLM_AUTH_TOKEN` / `JKLM_AUTH_USERNAME` for a logged-in jklm account (guest hosting works without them)
 
-Open-sourcing Croco.games network interaction code would make cheating significantly easier, which we are trying to prevent.
+The older Croco.games bot archive lives under `archive/BBV7` for historical reference only.
 
 ---
 

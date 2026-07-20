@@ -15,16 +15,13 @@ export const PAYPAL_DONATE_LINK = "https://www.paypal.com/paypalme/enzotomassi";
 export const WEBSITE_LINK = "https://birdbot.dev";
 
 const birdbotRulesBase = {
-    roundsToWin: 1,
-    scoreGoal: 100,
-    gameMode: "survival",
-    minWordLengthOption: "0",
     promptDifficulty: "custom",
-} satisfies Omit<DictionaryLessGameRules, "bombDuration" | "customPromptDifficulty" | "maxLives" | "startingLives">;
+    maxPromptAge: 16,
+} satisfies Pick<DictionaryLessGameRules, "promptDifficulty" | "maxPromptAge">;
 
 const birdbotRegularModeRules = {
     ...birdbotRulesBase,
-    bombDuration: 5,
+    minTurnDuration: 5,
     customPromptDifficulty: 1,
     maxLives: 3,
     startingLives: 2,
@@ -32,7 +29,7 @@ const birdbotRegularModeRules = {
 
 const birdbotEasyModeRules = {
     ...birdbotRulesBase,
-    bombDuration: 7,
+    minTurnDuration: 7,
     customPromptDifficulty: 400,
     maxLives: 3,
     startingLives: 3,
@@ -40,7 +37,7 @@ const birdbotEasyModeRules = {
 
 const birdbotBlitzModeRules = {
     ...birdbotRulesBase,
-    bombDuration: 3,
+    minTurnDuration: 2,
     customPromptDifficulty: 1,
     maxLives: 3,
     startingLives: 2,
@@ -48,7 +45,7 @@ const birdbotBlitzModeRules = {
 
 const birdbotSub500ModeRules = {
     ...birdbotRulesBase,
-    bombDuration: 5,
+    minTurnDuration: 5,
     customPromptDifficulty: -500,
     maxLives: 3,
     startingLives: 2,
@@ -56,7 +53,7 @@ const birdbotSub500ModeRules = {
 
 const birdbotSub50ModeRules = {
     ...birdbotRulesBase,
-    bombDuration: 5,
+    minTurnDuration: 5,
     customPromptDifficulty: -50,
     maxLives: 3,
     startingLives: 2,
@@ -64,10 +61,10 @@ const birdbotSub50ModeRules = {
 
 const birdbotFreeplayModeRules = {
     ...birdbotRulesBase,
-    bombDuration: 10,
+    minTurnDuration: 10,
     customPromptDifficulty: 1,
     maxLives: 10,
-    startingLives: 10,
+    startingLives: 5,
 } satisfies DictionaryLessGameRules;
 
 export const defaultBirdBotBombPartyRules = birdbotRegularModeRules satisfies DictionaryLessGameRules;

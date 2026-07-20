@@ -52,19 +52,19 @@ function birdBotServerHandler(req: IncomingMessage, res: ServerResponse, bot: Bi
                 roomDictionaryId && roomDictionaryId in dictionaryIdToBirdbotLanguage
                     ? dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId]
                     : "UNKNOWN";
-            const playerCount = room.roomState.roomData?.gamers.filter((x) => x.isOnline).length ?? 0;
+            const playerCount = room.roomState.roomData?.chatters.filter((x) => x.isOnline).length ?? 0;
             const gameTime =
-                room.roomState.gameData?.step.value === "round"
-                    ? Date.now() - room.roomState.gameData.step.timestamp
+                room.roomState.gameData?.milestone.name === "round"
+                    ? Date.now() - room.roomState.roundStartTimestamp
                     : "NOT-IN-GAME";
             const roomCode = room.constantRoomData.roomCode;
 
             const roomName = room.constantRoomData.targetConfig.roomName;
 
-            const roomScoresByGamer = (room?.roomState?.metadata as BirdBotRoomMetadata)?.scoresByGamerId;
+            const roomScoresByPeer = (room?.roomState?.metadata as BirdBotRoomMetadata)?.scoresByPeerId;
 
-            const wordCount = roomScoresByGamer
-                ? Object.values(roomScoresByGamer).reduce((acc, curr) => {
+            const wordCount = roomScoresByPeer
+                ? Object.values(roomScoresByPeer).reduce((acc, curr) => {
                       return acc + curr.words;
                   }, 0)
                 : 0;

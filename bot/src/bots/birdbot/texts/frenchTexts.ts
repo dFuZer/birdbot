@@ -1,4 +1,4 @@
-import { crocoDomain } from "../../../lib/constants/gameConstants";
+import { jklmDomain } from "../../../lib/constants/gameConstants";
 import { DISCORD_SERVER_LINK, GITHUB_REPO_LINK, PAYPAL_DONATE_LINK, WEBSITE_LINK } from "../BirdBotConstants";
 import { ResourceText } from "./englishTexts";
 export const frenchTexts = {
@@ -47,7 +47,7 @@ export const frenchTexts = {
             mustProvideWord: "$t(error.intro) Tu dois fournir un mot pour utiliser cette commande.",
         },
         platform: {
-            mustBeLoggedIn: `$t(intro) Tu dois être connecté à Croco.games pour utiliser cette commande. Pour te connecter, va sur la page d\'accueil https://${crocoDomain}/ et clique sur "Se connecter" si tu as un compte ou "Nouveau compte" si tu n\'en as pas.`,
+            mustBeLoggedIn: `$t(intro) Tu dois être connecté à jklm.fun pour utiliser cette commande. Pour te connecter, va sur la page d\'accueil https://${jklmDomain}/ et clique sur "Se connecter" si tu as un compte ou "Nouveau compte" si tu n\'en as pas.`,
         },
     },
     command: {
@@ -92,7 +92,7 @@ export const frenchTexts = {
         },
         playerProfile: {
             noUsernameNotConnected:
-                "Tu dois être connecté à Croco.games pour regarder ton propre profil. Si tu veux regarder le profil d'un autre joueur, utilise la syntaxe /p [nom d'utilisateur].",
+                "Tu dois être connecté à jklm.fun pour regarder ton propre profil. Si tu veux regarder le profil d'un autre joueur, utilise la syntaxe /p [nom d'utilisateur].",
             description: "Affiche le profil d'un joueur.",
             resultMode: "[{{languageFlag}} {{gameMode}}] {{playerUsername}} : {{records}}. {{profileLink}}",
             result: "[{{languageFlag}}] {{playerUsername}} : Rang #{{rank}} avec {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, niveau {{level}}. Top 5 performances : {{topPerformances}}. {{profileLink}}",
@@ -155,18 +155,18 @@ export const frenchTexts = {
         },
         createRoom: {
             description: "Crée un salon.",
-            roomCreated: `Salon créé : https://${crocoDomain}/{{roomCode}}`,
-            roomAlreadyExists: `Tu es déjà le propriétaire d'un salon : https://${crocoDomain}/{{code}}`,
+            roomCreated: `Salon créé : https://${jklmDomain}/{{roomCode}}`,
+            roomAlreadyExists: `Tu es déjà le propriétaire d'un salon : https://${jklmDomain}/{{code}}`,
             roomBeingCreated: "Le salon est en cours de création, merci d'attendre un peu...",
             unknownError:
                 "$t(error.intro) Une erreur inconnue est survenue lors de la création du salon. Merci de réessayer plus tard.",
         },
         linkAccount: {
             description:
-                "Relie ton compte Discord à ton compte Croco.games. C'est utile si tu veux utiliser les fonctionnalités du site web (et du bot Discord qui arrive bientôt).",
+                "Relie ton compte Discord à ton compte jklm.fun. C'est utile si tu veux utiliser les fonctionnalités du site web (et du bot Discord qui arrive bientôt).",
             tokenNotFound: "Le token est invalide ou expiré.",
             success:
-                "Ton compte Discord a été relié à ton compte Croco.games. Tu peux maintenant utiliser les fonctionnalités du site.",
+                "Ton compte Discord a été relié à ton compte jklm.fun. Tu peux maintenant utiliser les fonctionnalités du site.",
         },
         test: {
             description: "Commande de test pour les admins.",
