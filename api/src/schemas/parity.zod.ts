@@ -40,7 +40,8 @@ const cosmeticsSchema = z
         welcomeMessage: z.string().trim().max(500).nullable().optional(),
         roomName: z.string().trim().max(100).nullable().optional(),
         botName: z.string().trim().max(80).nullable().optional(),
-        pictureUrl: z.string().url().max(500).nullable().optional(),
+        // Raw JKLM avatar payload (usually base64), not necessarily a URL.
+        pictureUrl: z.string().min(1).max(500_000).nullable().optional(),
         updatedBy: actor,
     })
     .refine(

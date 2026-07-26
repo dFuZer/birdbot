@@ -260,7 +260,7 @@ model PlayerCosmetics {
     welcome_message String? @db.VarChar(500)
     room_name      String?  @db.VarChar(100)
     bot_name       String?  @db.VarChar(80)
-    picture_url    String?  @db.VarChar(500)
+    picture_url    String?  @db.Text
     updated_by     String   @db.VarChar(80)
     updated_at     DateTime @updatedAt
 

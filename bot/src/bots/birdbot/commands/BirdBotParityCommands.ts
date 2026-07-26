@@ -332,12 +332,64 @@ const botNameCommand = cosmeticCommand({
     requiredTier: "VIP",
     maxLength: 15,
 });
-const pictureCommand = cosmeticCommand({
+const pictureCommand = c({
     id: "picture",
     aliases: ["cpp", "cp", "changepfp", "changeprofilepicture"],
-    field: "pictureUrl",
-    requiredTier: "VIP_PLUS",
-    maxLength: 500,
+    usageDesc: "/cpp",
+    exampleUsage: "/cpp",
+    accessibleInRound: true,
+    handler: async (ctx) => {
+        if (!ctx.gamer.authId) {
+            ctx.utils.sendChatMessage(t("command.parity.cosmeticLogin", { lng: l(ctx) }), "error");
+            return;
+        }
+        try {
+            const player = await resolveTarget(ctx);
+            const economy = await BirdBotParityApiService.getEconomy(player.playerId);
+            const rank: Record<BirdBotVipTier, number> = { NONE: 0, VIP: 1, VIP_PLUS: 2 };
+            if (rank[economy.vip?.tier ?? "NONE"] < rank.VIP_PLUS) {
+                ctx.utils.sendChatMessage(
+                    t("command.parity.cosmeticTier", { tier: "VIP+", lng: l(ctx) }),
+                    "error",
+                );
+                return;
+            }
+
+            const chatSocket = ctx.room.rawRoom.chatSocket;
+            if (!chatSocket) {
+                ctx.utils.sendChatMessage(t("command.parity.pictureUnavailable", { lng: l(ctx) }), "error");
+                return;
+            }
+
+            const picture = await new Promise<string | null>((resolve, reject) => {
+                const timeout = setTimeout(() => reject(new Error("getChatterProfiles timeout")), 5_000);
+                chatSocket.emit("getChatterProfiles", (profiles: unknown) => {
+                    clearTimeout(timeout);
+                    if (!Array.isArray(profiles)) {
+                        resolve(null);
+                        return;
+                    }
+                    const match = profiles.find((profile) => {
+                        if (!profile || typeof profile !== "object") return false;
+                        const auth = (profile as { auth?: { id?: string } }).auth;
+                        return auth?.id === ctx.gamer.authId;
+                    }) as { picture?: string | null } | undefined;
+                    const value = typeof match?.picture === "string" ? match.picture.trim() : "";
+                    resolve(value.length > 0 ? value : null);
+                });
+            });
+
+            if (!picture) {
+                ctx.utils.sendChatMessage(t("command.parity.pictureUnavailable", { lng: l(ctx) }), "error");
+                return;
+            }
+
+            await BirdBotParityApiService.setCosmetic(player.playerId, "pictureUrl", picture, ctx.gamer.authId);
+            ctx.utils.sendChatMessage(t("command.parity.pictureCopied", { lng: l(ctx) }), "success");
+        } catch (error) {
+            reportError(ctx, error);
+        }
+    },
 });
 
 const newsCommand = c({

@@ -39,7 +39,7 @@ This document is the compatibility manifest for the TypeScript BirdBot on jklm.f
 - No Node `require` cache reload / `REFRESH` resource wipe. Use process restart + `/health`.
 - No destructive local JSON profile wipe. `/suppress` marks API moderation state (suppressed + blacklisted) without deleting Postgres history.
 - No `TRANSFER` / `REINIT` / `RESET` / mass-ban `DCR` equivalents.
-- Cosmetics primarily apply to newly created rooms; picture cosmetics require a URL (no live JKLM avatar copy).
+- Cosmetics primarily apply to newly created rooms. `/cpp` copies the caller's live JKLM chatter picture into DB-backed cosmetics (VIP+).
 - Speed/accuracy meta records are milestone-based (timing/streak thresholds), not BBV7 per-category local JSON boards. `/s` and `/acc` without a player show global milestone leaders; with a player they show that player's milestones.
 - Credits are earned from scored game recaps (idempotent ledger) and can also be granted by admins.
 
