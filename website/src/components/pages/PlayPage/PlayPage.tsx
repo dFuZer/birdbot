@@ -22,7 +22,7 @@ export type IPlayPageData = {
 function RoomCard({ room }: { room: IRoom }) {
     return (
         <Link
-            href={`https://croco.games/${room.roomCode}`}
+            href={`https://jklm.fun/${room.roomCode}`}
             className="flex flex-col rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
         >
             <div className="flex items-center justify-between gap-4">
