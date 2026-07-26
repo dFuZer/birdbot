@@ -20,8 +20,9 @@ export const birdbotTextResource = {
     brpt: {
         translation: portugueseTexts,
     },
-    de: {},
-    it: {},
+    // German and Italian intentionally use the complete English catalog until translated.
+    de: { translation: englishTexts },
+    it: { translation: englishTexts },
 } satisfies Resource;
 
 export function t(key: string, params?: { lng: BirdBotLanguage; [key: string]: string | number | undefined }) {

@@ -20,37 +20,16 @@ export class CommonEventHandlers {
     public static attemptToReconnectOnDisconnect: BotEventHandlerFn = (ctx) => {
         const room = ctx.room.rawRoom;
         const bot = ctx.bot.rawBot;
-        if (!bot.rooms[room.id]) return;
+        if (bot.rooms[room.id] !== room) return;
 
-        const snapshot = {
-            roomCode: room.constantRoomData.roomCode,
-            targetConfig: room.constantRoomData.targetConfig,
-            roomCreatorAuthId: room.constantRoomData.roomCreatorAuthId,
-            userToken: room.constantRoomData.userToken,
-            serverUrl: room.constantRoomData.serverUrl,
-            hasEverConnected: room.hasEverConnected,
-        };
-
-        Utilitary.destroyRoom(bot, room);
-
-        if (!snapshot.hasEverConnected) {
+        if (!room.hasEverConnected) {
             Logger.log({
-                message: `Room ${snapshot.roomCode} never fully connected. Not reconnecting.`,
+                message: `Room ${room.constantRoomData.roomCode} never fully connected. Not reconnecting.`,
                 path: "CommonEventHandlers.class.ts",
             });
+            Utilitary.destroyRoom(bot, room);
             return;
         }
-
-        Logger.log({
-            message: `Attempting to reconnect to ${snapshot.roomCode}...`,
-            path: "CommonEventHandlers.class.ts",
-        });
-        bot.joinRoom({
-            roomCode: snapshot.roomCode,
-            targetConfig: snapshot.targetConfig,
-            roomCreatorAuthId: snapshot.roomCreatorAuthId,
-            userToken: snapshot.userToken,
-            serverUrl: snapshot.serverUrl ?? undefined,
-        });
+        void bot.reconnectRoom(room);
     };
 }

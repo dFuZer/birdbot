@@ -29,6 +29,7 @@ export type Chatter = {
     authId: string | null;
     isOnline: boolean;
     isModerator: boolean;
+    isBanned?: boolean;
 };
 
 export type DictionaryManifest = {
@@ -62,11 +63,17 @@ export type BombPartyRuleKey = keyof BombPartyRules;
 export type PlayerState = {
     peerId: number;
     lives: number;
+    /** Canonical lowercase word used by game logic. */
     word: string;
+    /** Unmodified value received from JKLM. */
+    rawWord: string;
     /** Letters collected toward bonus alphabet this life */
     usedLetters: string;
-    bonusLetters?: Record<string, number> | string;
+    /** Authoritative JKLM progress toward the bonus alphabet. */
+    bonusLetters: string;
     wasWordValidated?: boolean;
+    startTurn: number | null;
+    startWrite: number | null;
 };
 
 export type MilestoneSeating = {
@@ -96,6 +103,8 @@ export type RoomData = {
     code: string;
     isPublic: boolean;
     chatters: Chatter[];
+    playerCount?: number;
+    bannedPeerIds?: number[];
 };
 
 export type GameData = {
@@ -116,12 +125,23 @@ export function bonusAlphabetToLetters(bonusAlphabet: Record<string, number> | s
         .join("");
 }
 
-export function extractRulesValues(rawRules: Record<string, { value: unknown }>): Partial<GameRules> & Record<string, unknown> {
+export function normalizeWord(rawWord: unknown): string {
+    return String(rawWord ?? "")
+        .toLowerCase()
+        .replace(/[^a-z'-]/g, "");
+}
+
+/** Setup sends rule descriptors; `setRules` sends already-unwrapped values. */
+export function extractSetupRulesValues(rawRules: Record<string, unknown>): Partial<GameRules> & Record<string, unknown> {
     const out: Record<string, unknown> = {};
     for (const [key, entry] of Object.entries(rawRules)) {
         if (entry && typeof entry === "object" && "value" in entry) {
-            out[key] = entry.value;
+            out[key] = (entry as { value: unknown }).value;
         }
     }
     return out;
+}
+
+export function extractIncrementalRulesValues(rawRules: Record<string, unknown>): Partial<GameRules> & Record<string, unknown> {
+    return { ...rawRules };
 }

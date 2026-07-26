@@ -8,6 +8,7 @@ export const frenchTexts = {
         unspecific: "$t(error.intro) Une erreur inconnue s'est produite.",
         api: {
             inaccessible: "$t(error.intro) L'API est inaccessible. Réessaie plus tard !",
+            conflict: "$t(error.intro) Cette opération est incompatible avec l'état actuel du compte.",
         },
         roomState: {
             noGameInProgress: "$t(error.intro) Aucune partie en cours.",
@@ -15,6 +16,8 @@ export const frenchTexts = {
             notEnoughPlayers: "$t(error.intro) Pas assez de joueurs pour démarrer la partie.",
             cannotSetMode: "$t(error.intro) Impossible de changer le mode en dehors de la phase de préparation.",
             cannotSetLanguage: "$t(error.intro) Impossible de changer la langue en dehors de la phase de préparation.",
+            cannotSetBonusAlphabet:
+                "$t(error.intro) Impossible de changer les lettres bonus en dehors de la phase de préparation.",
         },
         invalid: {
             regex: "$t(error.intro) Regex invalide : {{regex}}",
@@ -22,7 +25,7 @@ export const frenchTexts = {
             gameMode: "$t(error.intro) Mode de jeu invalide.",
         },
         notSupported: {
-            language: '$t(intro) La langue "{{language}}" n\'est pas supportée.',
+            language: '$t(error.intro) La langue "{{language}}" n\'est pas supportée.',
             listedRecordNotExistsInLanguage: "$t(error.intro) Le record à liste demandé n'existe pas dans la langue demandée.",
         },
         "404": {
@@ -47,7 +50,7 @@ export const frenchTexts = {
             mustProvideWord: "$t(error.intro) Tu dois fournir un mot pour utiliser cette commande.",
         },
         platform: {
-            mustBeLoggedIn: `$t(intro) Tu dois être connecté à jklm.fun pour utiliser cette commande. Pour te connecter, va sur la page d\'accueil https://${jklmDomain}/ et clique sur "Se connecter" si tu as un compte ou "Nouveau compte" si tu n\'en as pas.`,
+            mustBeLoggedIn: `$t(error.intro) Tu dois être connecté à jklm.fun pour utiliser cette commande. Pour te connecter, va sur la page d\'accueil https://${jklmDomain}/ et clique sur "Se connecter" si tu as un compte ou "Nouveau compte" si tu n\'en as pas.`,
         },
     },
     command: {
@@ -55,6 +58,71 @@ export const frenchTexts = {
             description: "Affiche la liste des commandes. Si tu indiques une commande, affiche sa description.",
             list: "{{commandList}} — Pour plus d'infos sur une commande, utilise /help [commande]",
             details: "/{{commandName}} : {{description}} — Utilisation : {{usage}} — Ex. {{example}}",
+        },
+        speedRecords: { description: "Affiche les jalons de vitesse globaux ou d'un joueur depuis l'API." },
+        accuracyRecords: { description: "Affiche les séries de mots valides globales ou d'un joueur." },
+        credits: { description: "Affiche ton solde de crédits BirdBot." },
+        economy: { description: "Affiche les crédits, le niveau VIP et les achats d'un joueur." },
+        buy: { description: "Achète un niveau VIP avec des crédits BirdBot." },
+        setName: { description: "Modifie le nom de ton profil BirdBot." },
+        welcomeMessage: { description: "Définit ton message de bienvenue." },
+        roomName: { description: "Définit le nom des salons que tu crées." },
+        botName: { description: "Définit le nom de BirdBot dans tes salons." },
+        picture: { description: "Définit l'image de BirdBot dans tes salons. Fournis une URL d'image." },
+        news: { description: "Affiche les dernières nouvelles publiées." },
+        trust: { description: "Administre la confiance des réviseurs via l'API." },
+        blacklist: { description: "Administre la liste noire des salons via l'API." },
+        connect: {
+            description: "Explique comment se connecter à jklm.fun.",
+            result: "Pour te connecter à jklm.fun, ouvre https://jklm.fun, clique sur ton pseudo en haut à droite, puis choisis Twitch ou Discord.",
+        },
+        admin: {
+            creatorId: "Auth id du créateur du salon : {{id}}",
+            reconnecting: "Reconnexion de ce salon...",
+            getId: "Correspondance : {{account}} / {{username}} ({{playerId}})",
+            suppressUsage: "Utilisation : /suppress [joueur] [raison ?]",
+            suppressResult: "Suppression de {{player}} : {{suppressed}}",
+            giveCreditsUsage: "Utilisation : /givecredits [joueur] [montant]",
+            giveCreditsResult: "{{player}} ajusté de {{amount}} crédits. Solde : {{balance}}.",
+            giveXpUsage: "Utilisation : /givexp [joueur] [montant]",
+            giveXpResult: "{{player}} ajusté de {{amount}} XP. Total XP : {{xp}}.",
+            setXpUsage: "Utilisation : /setxp [joueur] [montant]",
+            setXpResult: "XP de {{player}} définie à {{xp}}.",
+            health: "Santé — salons {{rooms}} (connectés {{connected}}), API {{api}}, uptime {{uptime}}",
+        },
+        parity: {
+            loginOrPlayer: "Connecte-toi ou indique un joueur.",
+            milestones: "{{player}} — jalons de {{type}} : {{records}}",
+            noMilestones: "{{player}} n'a pas encore de jalons de {{type}}.",
+            globalMilestones: "Jalons {{type}} globaux : {{records}}",
+            noGlobalMilestones: "Aucun jalon {{type}} global pour le moment.",
+            milestoneSpeed: "{{value}} ms",
+            milestoneAccuracy: "{{value}} mots valides",
+            credits: "Tu as {{count}} crédits.",
+            economy: "{{player}} : {{credits}} crédits — niveau {{tier}} — {{purchases}} achat(s).",
+            purchaseLogin: "Tu dois être connecté pour effectuer un achat.",
+            availableSkus: "Offres disponibles : VIP (500 crédits), VIP+ (1000 crédits).",
+            alreadyVip: "Tu as déjà {{tier}}.",
+            purchasedVip: "{{tier}} acheté.",
+            insufficientCredits: "Tu n'as pas assez de crédits.",
+            setNameLogin: "Tu dois être connecté pour définir un nom de profil.",
+            invalidName: "Le nom de profil doit contenir entre 2 et 20 caractères.",
+            nameSet: "Ton nom de profil BirdBot est maintenant {{name}}.",
+            nameClaimed: "Ce nom de profil est déjà pris.",
+            nameCooldown: "Tu ne peux changer de nom que tous les 30 jours.",
+            cosmeticLogin: "Tu dois être connecté pour personnaliser ton profil BirdBot.",
+            cosmeticValue: "Indique une valeur ou utilise /{{command}} clear.",
+            cosmeticTooLong: "Cette valeur doit contenir au maximum {{maxLength}} caractères.",
+            cosmeticTier: "Cette personnalisation nécessite {{tier}}.",
+            cosmeticCleared: "Personnalisation supprimée.",
+            cosmeticSaved: "Personnalisation enregistrée.",
+            noNews: "Aucune actualité BirdBot n'est publiée.",
+            moderationUsage: "Utilisation : /{{command}} [add|remove|show] [joueur].",
+            moderationState: "{{player}} : confiance {{trust}}, liste noire {{blacklist}}.",
+            yesWithReason: "oui ({{reason}})",
+            yes: "oui",
+            no: "non",
+            noReason: "aucune raison",
         },
         records: {
             description: "Affiche la liste des records.",
@@ -98,6 +166,39 @@ export const frenchTexts = {
             resultMode: "[{{languageFlag}} {{gameMode}}] {{playerUsername}} : {{records}}. {{profileLink}}",
             result: "[{{languageFlag}}] {{playerUsername}} : Rang #{{rank}} avec {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, niveau {{level}}. Top 5 performances : {{topPerformances}}. {{profileLink}}",
             noRecords: "[{{languageFlag}} {{gameMode}}] {{playerUsername}} : Pas de records dans cette catégorie",
+        },
+        xp: {
+            description: "Affiche l'XP et le niveau d'un joueur.",
+            noUsernameNotConnected:
+                "Tu dois être connecté à jklm.fun pour voir ton XP. Pour voir l'XP d'un autre joueur, utilise /xp [nom d'utilisateur].",
+            result: "{{playerUsername}} : niveau {{level}} — {{currentLevelXp}}/{{totalLevelXp}}xp ({{totalXp}} total)",
+        },
+        showTime: {
+            description: "Affiche la durée de la partie en cours.",
+            result: "Temps de partie : {{time}}",
+        },
+        changeBonusAlphabet: {
+            description:
+                "Change l'alphabet bonus. /bl default pour les valeurs par défaut, /bl reset pour tout remettre à 0 puis définir, ou /bl a:1 b:0 pour modifier des lettres.",
+            setting: "Changement des lettres bonus...",
+            invalidFormat:
+                "$t(error.intro) Format invalide. Exemples : /bl default — /bl a:1 z:0 — /bl reset q:1",
+            invalidRange: "$t(error.intro) Les comptes de lettres doivent être entre 0 et 99.",
+        },
+        destroyRoom: {
+            description: "Détruit le salon actuel.",
+            destroying: "Destruction du salon...",
+        },
+        getBomb: {
+            description: "Boom.",
+            result: "💥",
+        },
+        getDefinition: {
+            description: "Cherche la définition d'un mot (français et anglais).",
+            result: "{{word}} ({{source}}) [{{page}}/{{total}}] : {{definition}}",
+            notFound: "$t(error.intro) Aucune définition trouvée.",
+            notFoundSuggestion: "$t(error.intro) Aucune définition trouvée. Tu voulais dire {{suggestion}} ?",
+            notSupported: "$t(error.intro) Les définitions ne sont pas disponibles pour {{language}}.",
         },
         rareSyllables: {
             description: "Affiche les syllabes rares dans le dictionnaire.",
@@ -157,7 +258,7 @@ export const frenchTexts = {
         createRoom: {
             description: "Crée un salon.",
             roomCreated: `Salon créé : https://${jklmDomain}/{{roomCode}}`,
-            roomAlreadyExists: `Tu es déjà le propriétaire d'un salon : https://${jklmDomain}/{{code}}`,
+            roomAlreadyExists: `Tu es déjà le propriétaire d'un salon : https://${jklmDomain}/{{roomCode}}`,
             roomBeingCreated: "Le salon est en cours de création, merci d'attendre un peu...",
             unknownError:
                 "$t(error.intro) Une erreur inconnue est survenue lors de la création du salon. Merci de réessayer plus tard.",
@@ -195,9 +296,21 @@ export const frenchTexts = {
     eventHandler: {
         chat: {
             commandNotFound: "Commande introuvable : {{command}}",
+            noCommandGiven: "Tu dois indiquer une commande après le préfixe.",
             notRoomCreator:
                 "Tu ne peux pas utiliser cette commande si tu n'es pas le créateur du salon. /b pour créer ton salon sera bientôt disponible.",
             notAdmin: "Tu ne peux pas utiliser cette commande si tu n'es pas un admin.",
+            notAccessibleInRound: "Cette commande est indisponible pendant une manche.",
+            notAllowedFromWordInput: "Cette commande ne peut pas être utilisée dans la saisie des mots.",
+            cooldown: "Attends avant de réutiliser cette commande.",
+        },
+        moderation: {
+            invalidNickname: "⛔ {{username}} : pseudo bloqué ({{reason}}).",
+            bannedWord: "mot interdit",
+            bannedCharacter: "caractère interdit",
+            blacklisted: "⛔ {{username}} : ce compte est sur liste noire.",
+            spamTimeout: "⛔ {{username}} : exclusion temporaire pour spam.",
+            spamWarning: "⚠️ {{username}} : ralentis, s'il te plaît.",
         },
         submit: {
             turnCommentWithWord: "{{username}} : {{comments}} ({{word}})",
@@ -222,6 +335,40 @@ export const frenchTexts = {
                 slur: "a placé une insulte",
                 food: "a placé un aliment",
             },
+        },
+    },
+    parity: {
+        gameplay: {
+            customMode: "Mode personnalisé activé ; les scores classés sont désactivés.",
+            providePlaystyle: "Indique un style de jeu.",
+            unavailablePlaystyle: "Ce style de jeu n'est pas disponible dans la langue actuelle.",
+            playstyleEnabled: "Style de jeu {{playstyle}} activé.",
+            trainingLogin: "L'entraînement nécessite un créateur de salon connecté.",
+            invalidTrainingRegex: "Expression régulière d'entraînement invalide ou trop coûteuse.",
+            tooManyTrainingMatches: "L'entraînement correspond à plus de 30000 mots.",
+            noTrainingMatches: "Aucun mot ne correspond à l'entraînement.",
+            trainingEnabled: "Entraînement activé ; les scores classés sont désactivés.",
+            trainingDisabled: "Entraînement désactivé ; les scores sont de nouveau admissibles.",
+            trainingConfigured: "Entraînement activé avec {{count}} mots ({{sort}}) ; les scores classés sont désactivés.",
+            humanEnabled: "Mode humain activé ; BirdBot ne jouera pas et les scores classés sont désactivés.",
+            humanDisabled: "Mode humain désactivé ; les scores sont de nouveau admissibles.",
+            invalidRegex: "Expression régulière invalide ou trop coûteuse.",
+            unrankedScores: "{{username}} : {{scores}} (salon non classé).",
+            noScores: "aucun score",
+        },
+        dictionary: {
+            trustedReviewer: "Cette commande est réservée aux réviseurs de dictionnaire de confiance.",
+            trustedListReviewer: "Cette commande est réservée aux réviseurs de listes de confiance.",
+            listUsage: "Utilisation : /cl [langue] [record à liste] [add|remove] [mots...].",
+            testWords: "Mots de test : {{words}}",
+            unknownAdded: "Le mot inconnu {{word}} est valide et a été ajouté au dictionnaire.",
+            unknownTested: "Le mot inconnu {{word}} est valide et a été ajouté à la liste de test.",
+            invalidRemoved: "Le mot {{word}} est invalide et a été retiré du dictionnaire.",
+            invalidTested: "Le mot {{word}} est invalide et a été ajouté à la liste de test pour être retiré du dictionnaire.",
+        },
+        room: {
+            blacklisted: "Ce compte n'est pas autorisé à créer des salons BirdBot privés.",
+            verificationUnavailable: "Impossible de vérifier l'accès au salon privé. Réessaie plus tard.",
         },
     },
     lib: {

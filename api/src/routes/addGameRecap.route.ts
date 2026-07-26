@@ -1,11 +1,13 @@
 import { type RouteHandlerMethod } from "fastify";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
+import { calculateCreditsFromGameRecap } from "../helpers/credits";
 import refreshMaterializedViews from "../helpers/refreshMaterializedViews";
 import { calculateXpFromGameRecap, ExperienceData, getLevelDataFromXp } from "../helpers/xp";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
 import { gameRecap } from "../schemas/game.zod";
+import { mutateCredits } from "../services/parity.service";
 
 export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, res) {
     Logger.log({
@@ -81,6 +83,16 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             ${gameRecapData.adverbsCount})
         `;
 
+        const listedRecordsTotalCount =
+            gameRecapData.hyphenWordsCount +
+            gameRecapData.moreThan20LettersWordsCount +
+            gameRecapData.slursCount +
+            gameRecapData.creaturesCount +
+            gameRecapData.ethnonymsCount +
+            gameRecapData.chemicalsCount +
+            gameRecapData.plantsCount +
+            gameRecapData.foodsCount +
+            gameRecapData.adverbsCount;
         const gainedExperience = calculateXpFromGameRecap({
             mode: gameRecapData.game.mode,
             time: gameRecapData.diedAt - game.started_at.getTime(),
@@ -91,16 +103,7 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             wordsWithoutDeathCount: gameRecapData.wordsWithoutDeathCount,
             previousSyllablesCount: gameRecapData.previousSyllablesCount,
             multiSyllablesCount: gameRecapData.multiSyllablesCount,
-            listedRecordsTotalCount:
-                gameRecapData.hyphenWordsCount +
-                gameRecapData.moreThan20LettersWordsCount +
-                gameRecapData.slursCount +
-                gameRecapData.creaturesCount +
-                gameRecapData.ethnonymsCount +
-                gameRecapData.chemicalsCount +
-                gameRecapData.plantsCount +
-                gameRecapData.foodsCount +
-                gameRecapData.adverbsCount,
+            listedRecordsTotalCount,
         });
 
         const playerXp: { xp: number }[] = await prisma.$queryRaw`
@@ -118,14 +121,43 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
             WHERE id = ${player.id}::UUID
         `;
 
+        const creditsEarned = calculateCreditsFromGameRecap({
+            mode: gameRecapData.game.mode,
+            wordsCount: gameRecapData.wordsCount,
+            flipsCount: gameRecapData.flipsCount,
+            depletedSyllablesCount: gameRecapData.depletedSyllablesCount,
+            alphaCount: gameRecapData.alphaCount,
+            wordsWithoutDeathCount: gameRecapData.wordsWithoutDeathCount,
+            previousSyllablesCount: gameRecapData.previousSyllablesCount,
+            multiSyllablesCount: gameRecapData.multiSyllablesCount,
+            listedRecordsTotalCount,
+        });
+        if (creditsEarned > 0) {
+            await mutateCredits({
+                playerId: player.id,
+                amount: creditsEarned,
+                reason: "game-recap",
+                reference: game.id,
+                idempotencyKey: `game-recap-credits:${game.id}:${player.id}`,
+                actor: "game-recap",
+                metadata: {
+                    wordsCount: gameRecapData.wordsCount,
+                    mode: gameRecapData.game.mode,
+                    language: gameRecapData.game.lang,
+                },
+            });
+        }
+
         refreshMaterializedViews();
 
         return res.status(200).send({
             oldXpData: currentXpData,
             newXpData: newXpData,
+            creditsEarned,
         } satisfies {
             oldXpData: ExperienceData;
             newXpData: ExperienceData;
+            creditsEarned: number;
         });
     } catch (e) {
         Logger.error({

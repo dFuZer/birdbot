@@ -22,7 +22,7 @@ export default async function getPlayerProfile({
     language: TLanguage;
 }) {
     const playerQuery: { id: string; account_name: string; xp: number; username: string; avatar_url: string }[] =
-        await prisma.$queryRaw`SELECT p.id, p.account_name, p.metadata->>'latest_username' as username, p.xp, p.metadata->>'avatar_url' as avatar_url FROM player p WHERE p.id = ${playerId}::UUID LIMIT 1`;
+        await prisma.$queryRaw`SELECT p.id, p.account_name, COALESCE(p.metadata->>'profile_name', p.metadata->>'latest_username') as username, p.xp, p.metadata->>'avatar_url' as avatar_url FROM player p WHERE p.id = ${playerId}::UUID LIMIT 1`;
     const player = playerQuery[0];
 
     if (!player) {

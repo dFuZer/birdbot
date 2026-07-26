@@ -75,12 +75,75 @@ const commands: Command[] = [
         explanation:
             "Shows the current game scores for a given player. If no player is provided, it will show the scores for the current player.",
         id: "score",
-        shorthand: "/s",
-        uses: ["/score", "/score [player]"],
+        shorthand: "/j",
+        uses: ["/score", "/score [player]", "/stats", "/j"],
         exampleUses: [
             { use: "/score", useDescription: "Shows your current game scores" },
             { use: "/score dfuzer", useDescription: "Shows dfuzer's current game scores" },
         ],
+    },
+    {
+        trigger: "/speed",
+        explanation:
+            "Shows global speed milestones, or a specific player's milestones when a name is provided. Alias: /s.",
+        id: "speed",
+        shorthand: "/s",
+        uses: ["/speed", "/speed [player]", "/s"],
+        exampleUses: [
+            { use: "/s", useDescription: "Shows the global speed milestone board" },
+            { use: "/s dfuzer", useDescription: "Shows dfuzer's speed milestones" },
+        ],
+    },
+    {
+        trigger: "/accuracy",
+        explanation: "Shows global accuracy streak milestones, or a specific player's milestones.",
+        id: "accuracy",
+        shorthand: "/acc",
+        uses: ["/accuracy", "/accuracy [player]", "/acc"],
+        exampleUses: [
+            { use: "/acc", useDescription: "Shows the global accuracy milestone board" },
+            { use: "/acc dfuzer", useDescription: "Shows dfuzer's accuracy milestones" },
+        ],
+    },
+    {
+        trigger: "/credits",
+        explanation: "Shows your BirdBot credit balance. Credits are earned from scored games and can buy VIP.",
+        id: "credits",
+        uses: ["/credits"],
+        exampleUses: [{ use: "/credits", useDescription: "Shows your credit balance" }],
+    },
+    {
+        trigger: "/economy",
+        explanation: "Shows credits, VIP tier, and recent purchases for you or another player.",
+        id: "economy",
+        uses: ["/economy", "/economy [player]", "/vip"],
+        exampleUses: [
+            { use: "/economy", useDescription: "Shows your economy profile" },
+            { use: "/vip dfuzer", useDescription: "Shows dfuzer's VIP/economy profile" },
+        ],
+    },
+    {
+        trigger: "/buy",
+        explanation: "Purchases VIP (500 credits) or VIP+ (1000 credits).",
+        id: "buy",
+        condition: "logged-in",
+        uses: ["/buy vip", "/buy vip+"],
+        exampleUses: [{ use: "/buy vip", useDescription: "Buys VIP if you have enough credits" }],
+    },
+    {
+        trigger: "/setname",
+        explanation: "Sets your BirdBot profile name (limited to once every 30 days).",
+        id: "setname",
+        condition: "logged-in",
+        uses: ["/setname [name]"],
+        exampleUses: [{ use: "/setname dfuzer", useDescription: "Claims the profile name dfuzer" }],
+    },
+    {
+        trigger: "/connect",
+        explanation: "Explains how to log in to jklm.fun.",
+        id: "connect",
+        uses: ["/connect"],
+        exampleUses: [{ use: "/connect", useDescription: "Shows login instructions" }],
     },
     {
         trigger: "/profile",

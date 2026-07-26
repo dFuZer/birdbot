@@ -12,6 +12,8 @@ let addWordSchema = z.object({
     flip: z.boolean(),
     submitResult: submitResultSchema,
     prompt: z.string().max(10),
+    durationMs: z.number().int().nonnegative().max(3_600_000).optional(),
+    reactionMs: z.number().int().nonnegative().max(3_600_000).optional(),
 });
 
 export { addWordSchema, type TSubmitResult };

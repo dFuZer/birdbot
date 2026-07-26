@@ -4,26 +4,32 @@ import path from "path";
 import readline from "readline";
 import { io, type Socket } from "socket.io-client";
 import { v5 as uuidv5 } from "uuid";
-import { jklmDomain } from "../constants/gameConstants";
 import { NAMESPACE_UUID } from "../env";
+import { discoverRoomServer } from "../jklm/http";
 import { dataPath } from "../paths";
 import type { Chatter, GameData, MilestoneRound } from "../types/gameTypes";
-import type { BotEventHandler, BotEventPreviousHandlersCtx, EventCtx } from "../types/libEventTypes";
+import type {
+    BotEventHandler,
+    BotEventPreviousHandlersCtx,
+    ChatStyle,
+    ChatStyleMap,
+    ChatStyleName,
+    EventCtx,
+} from "../types/libEventTypes";
 import type Bot from "./Bot.class";
-import type { Command, CommandHandlerCtx } from "./CommandUtils.class";
+import CommandUtils, { type Command, type CommandDispatchResult } from "./CommandUtils.class";
 import Logger from "./Logger.class";
 import type Room from "./Room.class";
 
-type QueuedRequest = {
-    fn: () => Promise<void>;
-    resolve: () => void;
-    reject: (err: unknown) => void;
-};
-
 export default class Utilitary {
-    private static requestQueue: QueuedRequest[] = [];
-    private static queueRunning = false;
-    private static readonly QUEUE_DELAY_MS = 2800;
+    private static readonly SOCKET_TIMEOUT_MS = 8000;
+    public static readonly CHAT_STYLES: ChatStyleMap = Object.freeze({
+        error: Object.freeze({ color: "#f0b7b7" }),
+        success: Object.freeze({ color: "#b7f0bb" }),
+        neutral: Object.freeze({ color: "#c7cbf0" }),
+        info: Object.freeze({ color: "#c7cbf0", "font-weight": "bold" }),
+        important: Object.freeze({ color: "#E2E600", "font-weight": "bold" }),
+    });
 
     public static formatTime(time: number) {
         const milliseconds = time;
@@ -74,12 +80,13 @@ export default class Utilitary {
         return token;
     }
 
-    public static sendChatMessage(room: Room, message: string) {
+    public static sendChatMessage(room: Room, message: string, style?: ChatStyleName | ChatStyle) {
         const chatSocket = room.chatSocket;
         if (!chatSocket?.connected) return;
+        const resolvedStyle = typeof style === "string" ? Utilitary.CHAT_STYLES[style] : style;
         const chunks = Utilitary.cutMessage(message, 298);
         for (const chunk of chunks) {
-            chatSocket.emit("chat", chunk, {});
+            chatSocket.emit("chat", chunk, resolvedStyle ?? {});
         }
     }
 
@@ -98,59 +105,9 @@ export default class Utilitary {
         return uuidv5(value, NAMESPACE_UUID);
     }
 
-    public static async postJson<T>(apiPath: string, obj: Record<string, any>): Promise<T> {
-        const res = await fetch(`https://${jklmDomain}${apiPath}`, {
-            method: "POST",
-            body: JSON.stringify(obj),
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-        const text = await res.text();
-        try {
-            return JSON.parse(text) as T;
-        } catch {
-            throw new Error(`jklm API ${apiPath} failed: ${text}`);
-        }
-    }
-
-    public static queuedPostJson<T>(apiPath: string, obj: Record<string, any>): Promise<T> {
-        return new Promise((resolve, reject) => {
-            Utilitary.requestQueue.push({
-                fn: async () => {
-                    const result = await Utilitary.postJson<T>(apiPath, obj);
-                    resolve(result);
-                },
-                resolve: () => {},
-                reject,
-            });
-            Utilitary.pumpQueue();
-        });
-    }
-
-    private static async pumpQueue() {
-        if (Utilitary.queueRunning) return;
-        Utilitary.queueRunning = true;
-        while (Utilitary.requestQueue.length > 0) {
-            const item = Utilitary.requestQueue.shift()!;
-            try {
-                await item.fn();
-            } catch (err) {
-                item.reject(err);
-            }
-            await new Promise((r) => setTimeout(r, Utilitary.QUEUE_DELAY_MS));
-        }
-        Utilitary.queueRunning = false;
-    }
-
-    public static async resolveRoomServerUrl(room: Room) {
-        if (room.constantRoomData.serverUrl) return;
-        const response = await Utilitary.queuedPostJson<{ url: string }>("/api/joinRoom", {
-            roomCode: room.constantRoomData.roomCode,
-        });
-        if (!response.url) {
-            throw new Error(`Could not resolve server URL for room ${room.constantRoomData.roomCode}`);
-        }
+    public static async resolveRoomServerUrl(room: Room, forceRediscovery = false) {
+        if (room.constantRoomData.serverUrl && !forceRediscovery) return;
+        const response = await discoverRoomServer(room.constantRoomData.roomCode);
         room.constantRoomData.serverUrl = response.url;
     }
 
@@ -175,7 +132,8 @@ export default class Utilitary {
         }
     }
 
-    public static destroyRoom(bot: Bot, room: Room) {
+    public static teardownRoomSockets(room: Room) {
+        room.connectionGeneration++;
         const cleanupSocket = (socket: Socket | null) => {
             if (!socket) return;
             socket.removeAllListeners();
@@ -185,6 +143,10 @@ export default class Utilitary {
         cleanupSocket(room.gameSocket);
         room.chatSocket = null;
         room.gameSocket = null;
+    }
+
+    public static destroyRoom(bot: Bot, room: Room) {
+        Utilitary.teardownRoomSockets(room);
         delete bot.rooms[room.id];
     }
 
@@ -198,7 +160,8 @@ export default class Utilitary {
             },
             message: { event, args },
             utils: {
-                sendChatMessage: (m: string) => Utilitary.sendChatMessage(room, m),
+                sendChatMessage: (message, style) => Utilitary.sendChatMessage(room, message, style),
+                chatStyles: Utilitary.CHAT_STYLES,
                 userIsAdmin: (authId: string | null | undefined) => {
                     if (!authId) return false;
                     return bot.botData!.adminAuthIds.includes(authId);
@@ -226,6 +189,9 @@ export default class Utilitary {
                 setUserModerator: (peerId: number, isModerator: boolean) => {
                     room.chatSocket?.emit("setUserModerator", peerId, isModerator, () => {});
                 },
+                setUserBanned: (peerId: number, isBanned: boolean) => {
+                    room.chatSocket?.emit("setUserBanned", peerId, isBanned, () => {});
+                },
             },
             room: {
                 roomState: room.roomState,
@@ -239,110 +205,206 @@ export default class Utilitary {
         };
     }
 
-    public static initializeRoomSockets(bot: Bot, room: Room) {
+    public static initializeRoomSockets(bot: Bot, room: Room): Promise<void> {
         const url = room.constantRoomData.serverUrl;
         if (!url) {
-            throw new Error("Room server URL is not set");
+            return Promise.reject(new Error("Room server URL is not set"));
+        }
+        if (!bot.botData) {
+            return Promise.reject(new Error("Bot must be initialized before joining a room"));
         }
 
-        const session = bot.botData!.session;
+        Utilitary.teardownRoomSockets(room);
+        const generation = room.connectionGeneration;
+        const session = bot.botData.session;
+
         const joinData = {
             auth: session.getJoinAuth(),
             language: session.language,
-            nickname: session.nickname,
-            picture: session.picture,
+            nickname:
+                typeof room.constantRoomData.targetConfig.botName === "string"
+                    ? room.constantRoomData.targetConfig.botName
+                    : session.nickname,
+            picture:
+                typeof room.constantRoomData.targetConfig.pictureUrl === "string"
+                    ? room.constantRoomData.targetConfig.pictureUrl
+                    : session.picture,
             roomCode: room.constantRoomData.roomCode,
             userToken: room.constantRoomData.userToken,
             takeOver: false,
             isUsernameHidden: false,
         };
 
-        const chatSocket = io(url, {
-            transports: ["websocket"],
-            reconnection: false,
-            timeout: 8000,
-        });
-        room.chatSocket = chatSocket;
+        return new Promise((resolve, reject) => {
+            let ready = false;
+            let settled = false;
+            let chatAckTimer: NodeJS.Timeout | undefined;
+            let gameSetupTimer: NodeJS.Timeout | undefined;
 
-        chatSocket.on("connect", () => {
-            chatSocket.emit("joinRoom", joinData, (ack: { selfPeerId: number; roomEntry?: { isPublic?: boolean } }) => {
-                room.roomState.myPeerId = ack.selfPeerId;
-                room.roomState.roomData = {
-                    code: room.constantRoomData.roomCode,
-                    isPublic: ack.roomEntry?.isPublic ?? room.constantRoomData.targetConfig.isPublic,
-                    chatters: [],
-                };
-                room.roomState.lastActivityAt = Date.now();
+            const isCurrent = () => bot.rooms[room.id] === room && room.connectionGeneration === generation;
+            const fail = (error: Error) => {
+                if (settled) return;
+                settled = true;
+                if (chatAckTimer) clearTimeout(chatAckTimer);
+                if (gameSetupTimer) clearTimeout(gameSetupTimer);
+                if (isCurrent()) Utilitary.teardownRoomSockets(room);
+                reject(error);
+            };
 
-                if (bot.handlers.chatConnect) {
-                    Utilitary.executeEventHandlers(bot.handlers.chatConnect, Utilitary.buildEventCtx(bot, room, "chatConnect", []));
-                }
+            const chatSocket = io(url, {
+                transports: ["websocket"],
+                reconnection: false,
+                timeout: Utilitary.SOCKET_TIMEOUT_MS,
+            });
+            room.chatSocket = chatSocket;
 
-                Utilitary.bindSocketHandlers(bot, room, "chat", chatSocket);
+            chatSocket.once("connect", () => {
+                if (!isCurrent()) return;
+                chatAckTimer = setTimeout(() => {
+                    fail(new Error(`Timed out waiting for joinRoom acknowledgement for ${room.constantRoomData.roomCode}`));
+                }, Utilitary.SOCKET_TIMEOUT_MS);
 
-                chatSocket.emit("getChatterProfiles", (profiles: any[]) => {
-                    if (Array.isArray(profiles) && room.roomState.roomData) {
-                        room.roomState.roomData.chatters = profiles.map((p) => Utilitary.profileToChatter(p));
+                chatSocket.emit("joinRoom", joinData, (ack: unknown) => {
+                    if (settled || !isCurrent()) return;
+                    if (
+                        !ack ||
+                        typeof ack !== "object" ||
+                        typeof (ack as { selfPeerId?: unknown }).selfPeerId !== "number"
+                    ) {
+                        fail(new Error(`Invalid joinRoom acknowledgement for ${room.constantRoomData.roomCode}`));
+                        return;
                     }
-                });
+                    if (chatAckTimer) clearTimeout(chatAckTimer);
 
-                const gameSocket = io(url, {
-                    transports: ["websocket"],
-                    reconnection: false,
-                    timeout: 8000,
-                });
-                room.gameSocket = gameSocket;
+                    const validAck = ack as { selfPeerId: number; roomEntry?: { isPublic?: unknown } };
+                    room.roomState.myPeerId = validAck.selfPeerId;
+                    room.roomState.roomData = {
+                        code: room.constantRoomData.roomCode,
+                        isPublic:
+                            typeof validAck.roomEntry?.isPublic === "boolean"
+                                ? validAck.roomEntry.isPublic
+                                : room.constantRoomData.targetConfig.isPublic,
+                        chatters: [],
+                    };
+                    room.roomState.lastActivityAt = Date.now();
 
-                gameSocket.on("connect", () => {
-                    Utilitary.bindSocketHandlers(bot, room, "game", gameSocket);
-
-                    if (bot.handlers.gameConnect) {
+                    Utilitary.bindSocketHandlers(bot, room, "chat", chatSocket);
+                    if (bot.handlers.chatConnect) {
                         Utilitary.executeEventHandlers(
-                            bot.handlers.gameConnect,
-                            Utilitary.buildEventCtx(bot, room, "gameConnect", [])
+                            bot.handlers.chatConnect,
+                            Utilitary.buildEventCtx(bot, room, "chatConnect", [])
                         );
                     }
 
-                    gameSocket.emit(
-                        "joinGame",
-                        "bombparty",
-                        room.constantRoomData.roomCode,
-                        room.constantRoomData.userToken,
-                        true
-                    );
-                });
+                    chatSocket.emit("getChatterProfiles", (profiles: unknown) => {
+                        if (Array.isArray(profiles) && room.roomState.roomData && isCurrent()) {
+                            room.roomState.roomData.chatters = profiles.map((profile) =>
+                                Utilitary.profileToChatter(profile)
+                            );
+                        }
+                    });
 
-                gameSocket.on("disconnect", () => {
-                    if (bot.handlers.gameDisconnect) {
-                        Utilitary.executeEventHandlers(
-                            bot.handlers.gameDisconnect,
-                            Utilitary.buildEventCtx(bot, room, "gameDisconnect", [])
+                    const gameSocket = io(url, {
+                        transports: ["websocket"],
+                        reconnection: false,
+                        timeout: Utilitary.SOCKET_TIMEOUT_MS,
+                    });
+                    room.gameSocket = gameSocket;
+
+                    gameSocket.once("connect", () => {
+                        if (!isCurrent()) return;
+                        Utilitary.bindSocketHandlers(bot, room, "game", gameSocket);
+
+                        gameSocket.once("setup", () => {
+                            if (settled) return;
+                            if (!isCurrent() || !room.isConnected() || !room.roomState.gameData) {
+                                fail(new Error(`Game setup failed for room ${room.constantRoomData.roomCode}`));
+                                return;
+                            }
+                            if (gameSetupTimer) clearTimeout(gameSetupTimer);
+                            ready = true;
+                            settled = true;
+                            resolve();
+                        });
+
+                        if (bot.handlers.gameConnect) {
+                            Utilitary.executeEventHandlers(
+                                bot.handlers.gameConnect,
+                                Utilitary.buildEventCtx(bot, room, "gameConnect", [])
+                            );
+                        }
+
+                        gameSetupTimer = setTimeout(() => {
+                            fail(new Error(`Timed out waiting for game setup for ${room.constantRoomData.roomCode}`));
+                        }, Utilitary.SOCKET_TIMEOUT_MS);
+
+                        gameSocket.emit(
+                            "joinGame",
+                            "bombparty",
+                            room.constantRoomData.roomCode,
+                            room.constantRoomData.userToken,
+                            true
                         );
-                    }
-                });
+                    });
 
-                gameSocket.on("connect_error", (err) => {
-                    Logger.error({
-                        message: `Game socket connect error for ${room.constantRoomData.roomCode}: ${err.message}`,
-                        path: "Utilitary.class.ts",
+                    gameSocket.on("disconnect", () => {
+                        if (!isCurrent()) return;
+                        if (!ready) {
+                            fail(new Error(`Game socket disconnected before setup for ${room.constantRoomData.roomCode}`));
+                            return;
+                        }
+                        if (bot.handlers.gameDisconnect) {
+                            Utilitary.executeEventHandlers(
+                                bot.handlers.gameDisconnect,
+                                Utilitary.buildEventCtx(bot, room, "gameDisconnect", [])
+                            );
+                        }
+                    });
+
+                    gameSocket.once("connect_error", (error: Error) => {
+                        if (!ready) {
+                            fail(
+                                new Error(
+                                    `Game socket connection failed for ${room.constantRoomData.roomCode}: ${error.message}`
+                                )
+                            );
+                        } else {
+                            Logger.error({
+                                message: `Game socket connect error for ${room.constantRoomData.roomCode}: ${error.message}`,
+                                path: "Utilitary.class.ts",
+                            });
+                        }
                     });
                 });
             });
-        });
 
-        chatSocket.on("disconnect", () => {
-            if (bot.handlers.chatDisconnect) {
-                Utilitary.executeEventHandlers(
-                    bot.handlers.chatDisconnect,
-                    Utilitary.buildEventCtx(bot, room, "chatDisconnect", [])
-                );
-            }
-        });
+            chatSocket.on("disconnect", () => {
+                if (!isCurrent()) return;
+                if (!ready) {
+                    fail(new Error(`Chat socket disconnected before setup for ${room.constantRoomData.roomCode}`));
+                    return;
+                }
+                if (bot.handlers.chatDisconnect) {
+                    Utilitary.executeEventHandlers(
+                        bot.handlers.chatDisconnect,
+                        Utilitary.buildEventCtx(bot, room, "chatDisconnect", [])
+                    );
+                }
+            });
 
-        chatSocket.on("connect_error", (err) => {
-            Logger.error({
-                message: `Chat socket connect error for ${room.constantRoomData.roomCode}: ${err.message}`,
-                path: "Utilitary.class.ts",
+            chatSocket.once("connect_error", (error: Error) => {
+                if (!ready) {
+                    fail(
+                        new Error(
+                            `Chat socket connection failed for ${room.constantRoomData.roomCode}: ${error.message}`
+                        )
+                    );
+                } else {
+                    Logger.error({
+                        message: `Chat socket connect error for ${room.constantRoomData.roomCode}: ${error.message}`,
+                        path: "Utilitary.class.ts",
+                    });
+                }
             });
         });
     }
@@ -428,63 +490,13 @@ export default class Utilitary {
         ctx: EventCtx,
         rawMessage: string,
         chatter: Chatter,
-        commands: Command[]
-    ):
-        | "no-command-given"
-        | "command-not-found"
-        | "trying-to-handle-command"
-        | "no-command-attempted"
-        | "not-room-creator"
-        | "not-admin" {
-        const normalizedMessage = rawMessage.trim().replace(/[ ]+/, " ");
-        const commandPrefixes = ["!", "/", "."];
-        if (commandPrefixes.some((prefix) => normalizedMessage.startsWith(prefix))) {
-            const args = normalizedMessage.slice(1).split(" ");
-            const requestedCommand = args[0];
-            if (!requestedCommand) return "no-command-given";
-            const params = args
-                .slice(1)
-                .filter((arg) => arg.startsWith("-"))
-                .map((arg) => arg.slice(1).toLowerCase());
-            const commandArgs = args
-                .slice(1)
-                .filter((arg) => !arg.startsWith("-"))
-                .map((arg) => arg.toLowerCase());
-            const command = commands.find((c) => c.aliases.includes(requestedCommand));
-            if (!command) return "command-not-found";
-            if (command.adminRequired && !ctx.utils.userIsAdmin(chatter.authId)) {
-                return "not-admin";
-            }
-            if (command.roomCreatorRequired && !ctx.utils.userIsAdmin(chatter.authId)) {
-                const roomCreatorAuthId = ctx.room.constantRoomData.roomCreatorAuthId;
-                // Main rooms (no creator) are admin-only for room-creator commands
-                if (roomCreatorAuthId === null) {
-                    return "not-admin";
-                }
-                if (chatter.authId === null || roomCreatorAuthId !== chatter.authId) {
-                    return "not-room-creator";
-                }
-            }
-
-            Logger.log({
-                message: `Attempting to handle command ${command.id} from message ${rawMessage}`,
-                path: "Utilitary.class.ts",
-            });
-            const commandHandlerCtx: CommandHandlerCtx = {
-                bot: ctx.bot,
-                room: ctx.room,
-                utils: ctx.utils,
-                rawMessage,
-                params,
-                args: commandArgs,
-                gamer: chatter,
-                normalizedMessage,
-                usedAlias: requestedCommand,
-                normalizedTextAfterCommand: normalizedMessage.slice(requestedCommand.length + 1).trim(),
-            };
-            command.handler(commandHandlerCtx);
-            return "trying-to-handle-command";
-        }
-        return "no-command-attempted";
+        commands: readonly Command[],
+    ): CommandDispatchResult {
+        return CommandUtils.dispatch({
+            ctx,
+            rawMessage,
+            chatter,
+            registry: CommandUtils.getRegistry(commands),
+        });
     }
 }

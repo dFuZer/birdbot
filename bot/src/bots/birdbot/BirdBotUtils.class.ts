@@ -29,6 +29,8 @@ import {
     ExperienceData,
     PlayerGameScores,
 } from "./BirdBotTypes";
+import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
+import BirdBotWordSelectionService from "./services/BirdBotWordSelection.service";
 import { l, t } from "./texts/BirdBotTextUtils";
 
 export type ApiResponseAllRecords = {
@@ -61,58 +63,30 @@ export default class BirdBotUtils {
         }
         if (currentPlayer.peerId !== ctx.room.roomState.myPeerId) return;
         const myPlayer = currentPlayer;
-        const dictionaryResource = this.getCurrentDictionaryResource(ctx);
         const history = ctx.room.roomState.wordHistory;
         const prompt = ctx.room.roomState.gameData!.milestone.name === "round"
             ? ctx.room.roomState.gameData!.milestone.syllable
             : "";
         if (!prompt) return;
 
-        const isWordValid = (word: string) => {
-            return word.indexOf(prompt) !== -1 && history.indexOf(word) === -1;
-        };
-
-        type WordPlacementMode = "flip" | "random";
-        let mode: WordPlacementMode | null = null;
-
-        if (myPlayer.lives < ctx.room.roomState.gameData!.rules.maxLives) {
-            mode = "flip";
-        } else {
-            mode = "random";
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        if (!roomMetadata.scoresByPeerId[myPlayer.peerId]) {
+            this.initializeScoresForPlayerId(roomMetadata, myPlayer.peerId);
         }
-        if (mode === "flip") {
-            const requiredLetters = ctx.room.roomState.gameData!.dictionaryManifest.bonusLetters;
-            const placedLetters = myPlayer.usedLetters;
-            const foundWord = this.getBestFlipWord({
-                dictionaryResource,
-                requiredLetters,
-                placedLetters,
-                isWordValid,
-            });
-            this.submitWord({
-                word: foundWord ?? "/suicide",
-                setWord: ctx.utils.setWord,
-            });
-        } else if (mode === "random") {
-            const testList = dictionaryResource.metadata.testWords;
-            for (const testWord of testList) {
-                if (isWordValid(testWord.word)) {
-                    this.submitWord({
-                        word: testWord.word,
-                        setWord: ctx.utils.setWord,
-                    });
-                    return;
-                }
-            }
-            const foundWord = this.getRandomValidWord({
-                dictionary: dictionaryResource.resource,
-                isWordValid,
-            });
-            this.submitWord({
-                word: foundWord ?? "/suicide",
-                setWord: ctx.utils.setWord,
-            });
-        }
+        const foundWord = BirdBotWordSelectionService.select({
+            ctx,
+            prompt,
+            history,
+            lives: myPlayer.lives,
+            maxLives: ctx.room.roomState.gameData!.rules.maxLives,
+            bonusLetters: myPlayer.bonusLetters,
+            requiredLetters: ctx.room.roomState.gameData!.dictionaryManifest.bonusLetters,
+            scores: roomMetadata.scoresByPeerId[myPlayer.peerId]!,
+        });
+        this.submitWord({
+            word: foundWord ?? "/suicide",
+            setWord: ctx.utils.setWord,
+        });
     };
 
     public static getTopFlipWords = (
@@ -188,6 +162,19 @@ export default class BirdBotUtils {
         const timeSurvived = gameRecap.diedAt - ctx.room.roomState.roundStartTimestamp;
 
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+
+        if (!BirdBotGameplayStateService.isScoreEligible(ctx)) {
+            const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByPeerId[peerId], l(ctx));
+            ctx.utils.sendChatMessage(
+                t("parity.gameplay.unrankedScores", {
+                    username: gamer.nickname,
+                    scores: scores || t("parity.gameplay.noScores", { lng: l(ctx) }),
+                    lng: l(ctx),
+                }),
+                "neutral",
+            );
+            return;
+        }
 
         BirdBotUtils.registerGameRecap(gameRecap).then((data) => {
             if (!ctx.room.isHealthy() || !data) {
@@ -307,6 +294,46 @@ export default class BirdBotUtils {
     public static registerWord = async (wordData: BirdBotWordData) => {
         const res = await this.postJsonToApi("/word", wordData, "PUT");
         return res;
+    };
+
+    public static queueSuccessfulWordRegistration = (
+        ctx: EventCtx,
+        turnKey: string,
+        data: Omit<BirdBotWordData, "flip">
+    ) => {
+        if (!BirdBotGameplayStateService.isScoreEligible(ctx)) return;
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        if (roomMetadata.pendingWordRegistrations.has(turnKey)) return;
+        roomMetadata.pendingWordRegistrations.set(turnKey, { turnKey, data });
+        if (roomMetadata.flipTurnKeys.has(turnKey)) {
+            this.flushWordRegistration(ctx, turnKey, true);
+        }
+    };
+
+    public static markFlipForTurn = (ctx: EventCtx, turnKey: string) => {
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        const isNewFlip = !roomMetadata.flipTurnKeys.has(turnKey);
+        roomMetadata.flipTurnKeys.add(turnKey);
+        this.flushWordRegistration(ctx, turnKey, true);
+        return isNewFlip;
+    };
+
+    public static flushWordRegistration = (ctx: EventCtx, turnKey: string, flip?: boolean) => {
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        const pending = roomMetadata.pendingWordRegistrations.get(turnKey);
+        if (!pending) return;
+        roomMetadata.pendingWordRegistrations.delete(turnKey);
+        void this.registerWord({
+            ...pending.data,
+            flip: flip ?? roomMetadata.flipTurnKeys.has(turnKey),
+        });
+    };
+
+    public static flushAllWordRegistrations = (ctx: EventCtx) => {
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        for (const turnKey of [...roomMetadata.pendingWordRegistrations.keys()]) {
+            this.flushWordRegistration(ctx, turnKey);
+        }
     };
 
     public static registerGame = async (gameData: BirdBotGameData) => {
@@ -710,7 +737,7 @@ export default class BirdBotUtils {
         return syllables;
     };
 
-    public static getCurrentRoomLanguage = (ctx: EventCtx) => {
+    public static getCurrentRoomLanguage = (ctx: CommandOrEventCtx) => {
         const roomDictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
         const roomLanguage = dictionaryIdToBirdbotLanguage[roomDictionaryId as BirdBotSupportedDictionaryId];
         if (!roomLanguage) {
@@ -723,7 +750,7 @@ export default class BirdBotUtils {
         return roomLanguage;
     };
 
-    public static getCurrentDictionaryResource = (ctx: EventCtx) => {
+    public static getCurrentDictionaryResource = (ctx: CommandOrEventCtx) => {
         const roomLanguage = this.getCurrentRoomLanguage(ctx);
         return ctx.bot.getResource<DictionaryResource>(`dictionary-${roomLanguage}`);
     };
@@ -888,6 +915,8 @@ export default class BirdBotUtils {
             path: "BirdBotUtils.class.ts",
         });
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        BirdBotGameplayStateService.initialize(roomMetadata);
+        BirdBotGameplayStateService.resetIfLanguageChanged(ctx);
         this.detectRoomGameMode(ctx);
         roomMetadata.scoresByPeerId = {};
         roomMetadata.globalScores = {
@@ -907,6 +936,9 @@ export default class BirdBotUtils {
         };
         roomMetadata.hostLeftIteration = 0;
         roomMetadata.greetedPeerIds = new Set();
+        roomMetadata.pendingWordRegistrations = new Map();
+        roomMetadata.flipTurnKeys = new Set();
+        roomMetadata.scoredWordTurnKeys = new Set();
         this.initializeScoresForAllPlayers(ctx);
         const currentDictionaryResource = this.getCurrentDictionaryResource(ctx);
         roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);
@@ -963,6 +995,7 @@ export default class BirdBotUtils {
 
     public static resetRoomMetadata = (ctx: EventCtx) => {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        this.flushAllWordRegistrations(ctx);
         roomMetadata.scoresByPeerId = {};
         roomMetadata.globalScores = {
             flips: 0,
@@ -979,6 +1012,9 @@ export default class BirdBotUtils {
             foods: 0,
             adverbs: 0,
         };
+        roomMetadata.pendingWordRegistrations.clear();
+        roomMetadata.flipTurnKeys.clear();
+        roomMetadata.scoredWordTurnKeys.clear();
         for (const player of ctx.room.roomState.gameData!.players) {
             this.initializeScoresForPlayerId(roomMetadata, player.profile.peerId);
         }

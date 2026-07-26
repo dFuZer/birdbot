@@ -56,7 +56,7 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     return room.constantRoomData.roomCreatorAuthId === null;
                 })
                 .map(([, room]) => {
-                    return room.roomState.gameData?.rules.dictionaryId;
+                    return room.constantRoomData.targetConfig.dictionaryId;
                 })
                 .filter((lang) => lang !== undefined && lang in dictionaryIdToBirdbotLanguage)
                 .map((lang) => dictionaryIdToBirdbotLanguage[lang as BirdBotSupportedDictionaryId]);
@@ -89,6 +89,7 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
             const { bot } = ctx;
             const rooms = Object.values(bot.rooms);
             for (const room of rooms) {
+                if (room.reconnectPromise) continue;
                 if (!room.isConnected()) {
                     room.roomState.lastActivityAt = room.roomState.lastActivityAt || Date.now();
                     if (Date.now() - room.roomState.lastActivityAt > 12000) {

@@ -1,7 +1,10 @@
+import { writeFile } from "fs/promises";
 import type { Command } from "../../lib/class/CommandUtils.class";
 import CommandUtils from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
+import { alphabet } from "../../lib/constants/gameConstants";
+import type { CustomBonusAlphabet } from "../../lib/types/gameTypes";
 import BirdBot from "./BirdBot.class";
 import {
     birdbotLanguageToDictionaryId,
@@ -23,7 +26,11 @@ import {
     sortWordsModeRecords,
     WEBSITE_LINK,
 } from "./BirdBotConstants";
+import BirdBotDefinitions from "./BirdBotDefinitions.class";
 import { API_KEY, API_URL } from "./BirdBotEnv";
+import { createBirdBotCommandRegistry } from "./commands/BirdBotCommandRegistry";
+import { birdBotAdminCommands } from "./commands/BirdBotAdminCommands";
+import { birdBotParityCommands } from "./commands/BirdBotParityCommands";
 import {
     BirdBotGameMode,
     BirdBotLanguage,
@@ -34,18 +41,33 @@ import {
     ExperienceData,
     ListedRecordListResource,
     PlayerGameScores,
+    BirdBotPlaystyle,
+    BirdBotTrainingCondition,
+    BirdBotTrainingSort,
 } from "./BirdBotTypes";
 import BirdBotUtils, { type ApiResponseAllRecords, type ApiResponseBestScoresSpecificRecord } from "./BirdBotUtils.class";
+import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
+import BirdBotModerationService from "./services/BirdBotModeration.service";
+import BirdBotParityApiService from "./services/BirdBotParityApi.service";
+import BirdBotRegexService from "./services/BirdBotRegex.service";
+import BirdBotTrainingService from "./services/BirdBotTraining.service";
 import { l, t } from "./texts/BirdBotTextUtils";
 
 const c = CommandUtils.createCommandHelper;
+
+function findTargetGameMode(argumentsList: string[]): BirdBotGameMode | null {
+    const normalizedArguments = argumentsList.map((argument) => (argument === "hardcore" ? "blitz" : argument));
+    return BirdBotUtils.findTargetItemInZodEnum(normalizedArguments, modesEnumSchema);
+}
 
 const helpCommand = c({
     id: "help",
     aliases: ["help", "h", "?", "helo"], // helo may be a misinput of help
     usageDesc: "/help - /help [command]",
     exampleUsage: "/help - /help records",
-    handler: (ctx) => {
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: async (ctx) => {
         if (ctx.args.length === 0) {
             const commandFirstAliases = birdbotCommands
                 .filter((command) => !command.adminRequired)
@@ -89,6 +111,8 @@ const recordsCommand = c({
     aliases: ["records", "r", "recs", "rec", "record"],
     usageDesc: "/records - /records [recordType]",
     exampleUsage: "/records - /records words",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: async (ctx) => {
         const allArguments = ctx.params.concat(ctx.args);
         const targetLanguage = BirdBotUtils.findValueInAliasesObject(allArguments, languageAliases);
@@ -228,9 +252,11 @@ const recordsCommand = c({
 
 const currentGameScoresCommand = c({
     id: "currentGameScore",
-    aliases: ["score", "s", "sc", "j", "joueur"],
+    aliases: ["score", "stats", "sc", "j", "joueur"],
     usageDesc: "/score (player)",
     exampleUsage: "/score - /score dfuzer",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         const targetPlayerName = ctx.normalizedMessage.slice(ctx.usedAlias.length + 2);
         if (ctx.room.roomState.gameData!.milestone.name !== "round") {
@@ -327,9 +353,10 @@ const currentGameScoresCommand = c({
 
 const startGameCommand = c({
     id: "startGame",
-    aliases: ["startnow", "sn"],
+    aliases: ["start", "startgame", "startnow", "sn"],
     usageDesc: "/sn",
     roomCreatorRequired: true,
+    accessibleInRound: false,
     exampleUsage: "/sn",
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
@@ -363,6 +390,7 @@ const setGameModeCommand = c({
     usageDesc: "/mode [gameMode]",
     exampleUsage: "/mode survival",
     roomCreatorRequired: true,
+    accessibleInRound: false,
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
             ctx.utils.sendChatMessage(
@@ -372,7 +400,46 @@ const setGameModeCommand = c({
             );
             return;
         }
-        const targetGameMode = BirdBotUtils.findTargetItemInZodEnum(ctx.args.concat(ctx.params), modesEnumSchema);
+        const rawTokens = ctx.normalizedTextAfterCommand.toLowerCase().split(/\s+/).filter(Boolean);
+        if (rawTokens[0] === "custom") {
+            const values = rawTokens.slice(1).map(Number);
+            const bounds = [
+                [-1000, 1000],
+                [1, 10],
+                [1, 16],
+                [1, 5],
+                [1, 10],
+            ] as const;
+            if (
+                values.length !== 5 ||
+                values.some((value, index) => !Number.isFinite(value) || value < bounds[index]![0] || value > bounds[index]![1])
+            ) {
+                ctx.utils.sendChatMessage(
+                    "Usage: /mode custom [difficulty -1000..1000] [turn 1..10] [age 1..16] [starting lives 1..5] [max lives 1..10].",
+                );
+                return;
+            }
+            const [difficulty, minTurnDuration, maxPromptAge, startingLives, maxLives] = values as [
+                number,
+                number,
+                number,
+                number,
+                number,
+            ];
+            BirdBotUtils.setRoomGameMode(ctx, {
+                promptDifficulty: "custom",
+                customPromptDifficulty: difficulty,
+                minTurnDuration,
+                maxPromptAge,
+                startingLives,
+                maxLives,
+            });
+            BirdBotGameplayStateService.metadata(ctx).gameMode = "custom";
+            ctx.utils.sendChatMessage(t("parity.gameplay.customMode", { lng: l(ctx) }), "info");
+            return;
+        }
+
+        const targetGameMode = findTargetGameMode(rawTokens);
         if (targetGameMode) {
             const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
             if (roomMetadata.gameMode === targetGameMode) {
@@ -401,12 +468,174 @@ const setGameModeCommand = c({
     },
 }) satisfies Command;
 
+const setPlaystyleCommand = c({
+    id: "setPlaystyle",
+    aliases: ["playstyle", "style", "ps"],
+    usageDesc: "/playstyle [regular|alpha|previous|life|sn|ms|record]",
+    exampleUsage: "/ps alpha",
+    roomCreatorRequired: true,
+    accessibleInRound: true,
+    handler: (ctx) => {
+        const requested = ctx.args[0];
+        if (!requested) {
+            ctx.utils.sendChatMessage(t("parity.gameplay.providePlaystyle", { lng: l(ctx) }), "error");
+            return;
+        }
+        const language = BirdBotUtils.getCurrentRoomLanguage(ctx);
+        const direct: Record<string, BirdBotPlaystyle> = {
+            regular: "regular",
+            alpha: "alpha",
+            ps: "previous_syllable",
+            previous: "previous_syllable",
+            "previous-syllable": "previous_syllable",
+            life: "flips",
+            flip: "flips",
+            flips: "flips",
+            sn: "depleted_syllables",
+            depleted: "depleted_syllables",
+            ms: "multi_syllable",
+            multi: "multi_syllable",
+        };
+        let playstyle = direct[requested] ?? null;
+        const record = BirdBotUtils.findValueInAliasesObject([requested], recordAliases);
+        if (
+            !playstyle &&
+            record &&
+            (record === "hyphen" ||
+                record === "more_than_20_letters" ||
+                listedRecordsPerLanguage[language].includes(record as any))
+        ) {
+            playstyle = record as BirdBotPlaystyle;
+        }
+        if (!playstyle) {
+            ctx.utils.sendChatMessage(t("parity.gameplay.unavailablePlaystyle", { lng: l(ctx) }), "error");
+            return;
+        }
+        BirdBotGameplayStateService.metadata(ctx).playstyle = playstyle;
+        ctx.utils.sendChatMessage(
+            t("parity.gameplay.playstyleEnabled", { playstyle, lng: l(ctx) }),
+            "success",
+        );
+    },
+}) satisfies Command;
+
+const trainCommand = c({
+    id: "train",
+    aliases: ["train"],
+    usageDesc: "/train [regexes] (-record -alpha -previous -ms -sn -long -short)",
+    exampleUsage: "/train ^pre -long",
+    roomCreatorRequired: true,
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: (ctx) => {
+        if (!ctx.gamer.authId) {
+            ctx.utils.sendChatMessage(t("parity.gameplay.trainingLogin", { lng: l(ctx) }), "error");
+            return;
+        }
+        const metadata = BirdBotGameplayStateService.metadata(ctx);
+        if (ctx.args.length === 0 && ctx.params.length === 0) {
+            const enabling = metadata.training === null;
+            BirdBotTrainingService.set(
+                ctx,
+                enabling
+                    ? {
+                          creatorAuthId: ctx.gamer.authId,
+                          source: "dictionary",
+                          sort: "shuffle",
+                          conditions: [],
+                          regexSources: [],
+                          successes: 0,
+                          attempts: 0,
+                      }
+                    : null,
+            );
+            ctx.utils.sendChatMessage(
+                t(enabling ? "parity.gameplay.trainingEnabled" : "parity.gameplay.trainingDisabled", {
+                    lng: l(ctx),
+                }),
+                enabling ? "info" : "success",
+            );
+            return;
+        }
+
+        const all = [...ctx.params, ...ctx.args];
+        const record = BirdBotUtils.findValueInAliasesObject(all, recordAliases);
+        const language = BirdBotUtils.getCurrentRoomLanguage(ctx);
+        const source =
+            record && listedRecordsPerLanguage[language].includes(record as any) ? (record as ListedRecord) : "dictionary";
+        let sort: BirdBotTrainingSort = "shuffle";
+        const conditions: BirdBotTrainingCondition[] = [];
+        if (record === "depleted_syllables") sort = "depleted_syllables";
+        if (record === "multi_syllable") {
+            sort = "multi_syllable";
+            conditions.push({ type: "multi_syllable" });
+        }
+        if (record === "alpha") conditions.push({ type: "alpha" });
+        if (record === "previous_syllable") conditions.push({ type: "previous_syllable" });
+        if (record === "hyphen") conditions.push({ type: "hyphen" });
+        if (record === "more_than_20_letters") conditions.push({ type: "more_than_20_letters" });
+        if (ctx.params.some((item) => ["long", "longest", "l"].includes(item))) sort = "longest";
+        if (ctx.params.some((item) => ["short", "shortest", "s"].includes(item))) sort = "shortest";
+
+        const recognizedArgs = new Set(record ? recordAliases[record] : []);
+        const regexSources = ctx.args.filter((arg) => !recognizedArgs.has(arg));
+        if (BirdBotRegexService.compile(regexSources) === null) {
+            ctx.utils.sendChatMessage(t("parity.gameplay.invalidTrainingRegex", { lng: l(ctx) }), "error");
+            return;
+        }
+        const state = {
+            creatorAuthId: ctx.gamer.authId,
+            source,
+            sort,
+            conditions,
+            regexSources,
+            successes: 0,
+            attempts: 0,
+        } satisfies import("./BirdBotTypes").BirdBotTrainingState;
+        const count = BirdBotTrainingService.countMatches(ctx, state);
+        if (count < 1 || count > 30_000) {
+            ctx.utils.sendChatMessage(
+                t(count > 30_000 ? "parity.gameplay.tooManyTrainingMatches" : "parity.gameplay.noTrainingMatches", {
+                    lng: l(ctx),
+                }),
+                "error",
+            );
+            return;
+        }
+        BirdBotTrainingService.set(ctx, state);
+        ctx.utils.sendChatMessage(
+            t("parity.gameplay.trainingConfigured", { count, sort, lng: l(ctx) }),
+            "info",
+        );
+    },
+}) satisfies Command;
+
+const humanModeCommand = c({
+    id: "humanMode",
+    aliases: ["humanmode", "human", "humain"],
+    usageDesc: "/human",
+    exampleUsage: "/human",
+    roomCreatorRequired: true,
+    accessibleInRound: true,
+    handler: (ctx) => {
+        const metadata = BirdBotGameplayStateService.metadata(ctx);
+        metadata.humanMode = !metadata.humanMode;
+        ctx.utils.sendChatMessage(
+            t(metadata.humanMode ? "parity.gameplay.humanEnabled" : "parity.gameplay.humanDisabled", {
+                lng: l(ctx),
+            }),
+            metadata.humanMode ? "info" : "success",
+        );
+    },
+}) satisfies Command;
+
 const setRoomLanguageCommand = c({
     id: "setRoomLanguage",
-    aliases: ["language", "lang", "l"],
+    aliases: ["language", "lang", "l", "changelanguage", "changelang", "langue", "langage"],
     usageDesc: "/language [language]",
     exampleUsage: "/language fr",
     roomCreatorRequired: true,
+    accessibleInRound: false,
     handler: (ctx) => {
         if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
             ctx.utils.sendChatMessage(
@@ -441,6 +670,7 @@ const setRoomLanguageCommand = c({
                 }),
             );
             BirdBotUtils.setRoomDictionary(ctx, targetDictionaryId);
+            BirdBotGameplayStateService.resetForLanguageChange(ctx);
         } else {
             ctx.utils.sendChatMessage(
                 t("error.invalid.language", {
@@ -456,14 +686,16 @@ const searchWordsCommand = c({
     aliases: ["searchwords", "c", "words", "search"],
     usageDesc: "/c (-record) [...syllables|regexes]",
     exampleUsage: "/c hello - /c ^hello$ - /c -life syll - /c -sn syll",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         if (ctx.args.length === 0) {
-            ctx.utils.sendChatMessage(
-                t("error.searchWords.noArguments", {
-                    lng: l(ctx),
-                }),
-            );
-            return;
+            const milestone = ctx.room.roomState.gameData!.milestone;
+            if (milestone.name !== "round") {
+                ctx.utils.sendChatMessage(t("error.searchWords.noArguments", { lng: l(ctx) }));
+                return;
+            }
+            ctx.args.push(milestone.syllable);
         }
 
         const paramLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
@@ -595,20 +827,17 @@ const searchWordsCommand = c({
             searchList = dictionaryResource.resource;
         }
 
-        const regexes: RegExp[] = [];
-        for (const arg of ctx.args) {
-            try {
-                const reg = new RegExp(arg);
-                regexes.push(reg);
-            } catch (e) {
-                ctx.utils.sendChatMessage(t("error.invalid.regex", { regex: arg, lng: l(ctx) }));
-                return;
-            }
+        const regexes = BirdBotRegexService.compile(ctx.args);
+        if (regexes === null) {
+            ctx.utils.sendChatMessage(t("parity.gameplay.invalidRegex", { lng: l(ctx) }), "error");
+            return;
         }
+        const safeRegexes = regexes;
 
         const otherRoomPrompts: string[] = [];
         const rooms = Object.values(ctx.bot.rooms);
         for (const room of rooms) {
+            if (room === ctx.room.rawRoom) continue;
             const roomSyllable =
                 room.roomState.gameData?.milestone.name === "round" ? room.roomState.gameData.milestone.syllable : null;
             if (roomSyllable) {
@@ -631,7 +860,7 @@ const searchWordsCommand = c({
         }
 
         function isWordValid(word: string) {
-            return regexes.every((regex) => regex.test(word)) && filterFns.every((filterFn) => filterFn(word));
+            return safeRegexes.every((regex) => regex.test(word)) && filterFns.every((filterFn) => filterFn(word));
         }
 
         const RESULT_LIMIT = 500;
@@ -730,9 +959,11 @@ const searchWordsCommand = c({
 
 const playerProfileCommand = c({
     id: "playerProfile",
-    aliases: ["profile", "p"],
+    aliases: ["profile", "p", "i"],
     usageDesc: "/p (username) (-language -mode)",
     exampleUsage: "/p - /p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: async (ctx) => {
         const targetUsername = ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.authId;
         if (!targetUsername) {
@@ -886,15 +1117,408 @@ const playerProfileCommand = c({
     },
 }) satisfies Command;
 
-const testCommand = c({
+const xpCommand = c({
+    id: "xp",
+    aliases: ["xp", "x"],
+    usageDesc: "/xp - /xp [username]",
+    exampleUsage: "/xp - /xp dfuzer",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: async (ctx) => {
+        const targetUsername = ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.authId;
+        if (!targetUsername) {
+            ctx.utils.sendChatMessage(
+                t("command.xp.noUsernameNotConnected", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        type XpProfileResult = {
+            playerUsername: string;
+            playerAccountName: string;
+            xp: ExperienceData;
+        };
+
+        let playerData: XpProfileResult | null = null;
+
+        try {
+            // Reuse the existing profile API — XP is computed server-side via getLevelDataFromXp
+            const playerDataRequest = await BirdBotUtils.getJsonFromApi(
+                `/player-profile?searchByName=${encodeURIComponent(targetUsername)}`,
+            );
+            if (!playerDataRequest.ok) {
+                if (playerDataRequest.status === 404) {
+                    ctx.utils.sendChatMessage(
+                        t("error.404.player", {
+                            lng: l(ctx),
+                        }),
+                    );
+                } else {
+                    ctx.utils.sendChatMessage(
+                        t("error.api.inaccessible", {
+                            lng: l(ctx),
+                        }),
+                    );
+                }
+                return;
+            }
+            playerData = (await playerDataRequest.json()) as XpProfileResult;
+        } catch (e) {
+            Logger.error({
+                message: "Error fetching player XP",
+                path: "BirdBotCommands.ts",
+                error: e,
+            });
+            ctx.utils.sendChatMessage(
+                t("error.api.inaccessible", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        if (!ctx.room.isHealthy()) {
+            Logger.warn({
+                message: "Room is not healthy anymore, skipping the rest of command execution",
+                path: "BirdBotCommands.ts",
+            });
+            return;
+        }
+
+        ctx.utils.sendChatMessage(
+            t("command.xp.result", {
+                playerUsername: playerData.playerUsername,
+                level: playerData.xp.level,
+                currentLevelXp: playerData.xp.currentLevelXp,
+                totalLevelXp: playerData.xp.totalLevelXp,
+                totalXp: playerData.xp.xp,
+                lng: l(ctx),
+            }),
+        );
+    },
+}) satisfies Command;
+
+const showTimeCommand = c({
+    id: "showTime",
+    aliases: ["showtime", "time", "t"],
+    usageDesc: "/showtime",
+    exampleUsage: "/showtime",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: (ctx) => {
+        const gameData = ctx.room.roomState.gameData;
+        if (!gameData || gameData.milestone.name !== "round") {
+            ctx.utils.sendChatMessage(
+                t("error.roomState.noGameInProgress", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+        const elapsed = Date.now() - ctx.room.roomState.roundStartTimestamp;
+        ctx.utils.sendChatMessage(
+            t("command.showTime.result", {
+                time: recordsUtils.time.format(elapsed),
+                lng: l(ctx),
+            }),
+        );
+    },
+}) satisfies Command;
+
+const changeBonusAlphabetCommand = c({
+    id: "changeBonusAlphabet",
+    aliases: ["bl", "changebl", "changebonusalphabet"],
+    usageDesc: "/bl default - /bl reset - /bl a:1 b:0 - /bl reset x:1",
+    exampleUsage: "/bl default - /bl a:2 z:1 - /bl reset q:1",
+    roomCreatorRequired: true,
+    accessibleInRound: false,
+    handler: (ctx) => {
+        if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
+            ctx.utils.sendChatMessage(
+                t("error.roomState.cannotSetBonusAlphabet", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        const gameData = ctx.room.roomState.gameData!;
+        const dictionaryId = gameData.rules.dictionaryId;
+        const languageDefault = BirdBotUtils.getDefaultBonusAlphabet(dictionaryId);
+        const allTokens = [...ctx.args, ...ctx.params];
+        const wantsDefault = allTokens.includes("default");
+        const wantsReset = allTokens.includes("reset");
+
+        if (wantsDefault) {
+            BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "customBonusAlphabet", languageDefault);
+            ctx.utils.sendChatMessage(
+                t("command.changeBonusAlphabet.setting", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        const letterOverrides: [string, number][] = [];
+        const letterArgSource = ctx.normalizedTextAfterCommand;
+        const matches = letterArgSource.match(/[a-z]:([0-9]{1,2})/gi) ?? [];
+        for (const match of matches) {
+            const letter = match[0]!.toLowerCase();
+            const count = Number(match.slice(2));
+            if (!alphabet.includes(letter)) continue;
+            letterOverrides.push([letter, count]);
+        }
+
+        if (letterOverrides.length === 0 && !wantsReset) {
+            ctx.utils.sendChatMessage(
+                t("command.changeBonusAlphabet.invalidFormat", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        if (letterOverrides.some(([, count]) => count > 99 || count < 0)) {
+            ctx.utils.sendChatMessage(
+                t("command.changeBonusAlphabet.invalidRange", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        const base: CustomBonusAlphabet = wantsReset
+            ? Object.fromEntries(Object.keys(languageDefault).map((letter) => [letter, 0]))
+            : { ...languageDefault };
+
+        const newAlphabet: CustomBonusAlphabet = {
+            ...base,
+            ...Object.fromEntries(letterOverrides),
+        };
+
+        BirdBotUtils.setRoomGameRuleIfDifferent(ctx, "customBonusAlphabet", newAlphabet);
+        ctx.utils.sendChatMessage(
+            t("command.changeBonusAlphabet.setting", {
+                lng: l(ctx),
+            }),
+        );
+    },
+}) satisfies Command;
+
+const destroyRoomCommand = c({
+    id: "destroyRoom",
+    aliases: ["destroy", "dr", "destroyroom"],
+    usageDesc: "/destroy",
+    exampleUsage: "/destroy",
+    roomCreatorRequired: true,
+    accessibleInRound: true,
+    handler: (ctx) => {
+        ctx.utils.sendChatMessage(
+            t("command.destroyRoom.destroying", {
+                lng: l(ctx),
+            }),
+        );
+        Utilitary.destroyRoom(ctx.bot.rawBot, ctx.room.rawRoom);
+    },
+}) satisfies Command;
+
+const getBombCommand = c({
+    id: "getBomb",
+    aliases: ["getbomb", "boom", "bomb"],
+    usageDesc: "/boom",
+    exampleUsage: "/boom",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: (ctx) => {
+        ctx.utils.sendChatMessage(
+            t("command.getBomb.result", {
+                lng: l(ctx),
+            }),
+        );
+    },
+}) satisfies Command;
+
+const getDefinitionCommand = c({
+    id: "getDefinition",
+    aliases: ["definition", "d", "def"],
+    usageDesc: "/d [word] [page] (-language)",
+    exampleUsage: "/d test — /d test 2 — /d -fr maison 1",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: async (ctx) => {
+        const targetLanguageParam = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
+        const currentRoomLanguage =
+            dictionaryIdToBirdbotLanguage[ctx.room.roomState.gameData!.rules.dictionaryId as BirdBotSupportedDictionaryId];
+        const targetLanguage = targetLanguageParam ?? currentRoomLanguage ?? defaultLanguage;
+
+        const pageNumber = BirdBotUtils.findNumberInArgs(ctx.args);
+        const word = ctx.args.find((arg) => isNaN(Number(arg)));
+        if (!word) {
+            ctx.utils.sendChatMessage(
+                t("error.invalidParams.mustProvideWord", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        const pageIndex = pageNumber !== null && pageNumber > 0 ? pageNumber - 1 : 0;
+        const result = await BirdBotDefinitions.getDefinition(targetLanguage, word.toLowerCase());
+
+        if (!ctx.room.isHealthy()) {
+            return;
+        }
+
+        if ("error" in result) {
+            if (result.error === 405) {
+                ctx.utils.sendChatMessage(
+                    t("command.getDefinition.notSupported", {
+                        language: t(`lib.language.${targetLanguage}.name`, { lng: l(ctx) }),
+                        lng: l(ctx),
+                    }),
+                );
+                return;
+            }
+            if (result.suggestion) {
+                ctx.utils.sendChatMessage(
+                    t("command.getDefinition.notFoundSuggestion", {
+                        suggestion: result.suggestion,
+                        lng: l(ctx),
+                    }),
+                );
+                return;
+            }
+            ctx.utils.sendChatMessage(
+                t("command.getDefinition.notFound", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        if (result.definitions.length === 0) {
+            ctx.utils.sendChatMessage(
+                t("command.getDefinition.notFound", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+
+        const effectivePage = Math.min(Math.max(0, pageIndex), result.definitions.length - 1);
+        ctx.utils.sendChatMessage(
+            t("command.getDefinition.result", {
+                word: word.toLowerCase(),
+                source: result.source,
+                page: effectivePage + 1,
+                total: result.definitions.length,
+                definition: result.definitions[effectivePage]!,
+                lng: l(ctx),
+            }),
+        );
+    },
+}) satisfies Command;
+
+const testWordCommand = c({
     id: "test",
     aliases: ["test"],
-    adminRequired: true,
-    usageDesc: "/test",
-    hidden: true,
-    handler: (ctx) => {
-        const resource = ctx.bot.getResource<DictionaryResource>("dictionary-fr");
-        ctx.utils.sendChatMessage("test words : " + resource.metadata.testWords.join(" "));
+    usageDesc: "/test [word]",
+    exampleUsage: "/test example",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: async (ctx) => {
+        if (!ctx.utils.userIsAdmin(ctx.gamer.authId) && !(await BirdBotModerationService.isTrusted(ctx.gamer.authId))) {
+            ctx.utils.sendChatMessage(t("parity.dictionary.trustedReviewer", { lng: l(ctx) }), "error");
+            return;
+        }
+        const words = ctx.args
+            .flatMap((value) => value.split(/[,;]+/))
+            .map((value) => value.replace(/[^a-z'-]/g, ""))
+            .filter(Boolean);
+        if (words.length === 0) {
+            ctx.utils.sendChatMessage(
+                t("error.invalidParams.mustProvideWord", {
+                    lng: l(ctx),
+                }),
+            );
+            return;
+        }
+        const dictionaryId = ctx.room.roomState.gameData!.rules.dictionaryId;
+        const language = dictionaryIdToBirdbotLanguage[dictionaryId as BirdBotSupportedDictionaryId] ?? defaultLanguage;
+        const dictionary = ctx.bot.getResource<DictionaryResource>(`dictionary-${language}`);
+        const alreadyQueued: string[] = [];
+        const added: string[] = [];
+        for (const word of words) {
+            if (dictionary.metadata.testWords.some((item) => item.word === word)) {
+                alreadyQueued.push(word);
+            } else {
+                dictionary.metadata.testWords.push({
+                    word,
+                    callbackRoomCode: ctx.room.constantRoomData.roomCode,
+                });
+                added.push(word);
+            }
+        }
+        ctx.utils.sendChatMessage(
+            `Dictionary QA queued: ${added.join(", ") || "none"}; already queued: ${alreadyQueued.join(", ") || "none"}.`,
+        );
+    },
+}) satisfies Command;
+
+const changeListCommand = c({
+    id: "changeList",
+    aliases: ["changelist", "cl"],
+    usageDesc: "/cl [language] [list] [add|remove] [words...]",
+    exampleUsage: "/cl en plant add sunflower",
+    accessibleInRound: true,
+    handler: async (ctx) => {
+        if (!ctx.utils.userIsAdmin(ctx.gamer.authId) && !(await BirdBotModerationService.isTrusted(ctx.gamer.authId))) {
+            ctx.utils.sendChatMessage(t("parity.dictionary.trustedListReviewer", { lng: l(ctx) }), "error");
+            return;
+        }
+        const language = BirdBotUtils.findValueInAliasesObject([ctx.args[0] ?? ""], languageAliases);
+        const list = BirdBotUtils.findValueInAliasesObject([ctx.args[1] ?? ""], recordAliases);
+        const action = ctx.args[2];
+        const adding = ["add", "a", "ad"].includes(action);
+        const removing = ["remove", "rem", "delete", "del", "r", "d"].includes(action);
+        if (
+            !language ||
+            !list ||
+            !listedRecordsPerLanguage[language].includes(list as any) ||
+            (!adding && !removing)
+        ) {
+            ctx.utils.sendChatMessage(t("parity.dictionary.listUsage", { lng: l(ctx) }), "info");
+            return;
+        }
+        const resource = ctx.bot.getResource<ListedRecordListResource>(`list-${list}-${language}`);
+        const words = ctx.args
+            .slice(3)
+            .flatMap((value) => value.split(/[,;]+/))
+            .map((value) => value.replace(/[^a-z'-]/g, ""))
+            .filter(Boolean);
+        const changed: string[] = [];
+        const ignored: string[] = [];
+        for (const word of words) {
+            const index = resource.resource.indexOf(word);
+            if (adding && index === -1) {
+                resource.resource.push(word);
+                changed.push(word);
+            } else if (removing && index !== -1) {
+                resource.resource.splice(index, 1);
+                changed.push(word);
+            } else {
+                ignored.push(word);
+            }
+        }
+        if (changed.length > 0) {
+            resource.resource.sort((a, b) => a.localeCompare(b));
+            await writeFile(resource.metadata.resourceFilePath, resource.resource.join("\n"));
+        }
+        ctx.utils.sendChatMessage(
+            `List ${adding ? "added" : "removed"}: ${changed.join(", ") || "none"}; ignored: ${ignored.join(", ") || "none"}.`,
+        );
     },
 }) satisfies Command;
 
@@ -902,6 +1526,8 @@ const rareSyllablesCommand = c({
     id: "rareSyllables",
     aliases: ["raresyllables", "raresyll", "rares", "rs"],
     usageDesc: "/rareSyllables [word]",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         const paramLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
         const targetWord = ctx.args[0];
@@ -983,6 +1609,7 @@ const linkAccountCommand = c({
     id: "linkAccount",
     aliases: ["link"],
     usageDesc: "/link [token]",
+    accessibleInRound: true,
     handler: async (ctx) => {
         if (!ctx.gamer.authId) {
             ctx.utils.sendChatMessage(t("error.platform.mustBeLoggedIn", { lng: l(ctx) }));
@@ -1025,27 +1652,12 @@ const linkAccountCommand = c({
     },
 }) satisfies Command;
 
-const broadcastCommand = c({
-    id: "broadcast",
-    aliases: ["broadcast", "bc"],
-    usageDesc: "/broadcast [message]",
-    adminRequired: true,
-    hidden: true,
-    handler: (ctx) => {
-        const message = ctx.args.join(" ");
-        for (const roomId in ctx.bot.rooms) {
-            const room = ctx.bot.rooms[roomId];
-            if (room.isConnected()) {
-                Utilitary.sendChatMessage(room, t("command.broadcast.message", { message, lng: l(ctx) }));
-            }
-        }
-    },
-}) satisfies Command;
-
 const discordCommand = c({
     id: "discord",
-    aliases: ["discord"],
+    aliases: ["discord", "disc"],
     usageDesc: "/discord",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         ctx.utils.sendChatMessage(
             t("command.discord.result", {
@@ -1060,6 +1672,8 @@ const githubCommand = c({
     id: "github",
     aliases: ["github"],
     usageDesc: "/github",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         ctx.utils.sendChatMessage(t("command.github.result", { link: GITHUB_REPO_LINK, lng: l(ctx) }));
     },
@@ -1069,6 +1683,8 @@ const donateCommand = c({
     id: "donate",
     aliases: ["donate"],
     usageDesc: "/donate",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         ctx.utils.sendChatMessage(
             t("command.donate.result", {
@@ -1081,8 +1697,10 @@ const donateCommand = c({
 
 const websiteCommand = c({
     id: "website",
-    aliases: ["website"],
+    aliases: ["website", "site"],
     usageDesc: "/website",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         ctx.utils.sendChatMessage(t("command.website.result", { link: WEBSITE_LINK, lng: l(ctx) }));
     },
@@ -1092,6 +1710,8 @@ const uptimeCommand = c({
     id: "uptime",
     aliases: ["uptime"],
     usageDesc: "/uptime",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: (ctx) => {
         const uptimeMs = process.uptime() * 1000;
         const uptimeString = Utilitary.formatTime(uptimeMs);
@@ -1101,8 +1721,9 @@ const uptimeCommand = c({
 
 const modUserCommand = c({
     id: "modUser",
-    aliases: ["mod"],
+    aliases: ["mod", "mu", "moduser"],
     roomCreatorRequired: true,
+    accessibleInRound: true,
     usageDesc: "/mod [username]",
     exampleUsage: "/mod dfuzer",
     handler: (ctx) => {
@@ -1139,8 +1760,9 @@ const modUserCommand = c({
 
 const unmodUserCommand = c({
     id: "unmodUser",
-    aliases: ["unmod"],
+    aliases: ["unmod", "um", "unmoduser"],
     roomCreatorRequired: true,
+    accessibleInRound: true,
     usageDesc: "/unmod [username]",
     handler: (ctx) => {
         const username = ctx.normalizedTextAfterCommand;
@@ -1178,7 +1800,9 @@ const privateRoomCommand = c({
     id: "privateRoom",
     aliases: ["private", "priv", "pv"],
     usageDesc: "/private",
-    adminRequired: true,
+    roomCreatorRequired: true,
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     hidden: true,
     handler: (ctx) => {
         ctx.utils.setRoomPublic(false);
@@ -1194,7 +1818,9 @@ const publicRoomCommand = c({
     id: "publicRoom",
     aliases: ["public", "pub", "pb"],
     usageDesc: "/public",
-    adminRequired: true,
+    roomCreatorRequired: true,
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     hidden: true,
     handler: (ctx) => {
         ctx.utils.setRoomPublic(true);
@@ -1206,55 +1832,11 @@ const publicRoomCommand = c({
     },
 }) satisfies Command;
 
-const destroyAllRoomsCommand = c({
-    id: "destroyAllRooms",
-    aliases: ["destroy", "destroyall", "destroyallrooms"],
-    usageDesc: "/destroyallrooms",
-    adminRequired: true,
-    hidden: true,
-    handler: (ctx) => {
-        for (const roomId in ctx.bot.rooms) {
-            const room = ctx.bot.rooms[roomId];
-
-            if (room.isConnected()) {
-                Utilitary.sendChatMessage(
-                    room,
-                    t("command.destroyAllRooms.destroying", {
-                        lng:
-                            dictionaryIdToBirdbotLanguage[
-                                room.roomState.gameData?.rules.dictionaryId as BirdBotSupportedDictionaryId
-                            ] ?? "en",
-                    }),
-                );
-            }
-
-            Utilitary.destroyRoom(ctx.bot.rawBot, room);
-        }
-    },
-}) satisfies Command;
-
-const showAllRoomsCommand = c({
-    id: "showAllRooms",
-    aliases: ["rooms", "roomlist", "listrooms", "listroom"],
-    usageDesc: "/rooms",
-    adminRequired: true,
-    hidden: true,
-    handler: (ctx) => {
-        const roomsList = Object.values(ctx.bot.rooms)
-            .map((room) => {
-                return `${room.constantRoomData.roomCode}: ${room.roomState.gameData?.milestone.name ?? "gameData unknown"}`;
-            })
-            .join(" - ");
-
-        ctx.utils.sendChatMessage(t("command.showAllRooms.result", { roomsList, lng: l(ctx) }));
-    },
-}) satisfies Command;
-
 const createRoomCommand = c({
     id: "createRoom",
-    aliases: ["createroom", "b"],
+    aliases: ["createroom", "startroom", "b"],
     usageDesc: "/createroom",
-    handler: (ctx) => {
+    handler: async (ctx) => {
         const gamer = ctx.gamer;
         const bot = ctx.bot.rawBot as BirdBot;
         if (!gamer.authId) {
@@ -1279,7 +1861,7 @@ const createRoomCommand = c({
                 if (room.constantRoomData.roomCreatorAuthId === gamer.authId) {
                     ctx.utils.sendChatMessage(
                         t("command.createRoom.roomAlreadyExists", {
-                            code: room.constantRoomData.roomCode,
+                            roomCode: room.constantRoomData.roomCode,
                             lng: l(ctx),
                         }),
                     );
@@ -1294,7 +1876,37 @@ const createRoomCommand = c({
             dictionaryIdToBirdbotLanguage[ctx.room.roomState.gameData!.rules.dictionaryId as BirdBotSupportedDictionaryId] ??
             defaultLanguage;
         const targetDictionaryId = birdbotLanguageToDictionaryId[targetLanguage];
-        const targetMode = BirdBotUtils.findTargetItemInZodEnum(allArguments, modesEnumSchema);
+        const targetMode = findTargetGameMode(allArguments);
+        const isPrivate = allArguments.includes("private");
+        let roomName = `🐤 BirdBot x ${gamer.nickname}`;
+        let botName: string | undefined;
+        let pictureUrl: string | undefined;
+        try {
+            const player = await BirdBotParityApiService.resolvePlayer(gamer.authId, true);
+            const [economy, moderation] = await Promise.all([
+                BirdBotParityApiService.getEconomy(player.playerId),
+                BirdBotParityApiService.getModeration(player.playerId),
+            ]);
+            if (isPrivate && moderation.blacklisted) {
+                ctx.utils.sendChatMessage(t("parity.room.blacklisted", { lng: l(ctx) }), "error");
+                return;
+            }
+            if (economy.vip?.tier === "VIP" || economy.vip?.tier === "VIP_PLUS") {
+                botName = economy.cosmetics?.bot_name ?? undefined;
+            }
+            if (economy.vip?.tier === "VIP_PLUS") {
+                roomName = economy.cosmetics?.room_name
+                    ? `${economy.cosmetics.room_name} 🐤`
+                    : roomName;
+                pictureUrl = economy.cosmetics?.picture_url ?? undefined;
+            }
+        } catch {
+            if (isPrivate) {
+                ctx.utils.sendChatMessage(t("parity.room.verificationUnavailable", { lng: l(ctx) }), "error");
+                return;
+            }
+            // Room creation remains available when optional profile enrichment fails.
+        }
 
         if (
             targetLanguage !== null &&
@@ -1322,8 +1934,10 @@ const createRoomCommand = c({
             targetConfig: {
                 dictionaryId: targetDictionaryId,
                 birdbotGameMode: targetMode ?? defaultMode,
-                isPublic: true,
-                roomName: `🐤 BirdBot x ${gamer.nickname}`,
+                isPublic: !isPrivate,
+                roomName,
+                botName,
+                pictureUrl,
             },
             roomCreatorAuthId: gamer.authId,
             callback: (roomCode) => {
@@ -1342,29 +1956,54 @@ const createRoomCommand = c({
     },
 }) satisfies Command;
 
-export const birdbotCommands = [
-    helpCommand,
-    createRoomCommand,
-    recordsCommand,
-    playerProfileCommand,
-    currentGameScoresCommand,
-    searchWordsCommand,
-    setGameModeCommand,
-    setRoomLanguageCommand,
-    startGameCommand,
-    modUserCommand,
-    unmodUserCommand,
-    rareSyllablesCommand,
-    privateRoomCommand,
-    publicRoomCommand,
-    linkAccountCommand,
-    discordCommand,
-    githubCommand,
-    donateCommand,
-    websiteCommand,
-    broadcastCommand,
-    uptimeCommand,
-    testCommand,
-    destroyAllRoomsCommand,
-    showAllRoomsCommand,
-] satisfies Command[];
+export const birdbotCommandRegistry = createBirdBotCommandRegistry([
+    {
+        name: "information",
+        commands: [
+            helpCommand,
+            recordsCommand,
+            playerProfileCommand,
+            xpCommand,
+            currentGameScoresCommand,
+            searchWordsCommand,
+            showTimeCommand,
+            rareSyllablesCommand,
+            getBombCommand,
+            getDefinitionCommand,
+            testWordCommand,
+            changeListCommand,
+            discordCommand,
+            githubCommand,
+            donateCommand,
+            websiteCommand,
+            uptimeCommand,
+        ],
+    },
+    {
+        name: "room",
+        commands: [
+            createRoomCommand,
+            setGameModeCommand,
+            setPlaystyleCommand,
+            trainCommand,
+            humanModeCommand,
+            setRoomLanguageCommand,
+            changeBonusAlphabetCommand,
+            startGameCommand,
+            modUserCommand,
+            unmodUserCommand,
+            privateRoomCommand,
+            publicRoomCommand,
+            destroyRoomCommand,
+        ],
+    },
+    {
+        name: "account",
+        commands: [linkAccountCommand, ...birdBotParityCommands],
+    },
+    {
+        name: "administration",
+        commands: birdBotAdminCommands,
+    },
+] satisfies { name: string; commands: Command[] }[]);
+export const birdbotCommands = birdbotCommandRegistry.commands;

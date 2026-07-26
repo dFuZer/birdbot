@@ -5,6 +5,15 @@ import Room from "../class/Room.class";
 import type { Session } from "../class/Session.class";
 import type { Chatter } from "./gameTypes";
 
+export type ChatStyle = Readonly<{
+    color?: string;
+    "font-weight"?: "normal" | "bold";
+}>;
+
+export type ChatStyleName = "error" | "success" | "neutral" | "info" | "important";
+
+export type ChatStyleMap = Readonly<Record<ChatStyleName, ChatStyle>>;
+
 export type BotEventPreviousHandlersCtx = { [key: string]: any };
 export type BotEventHandlerFn = (ctx: EventCtx, previousHandlersCtx: BotEventPreviousHandlersCtx) => void;
 export type BotEventHandler = BotEventHandlerFn | BotEventHandlerFn[];
@@ -63,7 +72,8 @@ export type RoomEventCtx = {
 };
 
 export type EventCtxUtils = {
-    sendChatMessage: (message: string) => void;
+    sendChatMessage: (message: string, style?: ChatStyleName | ChatStyle) => void;
+    chatStyles: ChatStyleMap;
     userIsAdmin: (authId: string | null | undefined) => boolean;
     setWord: (word: string) => void;
     joinRound: () => void;
@@ -72,6 +82,7 @@ export type EventCtxUtils = {
     setRulesLocked: (locked: boolean) => void;
     setRoomPublic: (isPublic: boolean) => void;
     setUserModerator: (peerId: number, isModerator: boolean) => void;
+    setUserBanned: (peerId: number, isBanned: boolean) => void;
 };
 
 export type EventCtx = {

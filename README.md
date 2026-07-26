@@ -124,8 +124,20 @@ Note that, contrary to the API and website modules, you must fully restart the s
 
 - `admins.txt`: one jklm `auth.id` per line for admin commands
 - Optional `JKLM_AUTH_TOKEN` / `JKLM_AUTH_USERNAME` for a logged-in jklm account (guest hosting works without them)
+- `API_URL` / `API_KEY` must match the API service used for profiles, credits, VIP, milestones, and moderation
+- Optional moderation toggles and definitions socket overrides are documented in `bot/.env.example`
+- Parity contract and intentional divergences: [`bot/BBV7_PARITY.md`](bot/BBV7_PARITY.md)
 
 The older Croco.games bot archive lives under `archive/BBV7` for historical reference only.
+
+#### Safe admin commands (admins.txt)
+
+- `/reconnect` — reconnect the current room sockets
+- `/health` — room + API status
+- `/givecredits`, `/givexp`, `/setxp`, `/suppress`, `/getid`, `/creatorid`
+- `/broadcast`, `/rooms`, `/destroyallrooms`, `/diag`
+
+Destructive BBV7 reload/cache-wipe and profile-file delete flows are intentionally not ported.
 
 ---
 

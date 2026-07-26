@@ -2,7 +2,9 @@ import Utilitary from "../class/Utilitary.class";
 import { defaultBonusAlphabetsByDictionaryId } from "../constants/gameConstants";
 import {
     bonusAlphabetToLetters,
-    extractRulesValues,
+    extractIncrementalRulesValues,
+    extractSetupRulesValues,
+    normalizeWord,
     type DictionaryId,
     type GameData,
     type GameRules,
@@ -14,13 +16,18 @@ import {
 import type { BotEventHandlerFn } from "../types/libEventTypes";
 
 function normalizePlayerState(peerId: number | string, raw: any): PlayerState {
+    const rawWord = String(raw.wordRaw ?? raw.rawWord ?? raw.word ?? "");
+    const bonusLetters = bonusAlphabetToLetters(raw.bonusLetters ?? raw.usedLetters).toLowerCase();
     return {
         peerId: Number(peerId),
         lives: raw.lives ?? 0,
-        word: (raw.word ?? "").toString(),
-        usedLetters: raw.usedLetters ?? "",
-        bonusLetters: raw.bonusLetters,
+        word: normalizeWord(rawWord),
+        rawWord,
+        usedLetters: bonusLetters,
+        bonusLetters,
         wasWordValidated: raw.wasWordValidated,
+        startTurn: typeof raw.startTurn === "number" ? raw.startTurn : null,
+        startWrite: typeof raw.startWrite === "number" ? raw.startWrite : null,
     };
 }
 
@@ -29,11 +36,15 @@ function normalizeMilestone(raw: any, previous?: Milestone | null): Milestone {
         const playerStatesByPeerId: Record<string, PlayerState> = {};
         const rawStates = raw.playerStatesByPeerId ?? {};
         for (const [id, state] of Object.entries(rawStates)) {
-            const prev =
-                previous?.name === "round" ? previous.playerStatesByPeerId[id]?.usedLetters : undefined;
+            const prev = previous?.name === "round" ? previous.playerStatesByPeerId[id] : undefined;
             const normalized = normalizePlayerState(id, state);
-            if (prev !== undefined && !normalized.usedLetters) {
-                normalized.usedLetters = prev;
+            if (
+                prev &&
+                !(state as { bonusLetters?: unknown; usedLetters?: unknown }).bonusLetters &&
+                !(state as { bonusLetters?: unknown; usedLetters?: unknown }).usedLetters
+            ) {
+                normalized.bonusLetters = prev.bonusLetters;
+                normalized.usedLetters = prev.bonusLetters;
             }
             playerStatesByPeerId[id] = normalized;
         }
@@ -75,8 +86,8 @@ function normalizeMilestone(raw: any, previous?: Milestone | null): Milestone {
     };
 }
 
-function rulesFromSetup(rawRules: Record<string, { value: unknown }>): GameRules {
-    const values = extractRulesValues(rawRules);
+function rulesFromSetup(rawRules: Record<string, unknown>): GameRules {
+    const values = extractSetupRulesValues(rawRules);
     const dictionaryId = (values.dictionaryId as DictionaryId) ?? "en";
     const customBonusAlphabet =
         values.customBonusAlphabet && typeof values.customBonusAlphabet === "object"
@@ -145,6 +156,15 @@ export default class CommonPlayerDataTrackingEventHandlers {
 
         if (milestone.name === "round") {
             ctx.room.roomState.roundStartTimestamp = milestone.startTimestamp;
+            const currentState = milestone.playerStatesByPeerId[String(milestone.currentPlayerPeerId)];
+            if (currentState && currentState.startTurn === null) {
+                currentState.startTurn = Date.now();
+            }
+            for (const state of Object.values(milestone.playerStatesByPeerId)) {
+                if (state.wasWordValidated && state.word && !ctx.room.roomState.wordHistory.includes(state.word)) {
+                    ctx.room.roomState.wordHistory.push(state.word);
+                }
+            }
         }
 
         previousHandlersCtx.selfPeerId = data.selfPeerId;
@@ -167,6 +187,11 @@ export default class CommonPlayerDataTrackingEventHandlers {
             previousHandlersCtx.roundStarted = true;
             (milestone as MilestoneRound).startTimestamp = Date.now();
             ctx.room.roomState.roundStartTimestamp = (milestone as MilestoneRound).startTimestamp;
+            const currentState = milestone.playerStatesByPeerId[String(milestone.currentPlayerPeerId)];
+            if (currentState) {
+                currentState.startTurn = Date.now();
+                currentState.startWrite = currentState.word ? currentState.startTurn : null;
+            }
         }
 
         gameData.milestone = milestone;
@@ -176,7 +201,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
     };
 
     public static setRules: BotEventHandlerFn = (ctx) => {
-        const data = ctx.message.args[0];
+        const data = extractIncrementalRulesValues(ctx.message.args[0] ?? {});
         const gameData = ctx.room.roomState.gameData!;
         if (data && typeof data === "object") {
             for (const [key, value] of Object.entries(data)) {
@@ -261,6 +286,9 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
         if (state) {
             state.word = "";
+            state.rawWord = "";
+            state.startTurn = Date.now();
+            state.startWrite = null;
         }
     };
 
@@ -274,6 +302,7 @@ export default class CommonPlayerDataTrackingEventHandlers {
             const previousLives = state.lives;
             state.lives = lives;
             state.usedLetters = "";
+            state.bonusLetters = "";
             previousHandlersCtx.lostLifePeerId = playerPeerId;
             if (previousLives > 0 && lives === 0) {
                 previousHandlersCtx.deadPeerId = playerPeerId;
@@ -290,8 +319,10 @@ export default class CommonPlayerDataTrackingEventHandlers {
         if (state) {
             state.lives = lives;
             state.usedLetters = "";
+            state.bonusLetters = "";
             previousHandlersCtx.isLifeGain = true;
             previousHandlersCtx.lifeGainPeerId = playerPeerId;
+            previousHandlersCtx.flipTurnKey = `${playerPeerId}:${state.startTurn ?? "unknown"}`;
         }
     };
 
@@ -302,7 +333,15 @@ export default class CommonPlayerDataTrackingEventHandlers {
         if (gameData.milestone.name !== "round") return;
         const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
         if (state) {
-            state.word = word.toString();
+            const rawWord = String(word);
+            const canonicalWord = normalizeWord(rawWord);
+            state.rawWord = rawWord;
+            state.word = canonicalWord;
+            if (!canonicalWord) {
+                state.startWrite = null;
+            } else if (state.startWrite === null) {
+                state.startWrite = Date.now();
+            }
         }
     };
 
@@ -323,28 +362,53 @@ export default class CommonPlayerDataTrackingEventHandlers {
         const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
         if (!state) return;
 
-        const rawWord = state.word;
-        const word = rawWord.toLowerCase().replace(/[^a-z'-]/gi, "");
-        ctx.room.roomState.wordHistory.push(word);
-
-        const bonusLetters = gameData.dictionaryManifest.bonusLetters;
-        let used = state.usedLetters;
-        for (const letter of word) {
-            if (bonusLetters.includes(letter) && !used.includes(letter)) {
-                used += letter;
-            }
+        const rawWord = state.rawWord;
+        const word = state.word;
+        if (word && !ctx.room.roomState.wordHistory.includes(word)) {
+            ctx.room.roomState.wordHistory.push(word);
         }
-        state.usedLetters = used;
-        const isLifeGain = bonusLetters.length > 0 && used.length >= bonusLetters.length;
-        if (isLifeGain) {
-            previousHandlersCtx.isLifeGain = true;
-            state.usedLetters = "";
+        if (wordData.bonusLetters !== undefined) {
+            const authoritativeBonusLetters = bonusAlphabetToLetters(wordData.bonusLetters).toLowerCase();
+            state.bonusLetters = authoritativeBonusLetters;
+            state.usedLetters = authoritativeBonusLetters;
         }
 
         previousHandlersCtx.playerPeerId = playerPeerId;
         previousHandlersCtx.word = word;
         previousHandlersCtx.rawWord = rawWord;
+        previousHandlersCtx.turnKey = `${playerPeerId}:${state.startTurn ?? "unknown"}`;
+        previousHandlersCtx.durationMs =
+            state.startTurn === null ? undefined : Math.max(0, Date.now() - state.startTurn);
+        previousHandlersCtx.reactionMs =
+            state.startTurn === null || state.startWrite === null
+                ? undefined
+                : Math.max(0, state.startWrite - state.startTurn);
         previousHandlersCtx.success = true;
+    };
+
+    public static setPlayerCount: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const playerCount = Number(ctx.message.args[0]);
+        if (!Number.isFinite(playerCount) || !ctx.room.roomState.roomData) return;
+        ctx.room.roomState.roomData.playerCount = playerCount;
+        previousHandlersCtx.playerCount = playerCount;
+    };
+
+    public static userBanned: BotEventHandlerFn = (ctx, previousHandlersCtx) => {
+        const userInfo = ctx.message.args[0];
+        const peerId = typeof userInfo === "object" ? Number(userInfo?.peerId) : Number(userInfo);
+        if (!Number.isFinite(peerId)) return;
+        const roomData = ctx.room.roomState.roomData;
+        const chatter = roomData?.chatters.find((item) => item.peerId === peerId);
+        if (chatter) {
+            chatter.isBanned = true;
+            chatter.isOnline = false;
+        }
+        if (roomData) {
+            roomData.bannedPeerIds ??= [];
+            if (!roomData.bannedPeerIds.includes(peerId)) roomData.bannedPeerIds.push(peerId);
+        }
+        previousHandlersCtx.bannedPeerId = peerId;
+        previousHandlersCtx.bannedUser = chatter;
     };
 
     public static chatterAdded: BotEventHandlerFn = (ctx, previousHandlersCtx) => {

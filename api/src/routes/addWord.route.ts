@@ -25,10 +25,12 @@ export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
         const [player, game] = await Promise.all([addPlayerIfNotExist(wordData.player), addGameIfNotExist(wordData.game)]);
         Logger.log({ message: `Inserting new word`, path: "addWord.route.ts" });
         await prisma.$executeRaw`
-            INSERT INTO word (id, word, player_id, game_id, submit_result, prompt, flip)
+            INSERT INTO word (id, word, player_id, game_id, submit_result, prompt, flip, duration_ms, reaction_ms)
             VALUES (gen_random_uuid(), ${wordData.word}, ${player.id}::UUID, ${game.id}::UUID, ${
                 submitResultEnumToDatabaseEnumMap[wordData.submitResult]
-            }::"submit_result_type", ${wordData.prompt}, ${wordData.flip})
+            }::"submit_result_type", ${wordData.prompt}, ${wordData.flip}, ${wordData.durationMs ?? null}, ${
+                wordData.reactionMs ?? null
+            })
         `;
         return res.status(200).send({ message: "Word added successfully" });
     } catch (e) {

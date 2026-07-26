@@ -29,6 +29,37 @@ export type ListedRecordListResource = Resource<string[], ListedRecordListMetada
 export type BirdBotLanguage = z.infer<typeof languageEnumSchema>;
 export type BirdBotGameMode = z.infer<typeof modesEnumSchema>;
 export type BirdBotRecordType = z.infer<typeof recordsEnumSchema>;
+export type BirdBotListedRecord = "slur" | "creature" | "ethnonym" | "chemical" | "plant" | "adverb" | "food";
+
+export type BirdBotPlaystyle =
+    | "regular"
+    | "alpha"
+    | "previous_syllable"
+    | "flips"
+    | "depleted_syllables"
+    | "multi_syllable"
+    | "hyphen"
+    | "more_than_20_letters"
+    | BirdBotListedRecord;
+
+export type BirdBotTrainingSort = "shuffle" | "depleted_syllables" | "multi_syllable" | "longest" | "shortest";
+
+export type BirdBotTrainingCondition =
+    | { type: "alpha" }
+    | { type: "previous_syllable" }
+    | { type: "multi_syllable" }
+    | { type: "hyphen" }
+    | { type: "more_than_20_letters" };
+
+export type BirdBotTrainingState = {
+    creatorAuthId: string;
+    source: "dictionary" | BirdBotListedRecord;
+    sort: BirdBotTrainingSort;
+    conditions: BirdBotTrainingCondition[];
+    regexSources: string[];
+    successes: number;
+    attempts: number;
+};
 
 export type BirdBotSupportedDictionaryId = (typeof birdbotSupportedDictionaryIds)[number];
 
@@ -75,12 +106,19 @@ export type BirdbotRoomTargetConfig = {
 
 export type BirdBotRoomMetadata = {
     gameMode: BirdBotGameMode | "custom";
+    gameplayLanguage: BirdBotLanguage;
+    playstyle: BirdBotPlaystyle;
+    training: BirdBotTrainingState | null;
+    humanMode: boolean;
     scoresByPeerId: Record<string, PlayerGameScores>;
     globalScores: GlobalGameScores;
     remainingSyllables: Record<string, number>;
     wasInitialized: boolean;
     hostLeftIteration: number;
     greetedPeerIds: Set<string>;
+    pendingWordRegistrations: Map<string, PendingBirdBotWordRegistration>;
+    flipTurnKeys: Set<string>;
+    scoredWordTurnKeys: Set<string>;
 };
 
 export type ExperienceData = {
@@ -109,6 +147,13 @@ export type BirdBotWordData = {
     submitResult: SubmitResultType;
     prompt: string;
     flip: boolean;
+    durationMs?: number;
+    reactionMs?: number;
+};
+
+export type PendingBirdBotWordRegistration = {
+    turnKey: string;
+    data: Omit<BirdBotWordData, "flip">;
 };
 
 export type BirdBotGameRecap = {

@@ -36,6 +36,8 @@ export default class Room {
     public constantRoomData: ConstantRoomData;
     public id: string;
     public hasEverConnected: boolean;
+    public connectionGeneration: number;
+    public reconnectPromise: Promise<void> | null;
 
     constructor({
         roomCode,
@@ -56,6 +58,8 @@ export default class Room {
         this.gameSocket = null;
         this.id = id;
         this.hasEverConnected = false;
+        this.connectionGeneration = 0;
+        this.reconnectPromise = null;
         this.constantRoomData = {
             roomCode,
             targetConfig,

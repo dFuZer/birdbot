@@ -3,8 +3,19 @@ import prisma from "../prisma";
 export default async function findPlayerByUsername(username: string): Promise<{ id: string; username: string } | null> {
     const usernameLower = username.toLowerCase();
 
-    const playersQuery: { player_id: string; account_name: string; latest_username: string }[] =
-        await prisma.$queryRaw`SELECT p.id as player_id, p.account_name, p.metadata->>'latest_username' as latest_username FROM player p WHERE p.account_name ILIKE ${username} OR p.metadata->>'latest_username' ILIKE '%' || ${username} || '%';`;
+    const playersQuery: {
+        player_id: string;
+        account_name: string;
+        profile_name: string | null;
+        latest_username: string | null;
+    }[] = await prisma.$queryRaw`
+        SELECT p.id as player_id, p.account_name, p.metadata->>'profile_name' as profile_name,
+               p.metadata->>'latest_username' as latest_username
+        FROM player p
+        WHERE p.account_name ILIKE ${username}
+           OR p.metadata->>'profile_name' ILIKE '%' || ${username} || '%'
+           OR p.metadata->>'latest_username' ILIKE '%' || ${username} || '%'
+    `;
     const usernamesQuery: { player_id: string; username: string }[] =
         await prisma.$queryRaw`SELECT pu.player_id, pu.username FROM player_username pu WHERE pu.username ILIKE '%' || ${username} || '%';`;
 
@@ -17,30 +28,57 @@ export default async function findPlayerByUsername(username: string): Promise<{ 
         };
     }
 
-    const latestUsernameMatchPlayer = playersQuery.find((player) => player.latest_username.toLowerCase() === usernameLower);
+    const profileNameMatchPlayer = playersQuery.find(
+        (player) => player.profile_name?.toLowerCase() === usernameLower,
+    );
+    if (profileNameMatchPlayer) {
+        return { id: profileNameMatchPlayer.player_id, username: profileNameMatchPlayer.profile_name! };
+    }
+
+    const latestUsernameMatchPlayer = playersQuery.find(
+        (player) => player.latest_username?.toLowerCase() === usernameLower,
+    );
 
     if (latestUsernameMatchPlayer) {
         return {
             id: latestUsernameMatchPlayer.player_id,
-            username: latestUsernameMatchPlayer.latest_username,
+            username: latestUsernameMatchPlayer.latest_username!,
         };
     }
 
-    const latestStartWithPlayer = playersQuery.find((player) => player.latest_username.toLowerCase().startsWith(usernameLower));
+    const profileStartsWithPlayer = playersQuery.find((player) =>
+        player.profile_name?.toLowerCase().startsWith(usernameLower),
+    );
+    if (profileStartsWithPlayer) {
+        return { id: profileStartsWithPlayer.player_id, username: profileStartsWithPlayer.profile_name! };
+    }
+
+    const latestStartWithPlayer = playersQuery.find((player) =>
+        player.latest_username?.toLowerCase().startsWith(usernameLower),
+    );
 
     if (latestStartWithPlayer) {
         return {
             id: latestStartWithPlayer.player_id,
-            username: latestStartWithPlayer.latest_username,
+            username: latestStartWithPlayer.latest_username!,
         };
     }
 
-    const latestContainsPlayer = playersQuery.find((player) => player.latest_username.toLowerCase().includes(usernameLower));
+    const profileContainsPlayer = playersQuery.find((player) =>
+        player.profile_name?.toLowerCase().includes(usernameLower),
+    );
+    if (profileContainsPlayer) {
+        return { id: profileContainsPlayer.player_id, username: profileContainsPlayer.profile_name! };
+    }
+
+    const latestContainsPlayer = playersQuery.find((player) =>
+        player.latest_username?.toLowerCase().includes(usernameLower),
+    );
 
     if (latestContainsPlayer) {
         return {
             id: latestContainsPlayer.player_id,
-            username: latestContainsPlayer.latest_username,
+            username: latestContainsPlayer.latest_username!,
         };
     }
 

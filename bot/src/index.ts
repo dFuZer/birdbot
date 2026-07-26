@@ -2,6 +2,7 @@ import i18next from "i18next";
 import path from "path";
 import BirdBot from "./bots/birdbot/BirdBot.class";
 import { listedRecordsPerLanguage } from "./bots/birdbot/BirdBotConstants";
+import BirdBotDefinitions from "./bots/birdbot/BirdBotDefinitions.class";
 import { birdbotPeriodicTasks } from "./bots/birdbot/BirdbotPeriodicTasks";
 import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import getBirdBotHttpServer from "./bots/birdbot/BirdBotServer";
@@ -12,13 +13,14 @@ import Utilitary from "./lib/class/Utilitary.class";
 import { resourcesPath } from "./lib/paths";
 
 async function start() {
-    // const permanentRoomLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt"];
     const permanentRoomLanguages: BirdBotLanguage[] = ["fr"];
     const allowedLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt", "de", "it"];
     const bot = new BirdBot({
         periodicTasks: birdbotPeriodicTasks,
         mainRoomLanguages: permanentRoomLanguages,
     });
+
+    BirdBotDefinitions.connect();
 
     bot.initServer({
         app: getBirdBotHttpServer(bot),

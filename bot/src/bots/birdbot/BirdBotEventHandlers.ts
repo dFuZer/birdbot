@@ -1,4 +1,5 @@
 import Logger from "../../lib/class/Logger.class";
+import type { CommandDispatchResult } from "../../lib/class/CommandUtils.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { CommonEventHandlers as CommonEH } from "../../lib/handlers/CommonEventHandlers.class";
 import CommonTEH from "../../lib/handlers/DataTrackingEventHandlers.class";
@@ -13,12 +14,35 @@ import {
 } from "./BirdBotConstants";
 import type { BirdBotRoomMetadata, BirdbotRoomTargetConfig, ListedRecordListResource } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
+import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
+import BirdBotModerationService from "./services/BirdBotModeration.service";
+import BirdBotParityApiService from "./services/BirdBotParityApi.service";
+import BirdBotTrainingService from "./services/BirdBotTraining.service";
 import { l, t } from "./texts/BirdBotTextUtils";
+
+function reportCommandDispatchResult(
+    ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0],
+    result: CommandDispatchResult,
+    rawCommand: string,
+): void {
+    const feedback: Partial<Record<CommandDispatchResult, { key: string; style: "error" | "info" | "important" }>> = {
+        "no-command-given": { key: "eventHandler.chat.noCommandGiven", style: "error" },
+        "command-not-found": { key: "eventHandler.chat.commandNotFound", style: "error" },
+        "not-room-creator": { key: "eventHandler.chat.notRoomCreator", style: "error" },
+        "not-admin": { key: "eventHandler.chat.notAdmin", style: "error" },
+        "not-accessible-in-round": { key: "eventHandler.chat.notAccessibleInRound", style: "info" },
+        "not-allowed-from-word-input": { key: "eventHandler.chat.notAllowedFromWordInput", style: "info" },
+        cooldown: { key: "eventHandler.chat.cooldown", style: "important" },
+    };
+    const denied = feedback[result];
+    if (!denied) return;
+    ctx.utils.sendChatMessage(t(denied.key, { command: rawCommand, lng: l(ctx) }), denied.style);
+}
 
 function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0], previousHandlersCtx: Record<string, any>) {
     const playerPeerId = previousHandlersCtx.playerPeerId as number;
     const word = previousHandlersCtx.word as string;
-    const isLifeGain = previousHandlersCtx.isLifeGain as boolean | undefined;
+    const turnKey = previousHandlersCtx.turnKey as string;
 
     const gameData = ctx.room.roomState.gameData!;
     if (gameData.milestone.name !== "round") return;
@@ -30,6 +54,8 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
     }
     const isMe = ctx.room.roomState.myPeerId === playerPeerId;
     const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+    if (roomMetadata.scoredWordTurnKeys.has(turnKey)) return;
+    roomMetadata.scoredWordTurnKeys.add(turnKey);
     if (roomMetadata.scoresByPeerId[playerPeerId] === undefined) {
         BirdBotUtils.initializeScoresForPlayerId(roomMetadata, playerPeerId);
     }
@@ -40,24 +66,6 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
 
     let showWord = false;
     const turnComments: string[] = [];
-
-    if (isLifeGain) {
-        const oldFlips = playerScores.flips;
-        playerScores.flips++;
-        roomMetadata.globalScores.flips++;
-        const newFlips = playerScores.flips;
-        const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, newFlips, 4);
-        if (passedMilestone) {
-            turnComments.push(
-                t("eventHandler.submit.comments.gainedLives", {
-                    count: newFlips,
-                    playerTotal: playerScores.flips,
-                    globalTotal: roomMetadata.globalScores.flips,
-                    lng: l(ctx),
-                })
-            );
-        }
-    }
 
     playerScores.words++;
     playerScores.currentWordsWithoutDeath++;
@@ -225,7 +233,10 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
     if (!submitIsInDictionary) {
         if (isMe) {
             if (!currentDictionaryResource.resource.includes(word)) {
-                ctx.utils.sendChatMessage(`Unknown word ${word} is valid and was added to the dictionary.`);
+                ctx.utils.sendChatMessage(
+                    t("parity.dictionary.unknownAdded", { word, lng: l(ctx) }),
+                    "success",
+                );
                 BirdBotUtils.handleWordAdditionToDictionaryResource(ctx, currentRoomLanguage, word);
             }
             currentDictionaryResource.metadata.testWords = currentDictionaryResource.metadata.testWords.filter(
@@ -236,25 +247,86 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
                 word,
                 callbackRoomCode: ctx.room.constantRoomData.roomCode,
             });
-            ctx.utils.sendChatMessage(`Unknown word ${word} is valid and was added to the test list.`);
+            ctx.utils.sendChatMessage(
+                t("parity.dictionary.unknownTested", { word, lng: l(ctx) }),
+                "info",
+            );
         }
     }
 
-    if (currentChatter.authId && roomMetadata.gameMode !== "custom") {
-        BirdBotUtils.registerWord({
-            flip: isLifeGain ?? false,
+    const trainingFeedback = BirdBotTrainingService.evaluateCreatorWord(
+        ctx,
+        currentChatter.authId,
+        word,
+        currentPrompt,
+    );
+    if (trainingFeedback) ctx.utils.sendChatMessage(trainingFeedback);
+
+    if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
+        void BirdBotParityApiService.recordWordMilestones({
+            accountName: currentChatter.authId,
+            gameId: BirdBotUtils.getApiGameData(ctx).id,
+            turnKey,
+            word,
+            durationMs: previousHandlersCtx.durationMs,
+            reactionMs: previousHandlersCtx.reactionMs,
+            accuracyStreak: playerScores.currentWordsWithoutDeath,
+        });
+        BirdBotUtils.queueSuccessfulWordRegistration(ctx, turnKey, {
             word,
             submitResult: "success",
             prompt: currentPrompt,
             game: BirdBotUtils.getApiGameData(ctx),
             player: BirdBotUtils.getApiPlayerData(currentChatter),
+            durationMs: previousHandlersCtx.durationMs,
+            reactionMs: previousHandlersCtx.reactionMs,
         });
     }
 }
 
+function handleFlip(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0], previousHandlersCtx: Record<string, any>) {
+    const playerPeerId = previousHandlersCtx.lifeGainPeerId as number | undefined;
+    const turnKey = previousHandlersCtx.flipTurnKey as string | undefined;
+    if (playerPeerId === undefined || !turnKey) return;
+
+    const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+    if (!BirdBotUtils.markFlipForTurn(ctx, turnKey)) return;
+    if (roomMetadata.scoresByPeerId[playerPeerId] === undefined) {
+        BirdBotUtils.initializeScoresForPlayerId(roomMetadata, playerPeerId);
+    }
+    const playerScores = roomMetadata.scoresByPeerId[playerPeerId]!;
+    const oldFlips = playerScores.flips;
+    playerScores.flips++;
+    roomMetadata.globalScores.flips++;
+    const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, playerScores.flips, 4);
+    if (!passedMilestone || ctx.room.roomState.myPeerId === playerPeerId) return;
+
+    const chatter = ctx.room.roomState.roomData?.chatters.find((item) => item.peerId === playerPeerId);
+    if (!chatter) return;
+    ctx.utils.sendChatMessage(
+        t("eventHandler.submit.turnCommentWithoutWord", {
+            username: chatter.nickname,
+            comments: t("eventHandler.submit.comments.gainedLives", {
+                count: playerScores.flips,
+                playerTotal: playerScores.flips,
+                globalTotal: roomMetadata.globalScores.flips,
+                lng: l(ctx),
+            }),
+            lng: l(ctx),
+        })
+    );
+}
+
 const birdbotEventHandlers: BotEventHandlers = {
     chatDisconnect: [CommonEH.chatDisconnect, CommonEH.attemptToReconnectOnDisconnect],
-    gameDisconnect: [CommonEH.gameDisconnect, CommonEH.attemptToReconnectOnDisconnect],
+    gameDisconnect: [
+        (ctx) => {
+            const metadata = ctx.room.roomState.metadata as Partial<BirdBotRoomMetadata>;
+            if (metadata.pendingWordRegistrations) BirdBotUtils.flushAllWordRegistrations(ctx);
+        },
+        CommonEH.gameDisconnect,
+        CommonEH.attemptToReconnectOnDisconnect,
+    ],
     chat: {
         chat: (ctx) => {
             const author = ctx.message.args[0];
@@ -267,44 +339,53 @@ const birdbotEventHandlers: BotEventHandlers = {
                 ctx.room.roomState.roomData?.chatters.push(chatter);
             }
 
+            if (!BirdBotModerationService.handleChatMessage(ctx, chatter)) return;
             const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, chatter, birdbotCommands);
-            if (handleCommandResult === "command-not-found") {
-                ctx.utils.sendChatMessage(
-                    t("eventHandler.chat.commandNotFound", {
-                        command: rawMessage,
-                        lng: l(ctx),
-                    })
-                );
-            } else if (handleCommandResult === "not-room-creator") {
-                ctx.utils.sendChatMessage(t("eventHandler.chat.notRoomCreator", { lng: l(ctx) }));
-            } else if (handleCommandResult === "not-admin") {
-                ctx.utils.sendChatMessage(t("eventHandler.chat.notAdmin", { lng: l(ctx) }));
-            }
+            reportCommandDispatchResult(ctx, handleCommandResult, rawMessage);
         },
         chatterAdded: [
             CommonTEH.chatterAdded,
-            (ctx, previousHandlersCtx) => {
+            async (ctx, previousHandlersCtx) => {
                 const newPeerId = previousHandlersCtx.newPeerId as number;
-                const roomOwner = ctx.room.constantRoomData.roomCreatorAuthId;
-                if (roomOwner) {
-                    const roomOwnerChatter = ctx.room.roomState.roomData!.chatters.find((c) => c.authId === roomOwner);
-                    if (roomOwnerChatter && !roomOwnerChatter.isModerator) {
-                        ctx.utils.setUserModerator(roomOwnerChatter.peerId, true);
-                        roomOwnerChatter.isModerator = true;
-                    }
-                }
+                const chatter = ctx.room.roomState.roomData!.chatters.find((item) => item.peerId === newPeerId);
+                if (!chatter) return;
+                await BirdBotModerationService.handleChatterAdded(ctx, chatter);
+                if (chatter.isBanned) return;
 
                 const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
                 if (roomMetadata.wasInitialized && !roomMetadata.greetedPeerIds.has(newPeerId.toString())) {
                     roomMetadata.greetedPeerIds.add(newPeerId.toString());
-                    ctx.utils.sendChatMessage(t("general.greet", { lng: l(ctx) }));
+                    if (chatter.authId) {
+                        try {
+                            const player = await BirdBotParityApiService.resolvePlayer(chatter.authId, true);
+                            const economy = await BirdBotParityApiService.getEconomy(player.playerId);
+                            if (economy.vip && economy.vip.tier !== "NONE" && economy.cosmetics?.welcome_message) {
+                                ctx.utils.sendChatMessage(
+                                    economy.cosmetics.welcome_message.replace(/µ\{n\}/gi, chatter.nickname),
+                                    "important",
+                                );
+                                return;
+                            }
+                        } catch {
+                            // A greeting must not fail because profile enrichment is unavailable.
+                        }
+                    }
+                    ctx.utils.sendChatMessage(t("general.greet", { lng: l(ctx) }), "info");
                 }
             },
         ],
         chatterRemoved: CommonTEH.chatterRemoved,
+        setPlayerCount: CommonTEH.setPlayerCount,
+        userBanned: CommonTEH.userBanned,
     },
     game: {
         setup: [
+            (ctx) => {
+                const metadata = ctx.room.roomState.metadata as Partial<BirdBotRoomMetadata>;
+                if (metadata.pendingWordRegistrations) {
+                    BirdBotUtils.flushAllWordRegistrations(ctx);
+                }
+            },
             CommonTEH.setup,
             (ctx, previousHandlersCtx) => {
                 const selfPeerId = previousHandlersCtx.selfPeerId as number;
@@ -342,6 +423,7 @@ const birdbotEventHandlers: BotEventHandlers = {
             },
         ],
         setMilestone: [
+            (ctx) => BirdBotUtils.flushAllWordRegistrations(ctx),
             CommonTEH.setMilestone,
             (ctx, previousHandlersCtx) => {
                 if (previousHandlersCtx.roundEnded) {
@@ -354,7 +436,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                     roomMetadata.remainingSyllables = Object.assign({}, currentDictionaryResource.metadata.syllablesCount);
                     BirdBotUtils.initializeScoresForAllPlayers(ctx);
 
-                    if (birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any)) {
+                    if (
+                        birdbotSupportedDictionaryIds.includes(ctx.room.roomState.gameData!.rules.dictionaryId as any) &&
+                        BirdBotGameplayStateService.isScoreEligible(ctx)
+                    ) {
                         const gameData = BirdBotUtils.getApiGameData(ctx);
                         BirdBotUtils.registerGame(gameData);
                     }
@@ -365,6 +450,7 @@ const birdbotEventHandlers: BotEventHandlers = {
         setRules: [
             CommonTEH.setRules,
             (ctx) => {
+                BirdBotGameplayStateService.resetIfLanguageChanged(ctx);
                 BirdBotUtils.detectRoomGameMode(ctx);
             },
         ],
@@ -381,6 +467,7 @@ const birdbotEventHandlers: BotEventHandlers = {
             },
         ],
         nextTurn: [
+            (ctx) => BirdBotUtils.flushAllWordRegistrations(ctx),
             CommonTEH.nextTurn,
             BirdBotUtils.handleMyTurn,
             (ctx, previousHandlersCtx) => {
@@ -410,11 +497,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                 }
             },
         ],
-        bonusAlphabetCompleted: CommonTEH.bonusAlphabetCompleted,
+        bonusAlphabetCompleted: [CommonTEH.bonusAlphabetCompleted, handleFlip],
         setPlayerWord: CommonTEH.setPlayerWord,
         correctWord: [
             CommonTEH.correctWord,
-            BirdBotUtils.handleMyTurn,
             (ctx, previousHandlersCtx) => {
                 handleSuccessfulWord(ctx, previousHandlersCtx);
             },
@@ -429,11 +515,19 @@ const birdbotEventHandlers: BotEventHandlers = {
 
                 const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
                 if (!state) return;
-                const rawWord = state.word;
-                const word = rawWord.toLowerCase().replace(/[^a-z'-]/gi, "");
+                const rawWord = state.rawWord;
+                const word = state.word;
                 const isMe = ctx.room.roomState.myPeerId === playerPeerId;
                 const currentChatter = ctx.room.roomState.roomData!.chatters.find((c) => c.peerId === playerPeerId);
                 if (!currentChatter) return;
+
+                const trainingFeedback = BirdBotTrainingService.evaluateCreatorWord(
+                    ctx,
+                    currentChatter.authId,
+                    word,
+                    gameData.milestone.syllable,
+                );
+                if (trainingFeedback) ctx.utils.sendChatMessage(trainingFeedback);
 
                 const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
                 const currentRoomLanguage = BirdBotUtils.getCurrentRoomLanguage(ctx);
@@ -441,23 +535,17 @@ const birdbotEventHandlers: BotEventHandlers = {
 
                 if (!isMe) {
                     const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawWord, currentChatter, birdbotCommands);
-                    if (handleCommandResult === "command-not-found" && ["!", "/", "."].includes(rawWord.trim()[0] ?? "")) {
-                        ctx.utils.sendChatMessage(
-                            t("eventHandler.chat.commandNotFound", {
-                                command: word,
-                                lng: l(ctx),
-                            })
-                        );
-                    } else if (handleCommandResult === "not-room-creator") {
-                        ctx.utils.sendChatMessage(t("eventHandler.chat.notRoomCreator", { lng: l(ctx) }));
-                    }
+                    reportCommandDispatchResult(ctx, handleCommandResult, rawWord);
                 }
 
                 if (submitIsInDictionary && reason === "notInDictionary") {
                     if (isMe) {
                         const wordIndex = currentDictionaryResource.resource.indexOf(word);
                         if (wordIndex !== -1) {
-                            ctx.utils.sendChatMessage(`Word ${word} is invalid and was removed from the dictionary.`);
+                            ctx.utils.sendChatMessage(
+                                t("parity.dictionary.invalidRemoved", { word, lng: l(ctx) }),
+                                "success",
+                            );
                             BirdBotUtils.handleWordRemovalFromDictionaryResource(ctx, currentRoomLanguage, wordIndex, word);
                         }
                         currentDictionaryResource.metadata.testWords = currentDictionaryResource.metadata.testWords.filter(
@@ -465,7 +553,8 @@ const birdbotEventHandlers: BotEventHandlers = {
                         );
                     } else if (!currentDictionaryResource.metadata.testWords.some((testWord) => testWord.word === word)) {
                         ctx.utils.sendChatMessage(
-                            `Word ${word} is invalid and was added to the test list for removal from the dictionary.`
+                            t("parity.dictionary.invalidTested", { word, lng: l(ctx) }),
+                            "info",
                         );
                         currentDictionaryResource.metadata.testWords.push({
                             word,
@@ -474,7 +563,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                     }
                 }
 
-                if (currentChatter.authId && (ctx.room.roomState.metadata as BirdBotRoomMetadata).gameMode !== "custom") {
+                if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
                     BirdBotUtils.registerWord({
                         flip: false,
                         word,
@@ -482,6 +571,12 @@ const birdbotEventHandlers: BotEventHandlers = {
                         prompt: gameData.milestone.syllable,
                         game: BirdBotUtils.getApiGameData(ctx),
                         player: BirdBotUtils.getApiPlayerData(currentChatter),
+                        durationMs:
+                            state.startTurn === null ? undefined : Math.max(0, Date.now() - state.startTurn),
+                        reactionMs:
+                            state.startTurn === null || state.startWrite === null
+                                ? undefined
+                                : Math.max(0, state.startWrite - state.startTurn),
                     });
                 }
 

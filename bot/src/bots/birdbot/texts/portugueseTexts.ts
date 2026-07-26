@@ -9,6 +9,7 @@ export const portugueseTexts = {
         unspecific: "$t(error.intro) Ocorreu um erro desconhecido.",
         api: {
             inaccessible: "$t(error.intro) A API não está acessível. Tenta de novo mais tarde!",
+            conflict: "$t(error.intro) Essa operação entra em conflito com o estado atual da conta.",
         },
         roomState: {
             noGameInProgress: "$t(error.intro) Não há partida em andamento.",
@@ -16,6 +17,8 @@ export const portugueseTexts = {
             notEnoughPlayers: "$t(error.intro) Não há jogadores suficientes para começar a partida.",
             cannotSetMode: "$t(error.intro) Não é possível mudar o modo fora da fase de preparação.",
             cannotSetLanguage: "$t(error.intro) Não é possível mudar o idioma fora da fase de preparação.",
+            cannotSetBonusAlphabet:
+                "$t(error.intro) Não é possível mudar as letras bônus fora da fase de preparação.",
         },
         invalid: {
             regex: "$t(error.intro) Regex inválida: {{regex}}",
@@ -23,7 +26,7 @@ export const portugueseTexts = {
             gameMode: "$t(error.intro) Modo de jogo inválido.",
         },
         notSupported: {
-            language: '$t(intro) O idioma "{{language}}" não é suportado.',
+            language: '$t(error.intro) O idioma "{{language}}" não é suportado.',
             listedRecordNotExistsInLanguage: "$t(error.intro) O record à lista solicitado não existe na língua solicitada.",
         },
         "404": {
@@ -48,7 +51,7 @@ export const portugueseTexts = {
             mustProvideWord: "$t(error.intro) Você precisa fornecer uma palavra para usar este comando.",
         },
         platform: {
-            mustBeLoggedIn: `$t(intro) Você precisa estar logado no jklm.fun para usar este comando. Para fazer login, vá para a página inicial https://${jklmDomain}/ e clique em "Entrar" se você tem uma conta ou "Nova conta" se não tem.`,
+            mustBeLoggedIn: `$t(error.intro) Você precisa estar logado no jklm.fun para usar este comando. Para fazer login, vá para a página inicial https://${jklmDomain}/ e clique em "Entrar" se você tem uma conta ou "Nova conta" se não tem.`,
         },
     },
     command: {
@@ -56,6 +59,71 @@ export const portugueseTexts = {
             description: "Mostra a lista de comandos. Se você indicar um comando, mostra sua descrição.",
             list: "{{commandList}} — Para mais info sobre um comando, use /help [comando]",
             details: "/{{commandName}}: {{description}} — Uso: {{usage}} — Ex. {{example}}",
+        },
+        speedRecords: { description: "Mostra marcos de velocidade globais ou de um jogador pela API." },
+        accuracyRecords: { description: "Mostra sequências de palavras válidas globais ou de um jogador." },
+        credits: { description: "Mostra seu saldo de créditos do BirdBot." },
+        economy: { description: "Mostra créditos, nível VIP e compras de um jogador." },
+        buy: { description: "Compra um nível VIP com créditos do BirdBot." },
+        setName: { description: "Altera o nome do seu perfil do BirdBot." },
+        welcomeMessage: { description: "Define sua mensagem de boas-vindas." },
+        roomName: { description: "Define o nome das salas que você cria." },
+        botName: { description: "Define o nome do BirdBot nas suas salas." },
+        picture: { description: "Define a imagem do BirdBot nas suas salas. Informe uma URL de imagem." },
+        news: { description: "Mostra as últimas notícias publicadas." },
+        trust: { description: "Administra a confiança dos revisores pela API." },
+        blacklist: { description: "Administra a lista negra de salas pela API." },
+        connect: {
+            description: "Explica como entrar no jklm.fun.",
+            result: "Para se conectar ao jklm.fun, abra https://jklm.fun, clique no seu apelido no canto superior direito e escolha Twitch ou Discord.",
+        },
+        admin: {
+            creatorId: "Auth id do criador da sala: {{id}}",
+            reconnecting: "Reconectando esta sala...",
+            getId: "Correspondência: {{account}} / {{username}} ({{playerId}})",
+            suppressUsage: "Uso: /suppress [jogador] [motivo?]",
+            suppressResult: "Suprimido {{player}}: {{suppressed}}",
+            giveCreditsUsage: "Uso: /givecredits [jogador] [quantidade]",
+            giveCreditsResult: "Ajustado {{player}} em {{amount}} créditos. Saldo: {{balance}}.",
+            giveXpUsage: "Uso: /givexp [jogador] [quantidade]",
+            giveXpResult: "Ajustado {{player}} em {{amount}} XP. XP total: {{xp}}.",
+            setXpUsage: "Uso: /setxp [jogador] [quantidade]",
+            setXpResult: "XP de {{player}} definida para {{xp}}.",
+            health: "Saúde — salas {{rooms}} (conectadas {{connected}}), API {{api}}, uptime {{uptime}}",
+        },
+        parity: {
+            loginOrPlayer: "Entre na conta ou informe um jogador.",
+            milestones: "{{player}} — marcos de {{type}}: {{records}}",
+            noMilestones: "{{player}} ainda não tem marcos de {{type}}.",
+            globalMilestones: "Marcos {{type}} globais: {{records}}",
+            noGlobalMilestones: "Ainda não há marcos {{type}} globais.",
+            milestoneSpeed: "{{value}} ms",
+            milestoneAccuracy: "{{value}} palavras válidas",
+            credits: "Você tem {{count}} créditos.",
+            economy: "{{player}}: {{credits}} créditos — nível {{tier}} — {{purchases}} compra(s).",
+            purchaseLogin: "Você precisa entrar na conta para fazer uma compra.",
+            availableSkus: "Ofertas disponíveis: VIP (500 créditos), VIP+ (1000 créditos).",
+            alreadyVip: "Você já tem {{tier}}.",
+            purchasedVip: "{{tier}} comprado.",
+            insufficientCredits: "Você não tem créditos suficientes.",
+            setNameLogin: "Você precisa entrar na conta para definir um nome de perfil.",
+            invalidName: "O nome do perfil deve ter de 2 a 20 caracteres.",
+            nameSet: "Seu nome de perfil do BirdBot agora é {{name}}.",
+            nameClaimed: "Esse nome de perfil já está em uso.",
+            nameCooldown: "Você só pode mudar seu nome a cada 30 dias.",
+            cosmeticLogin: "Você precisa entrar na conta para personalizar seu perfil do BirdBot.",
+            cosmeticValue: "Informe um valor ou use /{{command}} clear.",
+            cosmeticTooLong: "Esse valor deve ter no máximo {{maxLength}} caracteres.",
+            cosmeticTier: "Essa personalização requer {{tier}}.",
+            cosmeticCleared: "Personalização removida.",
+            cosmeticSaved: "Personalização salva.",
+            noNews: "Não há notícias publicadas do BirdBot.",
+            moderationUsage: "Uso: /{{command}} [add|remove|show] [jogador].",
+            moderationState: "{{player}}: confiança {{trust}}, lista negra {{blacklist}}.",
+            yesWithReason: "sim ({{reason}})",
+            yes: "sim",
+            no: "não",
+            noReason: "sem motivo",
         },
         records: {
             description: "Mostra a lista de records.",
@@ -99,6 +167,39 @@ export const portugueseTexts = {
             resultMode: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: {{records}}. {{profileLink}}",
             result: "[{{languageFlag}}] {{playerUsername}}: Classificação #{{rank}} com {{pp}}pp, {{currentLevelXp}}/{{totalLevelXp}}xp, nível {{level}}. Top 5 desempenhos: {{topPerformances}}. {{profileLink}}",
             noRecords: "[{{languageFlag}} {{gameMode}}] {{playerUsername}}: Não há records nesta categoria",
+        },
+        xp: {
+            description: "Mostra o XP e o nível de um jogador.",
+            noUsernameNotConnected:
+                "Você precisa estar conectado ao jklm.fun para ver seu próprio XP. Para ver o XP de outro jogador, use /xp [nome de usuário].",
+            result: "{{playerUsername}}: nível {{level}} — {{currentLevelXp}}/{{totalLevelXp}}xp ({{totalXp}} total)",
+        },
+        showTime: {
+            description: "Mostra há quanto tempo a partida atual está rolando.",
+            result: "Tempo de partida: {{time}}",
+        },
+        changeBonusAlphabet: {
+            description:
+                "Muda o alfabeto bônus. /bl default para os valores padrão, /bl reset para zerar e depois definir, ou /bl a:1 b:0 para alterar letras.",
+            setting: "Alterando as letras bônus...",
+            invalidFormat:
+                "$t(error.intro) Formato inválido. Exemplos: /bl default — /bl a:1 z:0 — /bl reset q:1",
+            invalidRange: "$t(error.intro) As contagens de letras devem estar entre 0 e 99.",
+        },
+        destroyRoom: {
+            description: "Destrói a sala atual.",
+            destroying: "Destruindo a sala...",
+        },
+        getBomb: {
+            description: "Boom.",
+            result: "💥",
+        },
+        getDefinition: {
+            description: "Procura a definição de uma palavra (francês e inglês).",
+            result: "{{word}} ({{source}}) [{{page}}/{{total}}]: {{definition}}",
+            notFound: "$t(error.intro) Nenhuma definição encontrada.",
+            notFoundSuggestion: "$t(error.intro) Nenhuma definição encontrada. Você quis dizer {{suggestion}}?",
+            notSupported: "$t(error.intro) Definições não estão disponíveis para {{language}}.",
         },
         rareSyllables: {
             description: "Mostra as sílabas raras no dicionário.",
@@ -158,7 +259,7 @@ export const portugueseTexts = {
         createRoom: {
             description: "Cria uma sala.",
             roomCreated: `Sala criada: https://${jklmDomain}/{{roomCode}}`,
-            roomAlreadyExists: `Você já é o proprietário de uma sala: https://${jklmDomain}/{{code}}`,
+            roomAlreadyExists: `Você já é o proprietário de uma sala: https://${jklmDomain}/{{roomCode}}`,
             roomBeingCreated: "A sala está sendo criada, por favor, aguarde um pouco...",
             unknownError: "$t(error.intro) Um erro desconhecido ocorreu ao criar a sala. Por favor, tente novamente mais tarde.",
         },
@@ -189,9 +290,21 @@ export const portugueseTexts = {
     eventHandler: {
         chat: {
             commandNotFound: "Comando não encontrado: {{command}}",
+            noCommandGiven: "Você precisa informar um comando depois do prefixo.",
             notRoomCreator:
                 "Você não pode usar este comando se não for o criador da sala. /b para criar sua sala estará disponível em breve.",
             notAdmin: "Você não pode usar este comando se não for um administrador.",
+            notAccessibleInRound: "Este comando não está disponível durante uma rodada.",
+            notAllowedFromWordInput: "Este comando não pode ser usado na entrada de palavras.",
+            cooldown: "Espere antes de usar esse comando novamente.",
+        },
+        moderation: {
+            invalidNickname: "⛔ {{username}}: apelido bloqueado ({{reason}}).",
+            bannedWord: "palavra proibida",
+            bannedCharacter: "caractere proibido",
+            blacklisted: "⛔ {{username}}: a conta está na lista negra.",
+            spamTimeout: "⛔ {{username}}: expulsão temporária por spam.",
+            spamWarning: "⚠️ {{username}}: vá mais devagar.",
         },
         submit: {
             turnCommentWithWord: "{{username}}: {{comments}} ({{word}})",
@@ -222,6 +335,40 @@ export const portugueseTexts = {
         support: {
             star: `Hey! Se você gosta de BirdBot e quer nos apoiar, dê uma estrela no GitHub! Isso significa muito para nós! ${GITHUB_REPO_LINK}`,
             donate: `Hey! Se você gosta de BirdBot e quer nos apoiar, faça um doação no PayPal! Muito obrigado! ${PAYPAL_DONATE_LINK}`,
+        },
+    },
+    parity: {
+        gameplay: {
+            customMode: "Modo personalizado ativado; a pontuação ranqueada está desativada.",
+            providePlaystyle: "Informe um estilo de jogo.",
+            unavailablePlaystyle: "Esse estilo de jogo não está disponível no idioma atual.",
+            playstyleEnabled: "Estilo de jogo {{playstyle}} ativado.",
+            trainingLogin: "O treinamento exige que o criador da sala esteja conectado.",
+            invalidTrainingRegex: "Expressão regular de treinamento inválida ou muito custosa.",
+            tooManyTrainingMatches: "O treinamento corresponde a mais de 30000 palavras.",
+            noTrainingMatches: "Nenhuma palavra corresponde ao treinamento.",
+            trainingEnabled: "Treinamento ativado; a pontuação ranqueada está desativada.",
+            trainingDisabled: "Treinamento desativado; a elegibilidade de pontuação foi restaurada.",
+            trainingConfigured: "Treinamento ativado com {{count}} palavras ({{sort}}); a pontuação ranqueada está desativada.",
+            humanEnabled: "Modo humano ativado; o BirdBot não jogará e a pontuação ranqueada está desativada.",
+            humanDisabled: "Modo humano desativado; a elegibilidade de pontuação foi restaurada.",
+            invalidRegex: "Expressão regular inválida ou muito custosa.",
+            unrankedScores: "{{username}}: {{scores}} (sala não ranqueada).",
+            noScores: "sem pontuações",
+        },
+        dictionary: {
+            trustedReviewer: "Este comando é restrito a revisores confiáveis do dicionário.",
+            trustedListReviewer: "Este comando é restrito a revisores confiáveis de listas.",
+            listUsage: "Uso: /cl [idioma] [recorde de lista] [add|remove] [palavras...].",
+            testWords: "Palavras de teste: {{words}}",
+            unknownAdded: "A palavra desconhecida {{word}} é válida e foi adicionada ao dicionário.",
+            unknownTested: "A palavra desconhecida {{word}} é válida e foi adicionada à lista de teste.",
+            invalidRemoved: "A palavra {{word}} é inválida e foi removida do dicionário.",
+            invalidTested: "A palavra {{word}} é inválida e foi adicionada à lista de teste para remoção do dicionário.",
+        },
+        room: {
+            blacklisted: "Esta conta não pode criar salas privadas do BirdBot.",
+            verificationUnavailable: "Não foi possível verificar o acesso a salas privadas. Tente novamente mais tarde.",
         },
     },
     lib: {

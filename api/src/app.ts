@@ -12,6 +12,18 @@ import { getUserProfileRouteHandler } from "./routes/getUserProfile.route";
 import { healthRouteHandler } from "./routes/health.route";
 import { linkAccountRouteHandler } from "./routes/linkAccount.route";
 import { postDiscordOAuthToken } from "./routes/postDiscordOAuthToken.route";
+import {
+    getEconomyProfileRouteHandler,
+    grantVipRouteHandler,
+    mutateCreditsRouteHandler,
+    mutateXpRouteHandler,
+    recordPurchaseRouteHandler,
+    setCosmeticsRouteHandler,
+} from "./routes/economy.route";
+import { getMetaRecordsRouteHandler, writeMetaRecordRouteHandler } from "./routes/metaRecords.route";
+import { getModerationStateRouteHandler, setModerationStateRouteHandler } from "./routes/moderation.route";
+import { createNewsRouteHandler, getNewsRouteHandler, updateNewsRouteHandler } from "./routes/news.route";
+import { setProfileNameRouteHandler } from "./routes/profileName.route";
 
 const app = Fastify();
 
@@ -43,6 +55,19 @@ app.put("/game-recap", { preHandler: authMiddleware }, addGameRecapRouteHandler)
 app.post("/auth-code", { preHandler: authMiddleware }, postDiscordOAuthToken);
 // Link account
 app.post("/link-account", { preHandler: authMiddleware }, linkAccountRouteHandler);
+app.post("/economy/credits", { preHandler: authMiddleware }, mutateCreditsRouteHandler);
+app.post("/economy/xp", { preHandler: authMiddleware }, mutateXpRouteHandler);
+app.post("/economy/purchases", { preHandler: authMiddleware }, recordPurchaseRouteHandler);
+app.post("/profile/:playerId/vip", { preHandler: authMiddleware }, grantVipRouteHandler);
+app.post("/meta/records", { preHandler: authMiddleware }, writeMetaRecordRouteHandler);
+app.post("/news", { preHandler: authMiddleware }, createNewsRouteHandler);
+
+// --- PATCH ---
+
+app.patch("/profile/:playerId/cosmetics", { preHandler: authMiddleware }, setCosmeticsRouteHandler);
+app.patch("/profile/:playerId/name", { preHandler: authMiddleware }, setProfileNameRouteHandler);
+app.patch("/moderation/:playerId", { preHandler: authMiddleware }, setModerationStateRouteHandler);
+app.patch("/news/:newsId", { preHandler: authMiddleware }, updateNewsRouteHandler);
 
 // --- GET ---
 
@@ -60,5 +85,9 @@ app.get("/user", { preHandler: authMiddleware }, getUserProfileRouteHandler);
 
 // Get leaderboard
 app.get("/leaderboard", getLeaderboardRouteHandler);
+app.get("/economy/:playerId", { preHandler: authMiddleware }, getEconomyProfileRouteHandler);
+app.get("/meta/records", { preHandler: authMiddleware }, getMetaRecordsRouteHandler);
+app.get("/moderation/:playerId", { preHandler: authMiddleware }, getModerationStateRouteHandler);
+app.get("/news", { preHandler: authMiddleware }, getNewsRouteHandler);
 
 export default app;

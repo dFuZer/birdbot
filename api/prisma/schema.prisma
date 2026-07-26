@@ -40,6 +40,21 @@ enum SubmitResultType {
     @@map("submit_result_type")
 }
 
+enum MilestoneType {
+    SPEED
+    ACCURACY
+
+    @@map("milestone_type")
+}
+
+enum VipTier {
+    NONE
+    VIP
+    VIP_PLUS
+
+    @@map("vip_tier")
+}
+
 model PlayerUsername {
     id String @id @default(uuid()) @db.Uuid
 
@@ -66,6 +81,14 @@ model Player {
     usernames    PlayerUsername[]
     gameRecaps   GameRecap[]
     websiteUsers WebsiteUserToPlayer[]
+    milestones   PlayerMilestone[]
+    creditAccount CreditAccount?
+    creditLedger CreditLedger[]
+    vipEntitlements VipEntitlement[]
+    purchases    Purchase[]
+    cosmetics    PlayerCosmetics?
+    moderationState ModerationState?
+    xpLedger     XpLedger[]
 
     @@map("player")
 }
@@ -125,11 +148,156 @@ model Word {
     flip          Boolean
     submit_result SubmitResultType
     prompt        String           @db.VarChar(10)
+    duration_ms   Int?
+    reaction_ms   Int?
 
     player Player @relation(fields: [player_id], references: [id])
     game   Game   @relation(fields: [game_id], references: [id])
 
     @@map("word")
+}
+
+model PlayerMilestone {
+    id              String        @id @default(uuid()) @db.Uuid
+    player_id       String        @db.Uuid
+    type            MilestoneType
+    milestone       String        @db.VarChar(80)
+    value           Float
+    achieved_at     DateTime      @default(now())
+    source          String?       @db.VarChar(80)
+    idempotency_key String        @unique @db.VarChar(120)
+    metadata        Json          @default("{}")
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@unique([player_id, type, milestone])
+    @@index([player_id, type, achieved_at])
+    @@map("player_milestone")
+}
+
+model CreditAccount {
+    player_id String   @id @db.Uuid
+    balance   Int      @default(0)
+    updated_at DateTime @updatedAt
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@map("credit_account")
+}
+
+model CreditLedger {
+    id              String   @id @default(uuid()) @db.Uuid
+    player_id       String   @db.Uuid
+    amount          Int
+    balance_after   Int
+    reason          String   @db.VarChar(120)
+    reference       String?  @db.VarChar(160)
+    idempotency_key String   @unique @db.VarChar(140)
+    actor           String   @db.VarChar(80)
+    metadata        Json     @default("{}")
+    created_at      DateTime @default(now())
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@index([player_id, created_at])
+    @@map("credit_ledger")
+}
+
+model XpLedger {
+    id              String   @id @default(uuid()) @db.Uuid
+    player_id       String   @db.Uuid
+    amount          Int
+    xp_after        Int
+    operation       String   @db.VarChar(12)
+    reason          String   @db.VarChar(120)
+    idempotency_key String   @unique @db.VarChar(140)
+    actor           String   @db.VarChar(80)
+    metadata        Json     @default("{}")
+    created_at      DateTime @default(now())
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@index([player_id, created_at])
+    @@map("xp_ledger")
+}
+
+model VipEntitlement {
+    id              String   @id @default(uuid()) @db.Uuid
+    player_id       String   @db.Uuid
+    tier            VipTier  @default(NONE)
+    starts_at       DateTime @default(now())
+    expires_at      DateTime?
+    granted_by      String   @db.VarChar(80)
+    reason          String?  @db.VarChar(240)
+    idempotency_key String   @unique @db.VarChar(120)
+    updated_at      DateTime @updatedAt
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@index([player_id, starts_at])
+    @@map("vip_entitlement")
+}
+
+model Purchase {
+    id               String   @id @default(uuid()) @db.Uuid
+    player_id        String   @db.Uuid
+    sku              String   @db.VarChar(120)
+    credits_spent    Int
+    external_reference String? @unique @db.VarChar(160)
+    idempotency_key  String   @unique @db.VarChar(120)
+    actor            String   @db.VarChar(80)
+    metadata         Json     @default("{}")
+    purchased_at     DateTime @default(now())
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@index([player_id, purchased_at])
+    @@map("purchase")
+}
+
+model PlayerCosmetics {
+    player_id      String   @id @db.Uuid
+    welcome_message String? @db.VarChar(500)
+    room_name      String?  @db.VarChar(100)
+    bot_name       String?  @db.VarChar(80)
+    picture_url    String?  @db.VarChar(500)
+    updated_by     String   @db.VarChar(80)
+    updated_at     DateTime @updatedAt
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@map("player_cosmetics")
+}
+
+model ModerationState {
+    player_id         String   @id @db.Uuid
+    trust_score       Int      @default(0)
+    blacklisted       Boolean  @default(false)
+    blacklist_reason  String?  @db.VarChar(500)
+    suppressed        Boolean  @default(false)
+    suppress_reason   String?  @db.VarChar(500)
+    updated_by        String   @db.VarChar(80)
+    updated_at        DateTime @updatedAt
+
+    player Player @relation(fields: [player_id], references: [id])
+
+    @@map("moderation_state")
+}
+
+model NewsEntry {
+    id              String   @id @default(uuid()) @db.Uuid
+    title           String   @db.VarChar(160)
+    body            String
+    published       Boolean  @default(false)
+    published_at    DateTime?
+    created_by      String   @db.VarChar(80)
+    updated_by      String   @db.VarChar(80)
+    idempotency_key String   @unique @db.VarChar(120)
+    created_at      DateTime @default(now())
+    updated_at      DateTime @updatedAt
+
+    @@index([published, published_at])
+    @@map("news_entry")
 }
 
 model WebsiteSession {
