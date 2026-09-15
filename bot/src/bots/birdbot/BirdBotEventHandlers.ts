@@ -339,8 +339,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                 ctx.room.roomState.roomData?.chatters.push(chatter);
             }
 
-            if (!BirdBotModerationService.handleChatMessage(ctx, chatter)) return;
-            const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, chatter, birdbotCommands);
+            if (!BirdBotModerationService.handleChatMessage(ctx, chatter, rawMessage)) return;
+            const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawMessage, chatter, birdbotCommands, {
+                isScoreEligible: BirdBotGameplayStateService.isScoreEligible(ctx),
+            });
             reportCommandDispatchResult(ctx, handleCommandResult, rawMessage);
         },
         chatterAdded: [
@@ -376,7 +378,29 @@ const birdbotEventHandlers: BotEventHandlers = {
         ],
         chatterRemoved: CommonTEH.chatterRemoved,
         setPlayerCount: CommonTEH.setPlayerCount,
-        userBanned: CommonTEH.userBanned,
+        userBanned: [
+            CommonTEH.userBanned,
+            (ctx, previousHandlersCtx) => {
+                const bannedPeerId = previousHandlersCtx.bannedPeerId as number | undefined;
+                const bannedUser = previousHandlersCtx.bannedUser as
+                    | { authId?: string | null; peerId?: number }
+                    | undefined;
+                if (bannedPeerId === undefined) return;
+                const moderators = (ctx.room.roomState.roomData?.chatters ?? [])
+                    .filter((item) => item.isModerator && item.authId)
+                    .map((item) => item.authId!);
+                const playerAccount =
+                    bannedUser?.authId ||
+                    `peerId:${bannedPeerId}`;
+                void BirdBotParityApiService.createBanEvent({
+                    playerAccount,
+                    roomCode: ctx.room.constantRoomData.roomCode,
+                    moderatorAccounts: moderators,
+                }).catch(() => {
+                    // best-effort audit
+                });
+            },
+        ],
     },
     game: {
         setup: [
@@ -417,6 +441,19 @@ const birdbotEventHandlers: BotEventHandlers = {
                     if (ctx.room.roomState.gameData!.milestone.name === "seating") {
                         ctx.utils.joinRound();
                     } else if (ctx.room.roomState.gameData!.milestone.name === "round") {
+                        const milestone = ctx.room.roomState.gameData!.milestone;
+                        for (const [peerIdStr, state] of Object.entries(milestone.playerStatesByPeerId)) {
+                            if (!state.wasWordValidated || !state.word) continue;
+                            const turnKey = `${peerIdStr}:${state.startTurn ?? "unknown"}`;
+                            if (roomMetadata.scoredWordTurnKeys.has(turnKey)) continue;
+                            handleSuccessfulWord(ctx, {
+                                playerPeerId: Number(peerIdStr),
+                                word: state.word,
+                                turnKey,
+                                durationMs: undefined,
+                                reactionMs: undefined,
+                            });
+                        }
                         BirdBotUtils.handleMyTurn(ctx, {});
                     }
                 }
@@ -534,7 +571,13 @@ const birdbotEventHandlers: BotEventHandlers = {
                 const submitIsInDictionary = currentDictionaryResource.resource.includes(word);
 
                 if (!isMe) {
-                    const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawWord, currentChatter, birdbotCommands);
+                    const handleCommandResult = Utilitary.handleCommandIfExists(
+                        ctx,
+                        rawWord,
+                        currentChatter,
+                        birdbotCommands,
+                        { isScoreEligible: BirdBotGameplayStateService.isScoreEligible(ctx) },
+                    );
                     reportCommandDispatchResult(ctx, handleCommandResult, rawWord);
                 }
 
@@ -564,20 +607,24 @@ const birdbotEventHandlers: BotEventHandlers = {
                 }
 
                 if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
-                    BirdBotUtils.registerWord({
-                        flip: false,
-                        word,
-                        submitResult: "invalidWord",
-                        prompt: gameData.milestone.syllable,
-                        game: BirdBotUtils.getApiGameData(ctx),
-                        player: BirdBotUtils.getApiPlayerData(currentChatter),
-                        durationMs:
-                            state.startTurn === null ? undefined : Math.max(0, Date.now() - state.startTurn),
-                        reactionMs:
-                            state.startTurn === null || state.startWrite === null
-                                ? undefined
-                                : Math.max(0, state.startWrite - state.startTurn),
-                    });
+                    const failTurnKey = `${playerPeerId}:${state.startTurn ?? "unknown"}`;
+                    BirdBotUtils.registerWord(
+                        {
+                            flip: false,
+                            word,
+                            submitResult: "invalidWord",
+                            prompt: gameData.milestone.syllable,
+                            game: BirdBotUtils.getApiGameData(ctx),
+                            player: BirdBotUtils.getApiPlayerData(currentChatter),
+                            durationMs:
+                                state.startTurn === null ? undefined : Math.max(0, Date.now() - state.startTurn),
+                            reactionMs:
+                                state.startTurn === null || state.startWrite === null
+                                    ? undefined
+                                    : Math.max(0, state.startWrite - state.startTurn),
+                        },
+                        failTurnKey,
+                    );
                 }
 
                 if (isMe) {

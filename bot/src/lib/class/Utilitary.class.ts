@@ -148,6 +148,7 @@ export default class Utilitary {
     public static destroyRoom(bot: Bot, room: Room) {
         Utilitary.teardownRoomSockets(room);
         delete bot.rooms[room.id];
+        void bot.onRoomDestroyed?.(room);
     }
 
     private static buildEventCtx(bot: Bot, room: Room, event: string, args: any[]): EventCtx {
@@ -163,8 +164,12 @@ export default class Utilitary {
                 sendChatMessage: (message, style) => Utilitary.sendChatMessage(room, message, style),
                 chatStyles: Utilitary.CHAT_STYLES,
                 userIsAdmin: (authId: string | null | undefined) => {
-                    if (!authId) return false;
-                    return bot.botData!.adminAuthIds.includes(authId);
+                    if (!authId || !bot.botData) return false;
+                    return bot.botData.staff.admins.has(authId);
+                },
+                userIsAutomod: (authId: string | null | undefined) => {
+                    if (!authId || !bot.botData) return false;
+                    return bot.botData.staff.automods.has(authId);
                 },
                 setWord: (word: string) => {
                     room.gameSocket?.emit("setWord", word, true);
@@ -491,12 +496,14 @@ export default class Utilitary {
         rawMessage: string,
         chatter: Chatter,
         commands: readonly Command[],
+        options?: { isScoreEligible?: boolean },
     ): CommandDispatchResult {
         return CommandUtils.dispatch({
             ctx,
             rawMessage,
             chatter,
             registry: CommandUtils.getRegistry(commands),
+            isScoreEligible: options?.isScoreEligible,
         });
     }
 }

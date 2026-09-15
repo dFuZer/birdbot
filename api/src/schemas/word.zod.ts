@@ -14,6 +14,7 @@ let addWordSchema = z.object({
     prompt: z.string().max(10),
     durationMs: z.number().int().nonnegative().max(3_600_000).optional(),
     reactionMs: z.number().int().nonnegative().max(3_600_000).optional(),
+    idempotencyKey: z.string().trim().min(8).max(140),
 });
 
 export { addWordSchema, type TSubmitResult };

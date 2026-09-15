@@ -7,9 +7,15 @@ import Room, { type RoomTargetConfig } from "./Room.class";
 import { Session } from "./Session.class";
 import Utilitary from "./Utilitary.class";
 
+export type BotStaffCache = {
+    admins: Set<string>;
+    automods: Set<string>;
+    fingerprint: string;
+};
+
 type BotData = {
     session: Session;
-    adminAuthIds: string[];
+    staff: BotStaffCache;
 };
 
 export type PeriodicTaskCtx = {
@@ -24,6 +30,10 @@ export type PeriodicTask = {
     fn: (ctx: PeriodicTaskCtx) => void;
 };
 
+function emptyStaff(): BotStaffCache {
+    return { admins: new Set(), automods: new Set(), fingerprint: "a:|m:" };
+}
+
 export default class Bot {
     public periodicTasks: PeriodicTask[];
     public handlers: BotEventHandlers;
@@ -34,6 +44,9 @@ export default class Bot {
         app: Server;
         port: number;
     };
+    /** Optional hook for persisting rooms (BirdBot wires API upsert/delete). */
+    public onRoomConnected: ((room: Room) => void | Promise<void>) | null = null;
+    public onRoomDestroyed: ((room: Room) => void | Promise<void>) | null = null;
 
     constructor({
         handlers,
@@ -83,14 +96,14 @@ export default class Bot {
         });
     }
 
-    public async init({ adminAuthIds }: { adminAuthIds: string[] }) {
+    public async init() {
         Logger.log({
             message: "Initializing bot",
             path: "Bot.class.ts",
         });
         const session = new Session();
         await session.init();
-        this.botData = { session, adminAuthIds };
+        this.botData = { session, staff: emptyStaff() };
     }
 
     public async joinRoom({
@@ -121,10 +134,10 @@ export default class Bot {
             serverUrl: serverUrl ?? null,
         });
 
-        // Event handlers must be able to find the room from the first socket event onward.
         this.rooms[randomUUID] = room;
         try {
             await this.connectRoom(room);
+            await this.onRoomConnected?.(room);
             return room;
         } catch (error) {
             Utilitary.destroyRoom(this, room);
@@ -157,24 +170,39 @@ export default class Bot {
         if (room.reconnectPromise) return room.reconnectPromise;
 
         const reconnectPromise = (async () => {
-            try {
-                Logger.log({
-                    message: `Attempting to reconnect to ${room.constantRoomData.roomCode}...`,
-                    path: "Bot.class.ts",
-                });
-                Utilitary.teardownRoomSockets(room);
-                await this.connectRoom(room);
-            } catch (error) {
-                Logger.error({
-                    message: `Could not reconnect to ${room.constantRoomData.roomCode}. Removing room.`,
-                    path: "Bot.class.ts",
-                    error,
-                });
-                Utilitary.destroyRoom(this, room);
-            } finally {
-                room.reconnectPromise = null;
+            const delays = [2_000, 4_000, 8_000];
+            let lastError: unknown;
+            for (let attempt = 0; attempt < delays.length; attempt++) {
+                try {
+                    Logger.log({
+                        message: `Attempting to reconnect to ${room.constantRoomData.roomCode} (try ${attempt + 1}/${delays.length})...`,
+                        path: "Bot.class.ts",
+                    });
+                    Utilitary.teardownRoomSockets(room);
+                    await this.connectRoom(room);
+                    await this.onRoomConnected?.(room);
+                    return;
+                } catch (error) {
+                    lastError = error;
+                    Logger.error({
+                        message: `Reconnect attempt ${attempt + 1} failed for ${room.constantRoomData.roomCode}`,
+                        path: "Bot.class.ts",
+                        error,
+                    });
+                    if (attempt < delays.length - 1) {
+                        await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+                    }
+                }
             }
-        })();
+            Logger.error({
+                message: `Could not reconnect to ${room.constantRoomData.roomCode}. Removing room.`,
+                path: "Bot.class.ts",
+                error: lastError,
+            });
+            Utilitary.destroyRoom(this, room);
+        })().finally(() => {
+            room.reconnectPromise = null;
+        });
         room.reconnectPromise = reconnectPromise;
         return reconnectPromise;
     }

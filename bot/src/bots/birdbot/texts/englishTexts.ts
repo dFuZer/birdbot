@@ -89,6 +89,10 @@ export const englishTexts = {
             setXpUsage: "Usage: /setxp [player] [amount]",
             setXpResult: "Set {{player}} XP to {{xp}}.",
             health: "Health — rooms {{rooms}} (connected {{connected}}), API {{api}}, uptime {{uptime}}",
+            staffUsage: "Usage: /staff [add|remove|show] [admin|automod] [player]",
+            staffShow: "Admins: {{admins}} — Automods: {{automods}}",
+            staffUpdated: "Staff updated. Admins: {{admins}} — Automods: {{automods}}",
+            staffEmpty: "(none)",
         },
         parity: {
             loginOrPlayer: "Log in or provide a player name.",
@@ -355,6 +359,10 @@ export const englishTexts = {
             invalidRegex: "Invalid or too-expensive regular expression.",
             unrankedScores: "{{username}}: {{scores}} (unranked room).",
             noScores: "no scores",
+            scoresNotSaved: "{{username}}: scores were not saved ({{reason}}).",
+            scoresNotSavedGuest: "player is not logged in",
+            scoresNotSavedBlacklisted: "account is blacklisted",
+            scoresNotSavedApi: "API unreachable after retries",
         },
         dictionary: {
             trustedReviewer: "This command is restricted to trusted dictionary reviewers.",

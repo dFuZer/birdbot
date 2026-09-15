@@ -75,6 +75,7 @@ export type EventCtxUtils = {
     sendChatMessage: (message: string, style?: ChatStyleName | ChatStyle) => void;
     chatStyles: ChatStyleMap;
     userIsAdmin: (authId: string | null | undefined) => boolean;
+    userIsAutomod: (authId: string | null | undefined) => boolean;
     setWord: (word: string) => void;
     joinRound: () => void;
     startRoundNow: () => void;

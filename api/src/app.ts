@@ -24,6 +24,13 @@ import { getMetaRecordsRouteHandler, writeMetaRecordRouteHandler } from "./route
 import { getModerationStateRouteHandler, setModerationStateRouteHandler } from "./routes/moderation.route";
 import { createNewsRouteHandler, getNewsRouteHandler, updateNewsRouteHandler } from "./routes/news.route";
 import { setProfileNameRouteHandler } from "./routes/profileName.route";
+import { createBanEventRouteHandler } from "./routes/bans.route";
+import {
+    deleteBotRoomRouteHandler,
+    listBotRoomsRouteHandler,
+    upsertBotRoomRouteHandler,
+} from "./routes/botRooms.route";
+import { deleteStaffRouteHandler, listStaffRouteHandler, putStaffRouteHandler } from "./routes/staff.route";
 
 const app = Fastify();
 
@@ -61,6 +68,11 @@ app.post("/economy/purchases", { preHandler: authMiddleware }, recordPurchaseRou
 app.post("/profile/:playerId/vip", { preHandler: authMiddleware }, grantVipRouteHandler);
 app.post("/meta/records", { preHandler: authMiddleware }, writeMetaRecordRouteHandler);
 app.post("/news", { preHandler: authMiddleware }, createNewsRouteHandler);
+app.post("/bans", { preHandler: authMiddleware }, createBanEventRouteHandler);
+app.put("/staff", { preHandler: authMiddleware }, putStaffRouteHandler);
+app.delete("/staff", { preHandler: authMiddleware }, deleteStaffRouteHandler);
+app.put("/bot/rooms/:roomCode", { preHandler: authMiddleware }, upsertBotRoomRouteHandler);
+app.delete("/bot/rooms/:roomCode", { preHandler: authMiddleware }, deleteBotRoomRouteHandler);
 
 // --- PATCH ---
 
@@ -89,5 +101,7 @@ app.get("/economy/:playerId", { preHandler: authMiddleware }, getEconomyProfileR
 app.get("/meta/records", { preHandler: authMiddleware }, getMetaRecordsRouteHandler);
 app.get("/moderation/:playerId", { preHandler: authMiddleware }, getModerationStateRouteHandler);
 app.get("/news", { preHandler: authMiddleware }, getNewsRouteHandler);
+app.get("/staff", { preHandler: authMiddleware }, listStaffRouteHandler);
+app.get("/bot/rooms", { preHandler: authMiddleware }, listBotRoomsRouteHandler);
 
 export default app;

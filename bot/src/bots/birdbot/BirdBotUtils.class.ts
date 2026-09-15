@@ -30,6 +30,8 @@ import {
     PlayerGameScores,
 } from "./BirdBotTypes";
 import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
+import BirdBotApiWriteQueue from "./services/BirdBotApiWriteQueue.service";
+import BirdBotModerationService from "./services/BirdBotModeration.service";
 import BirdBotWordSelectionService from "./services/BirdBotWordSelection.service";
 import { l, t } from "./texts/BirdBotTextUtils";
 
@@ -176,8 +178,41 @@ export default class BirdBotUtils {
             return;
         }
 
+        if (!gamer.authId) {
+            ctx.utils.sendChatMessage(
+                t("parity.gameplay.scoresNotSaved", {
+                    username: gamer.nickname,
+                    reason: t("parity.gameplay.scoresNotSavedGuest", { lng: l(ctx) }),
+                    lng: l(ctx),
+                }),
+                "info",
+            );
+            return;
+        }
+
+        if (await BirdBotModerationService.isBlacklisted(gamer.authId)) {
+            ctx.utils.sendChatMessage(
+                t("parity.gameplay.scoresNotSaved", {
+                    username: gamer.nickname,
+                    reason: t("parity.gameplay.scoresNotSavedBlacklisted", { lng: l(ctx) }),
+                    lng: l(ctx),
+                }),
+                "info",
+            );
+            return;
+        }
+
         BirdBotUtils.registerGameRecap(gameRecap).then((data) => {
-            if (!ctx.room.isHealthy() || !data) {
+            if (!ctx.room.isHealthy()) return;
+            if (!data) {
+                ctx.utils.sendChatMessage(
+                    t("parity.gameplay.scoresNotSaved", {
+                        username: gamer.nickname,
+                        reason: t("parity.gameplay.scoresNotSavedApi", { lng: l(ctx) }),
+                        lng: l(ctx),
+                    }),
+                    "info",
+                );
                 return;
             }
             if (gameRecap.wordsCount === 0) {
@@ -284,16 +319,27 @@ export default class BirdBotUtils {
     };
 
     public static registerGameRecap = async (gameRecap: BirdBotGameRecap) => {
-        const res: {
+        const idempotencyKey = BirdBotApiWriteQueue.makeRecapKey(
+            gameRecap.game.id,
+            gameRecap.player.accountName,
+        );
+        const res = (await BirdBotApiWriteQueue.enqueueGameRecap(gameRecap as unknown as Record<string, unknown>, idempotencyKey)) as {
             oldXpData: ExperienceData;
             newXpData: ExperienceData;
-        } | null = await this.postJsonToApi("/game-recap", gameRecap, "PUT");
+        } | null;
         return res;
     };
 
-    public static registerWord = async (wordData: BirdBotWordData) => {
-        const res = await this.postJsonToApi("/word", wordData, "PUT");
-        return res;
+    public static registerWord = async (wordData: BirdBotWordData, turnKey = "unknown") => {
+        if (!wordData.player.accountName) return null;
+        if (await BirdBotModerationService.isBlacklisted(wordData.player.accountName)) return null;
+        const idempotencyKey = BirdBotApiWriteQueue.makeWordKey(
+            wordData.game.id,
+            turnKey,
+            wordData.submitResult,
+        );
+        BirdBotApiWriteQueue.enqueueWord({ ...wordData, idempotencyKey });
+        return null;
     };
 
     public static queueSuccessfulWordRegistration = (
@@ -302,6 +348,7 @@ export default class BirdBotUtils {
         data: Omit<BirdBotWordData, "flip">
     ) => {
         if (!BirdBotGameplayStateService.isScoreEligible(ctx)) return;
+        if (!data.player.accountName) return;
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         if (roomMetadata.pendingWordRegistrations.has(turnKey)) return;
         roomMetadata.pendingWordRegistrations.set(turnKey, { turnKey, data });
@@ -323,10 +370,13 @@ export default class BirdBotUtils {
         const pending = roomMetadata.pendingWordRegistrations.get(turnKey);
         if (!pending) return;
         roomMetadata.pendingWordRegistrations.delete(turnKey);
-        void this.registerWord({
-            ...pending.data,
-            flip: flip ?? roomMetadata.flipTurnKeys.has(turnKey),
-        });
+        void this.registerWord(
+            {
+                ...pending.data,
+                flip: flip ?? roomMetadata.flipTurnKeys.has(turnKey),
+            },
+            turnKey,
+        );
     };
 
     public static flushAllWordRegistrations = (ctx: EventCtx) => {

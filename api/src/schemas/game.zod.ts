@@ -11,6 +11,7 @@ let gameSchema = z.object({
 let gameRecap = z.object({
     game: gameSchema,
     player: playerSchema,
+    idempotencyKey: z.string().trim().min(8).max(140).optional(),
 
     // Non-listed records
     diedAt: z.number(),

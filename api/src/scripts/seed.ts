@@ -321,6 +321,16 @@ async function seed() {
                     ct
             );
     `;
+
+    await prisma.$executeRaw`
+        CREATE UNIQUE INDEX IF NOT EXISTS leaderboard_player_language_mode_record_type_uidx
+        ON leaderboard (player_id, language, mode, record_type)
+    `;
+
+    await prisma.$executeRaw`
+        CREATE UNIQUE INDEX IF NOT EXISTS pp_leaderboard_player_language_uidx
+        ON pp_leaderboard (player_id, language)
+    `;
 }
 
 seed();

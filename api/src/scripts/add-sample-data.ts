@@ -204,6 +204,7 @@ let modeArray = Object.values(GameMode);
             prompt: "TEST",
             player_id: randomPlayer.id,
             game_id: randomGame.id,
+            idempotency_key: `sample-word-${crypto.randomUUID()}`,
         };
     });
 

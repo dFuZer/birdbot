@@ -1,4 +1,5 @@
 import type { RouteHandlerMethod } from "fastify";
+import { Prisma } from "@prisma/client";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
 import { submitResultEnumToDatabaseEnumMap } from "../helpers/maps";
@@ -22,18 +23,37 @@ export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
     const wordData = parsed.data;
     Logger.log({ message: `Trying to insert new word`, path: "addWord.route.ts" });
     try {
-        const [player, game] = await Promise.all([addPlayerIfNotExist(wordData.player), addGameIfNotExist(wordData.game)]);
+        const existing = await prisma.word.findUnique({
+            where: { idempotency_key: wordData.idempotencyKey },
+            select: { id: true },
+        });
+        if (existing) {
+            return res.status(200).send({ message: "Word already recorded", idempotent: true });
+        }
+
+        const [player, game] = await Promise.all([
+            addPlayerIfNotExist(wordData.player),
+            addGameIfNotExist(wordData.game),
+        ]);
         Logger.log({ message: `Inserting new word`, path: "addWord.route.ts" });
-        await prisma.$executeRaw`
-            INSERT INTO word (id, word, player_id, game_id, submit_result, prompt, flip, duration_ms, reaction_ms)
-            VALUES (gen_random_uuid(), ${wordData.word}, ${player.id}::UUID, ${game.id}::UUID, ${
-                submitResultEnumToDatabaseEnumMap[wordData.submitResult]
-            }::"submit_result_type", ${wordData.prompt}, ${wordData.flip}, ${wordData.durationMs ?? null}, ${
-                wordData.reactionMs ?? null
-            })
-        `;
+        await prisma.word.create({
+            data: {
+                word: wordData.word,
+                player_id: player.id,
+                game_id: game.id,
+                submit_result: submitResultEnumToDatabaseEnumMap[wordData.submitResult],
+                prompt: wordData.prompt,
+                flip: wordData.flip,
+                duration_ms: wordData.durationMs ?? null,
+                reaction_ms: wordData.reactionMs ?? null,
+                idempotency_key: wordData.idempotencyKey,
+            },
+        });
         return res.status(200).send({ message: "Word added successfully" });
     } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+            return res.status(200).send({ message: "Word already recorded", idempotent: true });
+        }
         Logger.error({ message: "Failed to add word", path: "addWord.route.ts", errorType: "unknown", error: e });
         return res.status(500).send({ message: "Failed to add word" });
     }

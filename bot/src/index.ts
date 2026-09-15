@@ -27,21 +27,6 @@ async function start() {
         port: 3001,
     });
 
-    let admins: string[];
-    try {
-        admins = Utilitary.readArrayFromFile("./admins.txt");
-        Logger.log({
-            message: `Starting bot with admins: ${admins.join(", ")}`,
-            path: "index.ts",
-        });
-    } catch (e) {
-        admins = [];
-        Logger.error({
-            message: `No admins.txt file found. Running the bot with no admins.`,
-            path: "index.ts",
-        });
-    }
-
     {
         const s1 = performance.now();
         const loadedResources = await Promise.all(
@@ -103,7 +88,7 @@ async function start() {
 
     while (true) {
         try {
-            await bot.init({ adminAuthIds: admins });
+            await bot.init();
             break;
         } catch (e) {
             Logger.error({
@@ -115,6 +100,15 @@ async function start() {
         }
     }
 
+    const { default: BirdBotStaffSync } = await import("./bots/birdbot/services/BirdBotStaffSync.service");
+    await BirdBotStaffSync.refresh(bot);
+    BirdBotStaffSync.start(bot);
+    Logger.log({
+        message: `Staff loaded: admins=[${[...(bot.botData?.staff.admins ?? [])].join(", ")}] automods=[${[...(bot.botData?.staff.automods ?? [])].join(", ")}]`,
+        path: "index.ts",
+    });
+
+    await bot.rejoinPersistedRooms();
     await bot.startPeriodicTasks();
     bot.startServer();
 }

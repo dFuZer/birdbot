@@ -84,6 +84,18 @@ const nameSchema = z.object({
     playerId: z.string().uuid(),
     username: z.string(),
 });
+const staffSchema = z.object({
+    admins: z.array(z.string()),
+    automods: z.array(z.string()),
+});
+const botRoomSchema = z.object({
+    roomCode: z.string(),
+    userToken: z.string(),
+    serverUrl: z.string().nullable(),
+    creatorAuthId: z.string().nullable(),
+    targetConfig: z.record(z.unknown()),
+    updatedAt: z.string().or(z.date()).optional(),
+});
 
 export type BirdBotPlayerProfile = z.infer<typeof profileSchema>;
 export type BirdBotEconomyProfile = z.infer<typeof economySchema>;
@@ -92,6 +104,8 @@ export type BirdBotModerationState = z.infer<typeof moderationSchema>;
 export type BirdBotVipTier = z.infer<typeof vipTierSchema>;
 export type BirdBotCreditLedger = z.infer<typeof creditLedgerSchema>;
 export type BirdBotXpLedger = z.infer<typeof xpLedgerSchema>;
+export type BirdBotStaffList = z.infer<typeof staffSchema>;
+export type BirdBotPersistedRoom = z.infer<typeof botRoomSchema>;
 
 export class BirdBotApiError extends Error {
     public constructor(
@@ -224,6 +238,62 @@ export default class BirdBotParityApiService {
         });
     }
 
+    public static async getStaff(): Promise<BirdBotStaffList> {
+        return this.request("/staff", staffSchema);
+    }
+
+    public static async putStaff(accountName: string, role: "ADMIN" | "AUTOMOD", updatedBy: string): Promise<BirdBotStaffList> {
+        return this.request("/staff", staffSchema, "PUT", { accountName, role, updatedBy });
+    }
+
+    public static async deleteStaff(
+        accountName: string,
+        role: "ADMIN" | "AUTOMOD",
+        updatedBy: string,
+    ): Promise<BirdBotStaffList> {
+        return this.request("/staff", staffSchema, "DELETE", { accountName, role, updatedBy });
+    }
+
+    public static async listBotRooms(): Promise<BirdBotPersistedRoom[]> {
+        return this.request("/bot/rooms", z.array(botRoomSchema));
+    }
+
+    public static async upsertBotRoom(input: {
+        roomCode: string;
+        userToken: string;
+        serverUrl: string | null;
+        creatorAuthId: string | null;
+        targetConfig: Record<string, unknown>;
+    }): Promise<BirdBotPersistedRoom> {
+        return this.request(`/bot/rooms/${encodeURIComponent(input.roomCode)}`, botRoomSchema, "PUT", {
+            userToken: input.userToken,
+            serverUrl: input.serverUrl,
+            creatorAuthId: input.creatorAuthId,
+            targetConfig: input.targetConfig,
+        });
+    }
+
+    public static async deleteBotRoom(roomCode: string): Promise<void> {
+        await this.request(`/bot/rooms/${encodeURIComponent(roomCode)}`, z.any().optional(), "DELETE");
+    }
+
+    public static async createBanEvent(input: {
+        playerAccount: string;
+        roomCode: string;
+        moderatorAccounts: string[];
+    }): Promise<void> {
+        await this.request(
+            "/bans",
+            z.object({ id: z.string().uuid() }).passthrough(),
+            "POST",
+            input,
+        );
+    }
+
+    public static makeIdempotencyKey(...parts: string[]): string {
+        return this.idempotencyKey(...parts);
+    }
+
     public static async recordWordMilestones(input: {
         accountName: string;
         gameId: string;
@@ -310,7 +380,7 @@ export default class BirdBotParityApiService {
     private static async request<T>(
         path: string,
         schema: z.ZodType<T>,
-        method: "GET" | "POST" | "PATCH" = "GET",
+        method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE" = "GET",
         body?: unknown,
     ): Promise<T> {
         const response = await fetch(`${API_URL}${path}`, {
@@ -321,6 +391,9 @@ export default class BirdBotParityApiService {
             },
             body: body === undefined ? undefined : JSON.stringify(body),
         });
+        if (response.status === 204) {
+            return schema.parse(undefined);
+        }
         const responseBody = await response.text();
         if (!response.ok) throw new BirdBotApiError(response.status, responseBody);
         return schema.parse(responseBody ? (JSON.parse(responseBody) as unknown) : undefined);

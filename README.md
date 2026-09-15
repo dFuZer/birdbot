@@ -122,18 +122,19 @@ Note that, contrary to the API and website modules, you must fully restart the s
 
 ### Bot configuration
 
-- `admins.txt`: one jklm `auth.id` per line for admin commands
+- Admins and automods are stored in Postgres (`bot_staff`); manage with `/staff` (seeded admin: `dfuzer`)
 - Optional `JKLM_AUTH_TOKEN` / `JKLM_AUTH_USERNAME` for a logged-in jklm account (guest hosting works without them)
-- `API_URL` / `API_KEY` must match the API service used for profiles, credits, VIP, milestones, and moderation
+- `API_URL` / `API_KEY` must match the API service used for profiles, credits, VIP, milestones, moderation, staff, and room persistence
 - Optional moderation toggles and definitions socket overrides are documented in `bot/.env.example`
 - Parity contract and intentional divergences: [`bot/BBV7_PARITY.md`](bot/BBV7_PARITY.md)
 
 The older Croco.games bot archive lives under `archive/BBV7` for historical reference only.
 
-#### Safe admin commands (admins.txt)
+#### Safe admin commands (DB staff)
 
 - `/reconnect` — reconnect the current room sockets
 - `/health` — room + API status
+- `/staff` — add/remove/show admins and automods
 - `/givecredits`, `/givexp`, `/setxp`, `/suppress`, `/getid`, `/creatorid`
 - `/broadcast`, `/rooms`, `/destroyallrooms`, `/diag`
 

@@ -366,6 +366,76 @@ const showAllRoomsCommand = c({
     },
 });
 
+const staffCommand = c({
+    id: "staff",
+    aliases: ["staff"],
+    usageDesc: "/staff [add|remove|show] [admin|automod] [player]",
+    exampleUsage: "/staff add automod dfuzer",
+    adminRequired: true,
+    hidden: true,
+    accessibleInRound: true,
+    handler: async (ctx) => {
+        const action = ctx.args[0];
+        const roleRaw = ctx.args[1];
+        const formatList = (items: string[]) =>
+            items.length ? items.join(", ") : t("command.admin.staffEmpty", { lng: l(ctx) });
+
+        if (!action || action === "show") {
+            try {
+                await (await import("../services/BirdBotStaffSync.service")).default.refresh(ctx.bot.rawBot);
+                const staff = ctx.bot.rawBot.botData!.staff;
+                ctx.utils.sendChatMessage(
+                    t("command.admin.staffShow", {
+                        admins: formatList([...staff.admins]),
+                        automods: formatList([...staff.automods]),
+                        lng: l(ctx),
+                    }),
+                    "neutral",
+                );
+            } catch (error) {
+                reportError(ctx, error);
+            }
+            return;
+        }
+
+        if ((action !== "add" && action !== "remove") || (roleRaw !== "admin" && roleRaw !== "automod")) {
+            ctx.utils.sendChatMessage(t("command.admin.staffUsage", { lng: l(ctx) }), "info");
+            return;
+        }
+
+        const query = ctx.args.slice(2).join(" ").trim() || ctx.normalizedTextAfterCommand.split(/\s+/).slice(2).join(" ");
+        if (!query) {
+            ctx.utils.sendChatMessage(t("command.admin.staffUsage", { lng: l(ctx) }), "info");
+            return;
+        }
+
+        const role = roleRaw === "admin" ? "ADMIN" : "AUTOMOD";
+        try {
+            const player = await BirdBotParityApiService.resolvePlayer(query);
+            const accountName = player.playerAccountName;
+            const updatedBy = ctx.gamer.authId!;
+            if (action === "add") {
+                await BirdBotParityApiService.putStaff(accountName, role, updatedBy);
+            } else {
+                await BirdBotParityApiService.deleteStaff(accountName, role, updatedBy);
+            }
+            const BirdBotStaffSync = (await import("../services/BirdBotStaffSync.service")).default;
+            await BirdBotStaffSync.refresh(ctx.bot.rawBot);
+            const staff = ctx.bot.rawBot.botData!.staff;
+            ctx.utils.sendChatMessage(
+                t("command.admin.staffUpdated", {
+                    admins: formatList([...staff.admins]),
+                    automods: formatList([...staff.automods]),
+                    lng: l(ctx),
+                }),
+                "success",
+            );
+        } catch (error) {
+            reportError(ctx, error);
+        }
+    },
+});
+
 export const birdBotAdminCommands: Command[] = [
     connectCommand,
     creatorIdCommand,
@@ -380,4 +450,5 @@ export const birdBotAdminCommands: Command[] = [
     diagnosticCommand,
     destroyAllRoomsCommand,
     showAllRoomsCommand,
+    staffCommand,
 ];

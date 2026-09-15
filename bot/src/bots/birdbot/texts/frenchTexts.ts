@@ -89,6 +89,10 @@ export const frenchTexts = {
             setXpUsage: "Utilisation : /setxp [joueur] [montant]",
             setXpResult: "XP de {{player}} définie à {{xp}}.",
             health: "Santé — salons {{rooms}} (connectés {{connected}}), API {{api}}, uptime {{uptime}}",
+            staffUsage: "Utilisation : /staff [add|remove|show] [admin|automod] [joueur]",
+            staffShow: "Admins : {{admins}} — Automods : {{automods}}",
+            staffUpdated: "Staff mis à jour. Admins : {{admins}} — Automods : {{automods}}",
+            staffEmpty: "(aucun)",
         },
         parity: {
             loginOrPlayer: "Connecte-toi ou indique un joueur.",
@@ -357,6 +361,10 @@ export const frenchTexts = {
             invalidRegex: "Expression régulière invalide ou trop coûteuse.",
             unrankedScores: "{{username}} : {{scores}} (salon non classé).",
             noScores: "aucun score",
+            scoresNotSaved: "{{username}} : scores non enregistrés ({{reason}}).",
+            scoresNotSavedGuest: "joueur non connecté",
+            scoresNotSavedBlacklisted: "compte sur liste noire",
+            scoresNotSavedApi: "API inaccessible après nouvelles tentatives",
         },
         dictionary: {
             trustedReviewer: "Cette commande est réservée aux réviseurs de dictionnaire de confiance.",

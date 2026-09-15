@@ -1,5 +1,6 @@
 import type { Command, CommandHandlerCtx } from "../../../lib/class/CommandUtils.class";
 import CommandUtils from "../../../lib/class/CommandUtils.class";
+import BirdBotModerationService from "../services/BirdBotModeration.service";
 import BirdBotParityApiService, {
     BirdBotApiError,
     type BirdBotEconomyProfile,
@@ -223,6 +224,18 @@ const setNameCommand = c({
         const name = ctx.normalizedTextAfterCommand.trim();
         if (name.length < 2 || name.length > 20) {
             ctx.utils.sendChatMessage(t("command.parity.invalidName", { lng: l(ctx) }), "error");
+            return;
+        }
+        const nicknameReason = BirdBotModerationService.invalidNicknameReason(name);
+        if (nicknameReason) {
+            ctx.utils.sendChatMessage(
+                t("eventHandler.moderation.invalidNickname", {
+                    username: name,
+                    reason: t(`eventHandler.moderation.${nicknameReason}`, { lng: l(ctx) }),
+                    lng: l(ctx),
+                }),
+                "error",
+            );
             return;
         }
         try {

@@ -1,5 +1,6 @@
 import type { Chatter } from "../types/gameTypes";
 import type { BotEventCtx, EventCtx, EventCtxUtils, RoomEventCtx } from "../types/libEventTypes";
+import Logger from "./Logger.class";
 
 export type CommandHandlerCtx = {
     rawMessage: string;
@@ -18,7 +19,7 @@ export type CommandHandlerCtx = {
 
 export type CommandOrEventCtx = CommandHandlerCtx | EventCtx;
 
-export type CommandHandler = (commandCtx: CommandHandlerCtx) => void;
+export type CommandHandler = (commandCtx: CommandHandlerCtx) => void | Promise<void>;
 
 export type CommandSource = "chat" | "word-input";
 
@@ -55,12 +56,29 @@ export type CommandRegistry = Readonly<{
     commandsByAlias: ReadonlyMap<string, Command>;
 }>;
 
+/** BBV7 INGAME_SAFE_COMMANDS equivalent — used when scores are eligible. */
+export const RANKED_WORD_INPUT_SAFE_COMMAND_IDS: ReadonlySet<string> = new Set([
+    "currentGameScore",
+    "getDefinition",
+    "playerProfile",
+    "records",
+    "showTime",
+    "speedRecords",
+    "accuracyRecords",
+    "publicRoom",
+    "privateRoom",
+    "getBomb",
+    "train",
+]);
+
 export default class CommandUtils {
     public static DEFAULT_COMMAND_DESCRIPTION = "No description provided for this command";
     public static DEFAULT_COMMAND_USAGE_DESCRIPTION = "No usage description provided for this command";
     public static DEFAULT_COMMAND_EXAMPLE_USAGE = "No example usage provided for this command";
     public static DEFAULT_COMMAND_COOLDOWN = 1500;
+    public static GLOBAL_COMMAND_THROTTLE_MS = 1500;
     private static readonly cooldowns = new Map<string, number>();
+    private static readonly globalThrottles = new Map<string, number>();
     private static readonly registries = new WeakMap<readonly Command[], CommandRegistry>();
 
     public static createCommandHelper({
@@ -149,12 +167,14 @@ export default class CommandUtils {
         chatter,
         registry,
         source = ctx.message.event === "failWord" ? "word-input" : "chat",
+        isScoreEligible = false,
     }: {
         ctx: EventCtx;
         rawMessage: string;
         chatter: Chatter;
         registry: CommandRegistry;
         source?: CommandSource;
+        isScoreEligible?: boolean;
     }): CommandDispatchResult {
         const normalizedMessage = rawMessage.trim().replace(/[ ]+/g, " ");
         const commandPrefixes = ["!", "/", "."];
@@ -168,8 +188,11 @@ export default class CommandUtils {
 
         const command = registry.commandsByAlias.get(requestedCommand);
         if (!command) return "command-not-found";
-        if (source === "word-input" && !command.allowedFromWordInput) {
-            return "not-allowed-from-word-input";
+        if (source === "word-input") {
+            if (!command.allowedFromWordInput) return "not-allowed-from-word-input";
+            if (isScoreEligible && !RANKED_WORD_INPUT_SAFE_COMMAND_IDS.has(command.id)) {
+                return "not-allowed-from-word-input";
+            }
         }
         if (ctx.room.roomState.gameData?.milestone.name === "round" && !command.accessibleInRound) {
             return "not-accessible-in-round";
@@ -188,15 +211,21 @@ export default class CommandUtils {
         }
 
         const now = Date.now();
-        const cooldownKey = [
-            ctx.room.constantRoomData.roomCode,
-            chatter.authId ?? `peer:${chatter.peerId}`,
-            command.id,
-        ].join(":");
+        const identity = chatter.authId ?? `peer:${chatter.peerId}`;
+        const roomCode = ctx.room.constantRoomData.roomCode;
+        const globalKey = `${roomCode}:${identity}`;
+        const globalEndsAt = CommandUtils.globalThrottles.get(globalKey) ?? 0;
+        if (globalEndsAt > now) {
+            return "cooldown";
+        }
+
+        const cooldownKey = `${roomCode}:${identity}:${command.id}`;
         const cooldownEndsAt = CommandUtils.cooldowns.get(cooldownKey) ?? 0;
         if (command.cooldown > 0 && cooldownEndsAt > now) {
             return "cooldown";
         }
+
+        CommandUtils.globalThrottles.set(globalKey, now + CommandUtils.GLOBAL_COMMAND_THROTTLE_MS);
         if (command.cooldown > 0) {
             CommandUtils.cooldowns.set(cooldownKey, now + command.cooldown);
         }
@@ -223,7 +252,29 @@ export default class CommandUtils {
             normalizedTextAfterCommand: normalizedMessage.slice(requestedCommand.length + 1).trim(),
             source,
         };
-        command.handler(commandHandlerCtx);
+        try {
+            const result = command.handler(commandHandlerCtx);
+            if (result && typeof (result as Promise<void>).then === "function") {
+                void (result as Promise<void>).catch((error) => {
+                    Logger.error({
+                        message: `Async command handler failed for ${command.id}`,
+                        path: "CommandUtils.class.ts",
+                        error,
+                    });
+                    ctx.utils.sendChatMessage(
+                        `Could not execute command "${command.id}".`,
+                        "error",
+                    );
+                });
+            }
+        } catch (error) {
+            Logger.error({
+                message: `Command handler failed for ${command.id}`,
+                path: "CommandUtils.class.ts",
+                error,
+            });
+            ctx.utils.sendChatMessage(`Could not execute command "${command.id}".`, "error");
+        }
         return "trying-to-handle-command";
     }
 }

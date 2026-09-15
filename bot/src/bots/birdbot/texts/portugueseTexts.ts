@@ -90,6 +90,10 @@ export const portugueseTexts = {
             setXpUsage: "Uso: /setxp [jogador] [quantidade]",
             setXpResult: "XP de {{player}} definida para {{xp}}.",
             health: "Saúde — salas {{rooms}} (conectadas {{connected}}), API {{api}}, uptime {{uptime}}",
+            staffUsage: "Uso: /staff [add|remove|show] [admin|automod] [jogador]",
+            staffShow: "Admins: {{admins}} — Automods: {{automods}}",
+            staffUpdated: "Staff atualizado. Admins: {{admins}} — Automods: {{automods}}",
+            staffEmpty: "(nenhum)",
         },
         parity: {
             loginOrPlayer: "Entre na conta ou informe um jogador.",
@@ -357,6 +361,10 @@ export const portugueseTexts = {
             invalidRegex: "Expressão regular inválida ou muito custosa.",
             unrankedScores: "{{username}}: {{scores}} (sala não ranqueada).",
             noScores: "sem pontuações",
+            scoresNotSaved: "{{username}}: pontuações não salvas ({{reason}}).",
+            scoresNotSavedGuest: "jogador não conectado",
+            scoresNotSavedBlacklisted: "conta na lista negra",
+            scoresNotSavedApi: "API inacessível após novas tentativas",
         },
         dictionary: {
             trustedReviewer: "Este comando é restrito a revisores confiáveis do dicionário.",

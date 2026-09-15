@@ -55,6 +55,13 @@ enum VipTier {
     @@map("vip_tier")
 }
 
+enum BotStaffRole {
+    ADMIN
+    AUTOMOD
+
+    @@map("bot_staff_role")
+}
+
 model PlayerUsername {
     id String @id @default(uuid()) @db.Uuid
 
@@ -134,6 +141,7 @@ model GameRecap {
     game   Game   @relation(fields: [game_id], references: [id])
     player Player @relation(fields: [player_id], references: [id])
 
+    @@unique([game_id, player_id])
     @@map("game_recap")
 }
 
@@ -144,12 +152,13 @@ model Word {
     player_id String @db.Uuid
     game_id   String @db.Uuid
 
-    word          String           @db.VarChar(50)
-    flip          Boolean
-    submit_result SubmitResultType
-    prompt        String           @db.VarChar(10)
-    duration_ms   Int?
-    reaction_ms   Int?
+    word            String           @db.VarChar(50)
+    flip            Boolean
+    submit_result   SubmitResultType
+    prompt          String           @db.VarChar(10)
+    duration_ms     Int?
+    reaction_ms     Int?
+    idempotency_key String           @unique @db.VarChar(140)
 
     player Player @relation(fields: [player_id], references: [id])
     game   Game   @relation(fields: [game_id], references: [id])
@@ -346,4 +355,39 @@ model WebsiteUserToPlayerToken {
     website_user WebsiteUser @relation(fields: [website_user_id], references: [id])
 
     @@map("website_user_to_player_token")
+}
+
+model BotStaff {
+    account_name String       @db.VarChar(120)
+    role         BotStaffRole
+    updated_by   String       @db.VarChar(80)
+    updated_at   DateTime     @updatedAt
+    created_at   DateTime     @default(now())
+
+    @@id([account_name, role])
+    @@map("bot_staff")
+}
+
+model BotRoom {
+    room_code       String   @id @db.VarChar(16)
+    user_token      String   @db.VarChar(120)
+    server_url      String?  @db.VarChar(500)
+    creator_auth_id String?  @db.VarChar(120)
+    target_config   Json
+    updated_at      DateTime @updatedAt
+    created_at      DateTime @default(now())
+
+    @@map("bot_room")
+}
+
+model BanEvent {
+    id                  String   @id @default(uuid()) @db.Uuid
+    player_account      String   @db.VarChar(120)
+    room_code           String   @db.VarChar(16)
+    moderator_accounts  String[]
+    created_at          DateTime @default(now())
+
+    @@index([room_code, created_at])
+    @@index([player_account, created_at])
+    @@map("ban_event")
 }
