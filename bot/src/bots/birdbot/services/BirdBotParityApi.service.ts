@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { z } from "zod";
-import Logger from "../../../lib/class/Logger.class";
 import { API_KEY, API_URL } from "../BirdBotEnv";
+import type { BirdBotWordMilestone } from "../BirdBotTypes";
 
 const profileSchema = z.object({
     playerId: z.string().uuid(),
@@ -294,83 +294,53 @@ export default class BirdBotParityApiService {
         return this.idempotencyKey(...parts);
     }
 
-    public static async recordWordMilestones(input: {
-        accountName: string;
+    public static buildWordMilestones(input: {
         gameId: string;
         turnKey: string;
         word: string;
         durationMs?: number;
         reactionMs?: number;
         accuracyStreak: number;
-    }): Promise<void> {
-        try {
-            const player = await this.resolvePlayer(input.accountName, true);
-            const writes: Promise<unknown>[] = [];
-            const metadata = {
-                gameId: input.gameId,
-                turnKey: input.turnKey,
-                word: input.word,
-                durationMs: input.durationMs,
-                reactionMs: input.reactionMs,
-            };
+    }): BirdBotWordMilestone[] {
+        const milestones: BirdBotWordMilestone[] = [];
+        const metadata = {
+            gameId: input.gameId,
+            turnKey: input.turnKey,
+            word: input.word,
+            durationMs: input.durationMs,
+            reactionMs: input.reactionMs,
+        };
 
-            for (const [metric, value, thresholds] of [
-                ["duration", input.durationMs, [500, 750, 1000, 1500, 2000, 3000]],
-                ["reaction", input.reactionMs, [100, 250, 500, 750, 1000]],
-            ] as const) {
-                if (value === undefined) continue;
-                for (const threshold of thresholds) {
-                    if (value > threshold) continue;
-                    const milestone = `${metric}-under-${threshold}ms`;
-                    writes.push(
-                        this.recordMilestone({
-                            playerId: player.playerId,
-                            type: "SPEED",
-                            milestone,
-                            value,
-                            idempotencyKey: this.idempotencyKey(input.gameId, input.turnKey, "SPEED", milestone),
-                            metadata,
-                        }),
-                    );
-                }
+        for (const [metric, value, thresholds] of [
+            ["duration", input.durationMs, [500, 750, 1000, 1500, 2000, 3000]],
+            ["reaction", input.reactionMs, [100, 250, 500, 750, 1000]],
+        ] as const) {
+            if (value === undefined) continue;
+            for (const threshold of thresholds) {
+                if (value > threshold) continue;
+                const milestone = `${metric}-under-${threshold}ms`;
+                milestones.push({
+                    type: "SPEED",
+                    milestone,
+                    value,
+                    idempotencyKey: this.idempotencyKey(input.gameId, input.turnKey, "SPEED", milestone),
+                    metadata,
+                });
             }
+        }
 
-            for (const threshold of [10, 25, 50, 100, 250, 500]) {
-                if (input.accuracyStreak !== threshold) continue;
-                const milestone = `valid-word-streak-${threshold}`;
-                writes.push(
-                    this.recordMilestone({
-                        playerId: player.playerId,
-                        type: "ACCURACY",
-                        milestone,
-                        value: input.accuracyStreak,
-                        idempotencyKey: this.idempotencyKey(input.gameId, input.turnKey, "ACCURACY", milestone),
-                        metadata,
-                    }),
-                );
-            }
-            await Promise.all(writes);
-        } catch (error) {
-            Logger.error({
-                message: "Failed to record BirdBot parity milestones",
-                path: "BirdBotParityApi.service.ts",
-                error,
+        for (const threshold of [10, 25, 50, 100, 250, 500]) {
+            if (input.accuracyStreak !== threshold) continue;
+            const milestone = `valid-word-streak-${threshold}`;
+            milestones.push({
+                type: "ACCURACY",
+                milestone,
+                value: input.accuracyStreak,
+                idempotencyKey: this.idempotencyKey(input.gameId, input.turnKey, "ACCURACY", milestone),
+                metadata,
             });
         }
-    }
-
-    private static async recordMilestone(body: {
-        playerId: string;
-        type: "SPEED" | "ACCURACY";
-        milestone: string;
-        value: number;
-        idempotencyKey: string;
-        metadata: Record<string, unknown>;
-    }): Promise<BirdBotMilestone> {
-        return this.request("/meta/records", milestoneSchema, "POST", {
-            ...body,
-            source: "authoritative-word-event",
-        });
+        return milestones;
     }
 
     private static idempotencyKey(...parts: string[]): string {

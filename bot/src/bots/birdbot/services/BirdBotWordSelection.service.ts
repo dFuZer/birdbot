@@ -28,8 +28,6 @@ type SelectionInput = {
 export default class BirdBotWordSelectionService {
     public static select(input: SelectionInput): string | null {
         const metadata = input.ctx.room.roomState.metadata as BirdBotRoomMetadata;
-        if (metadata.humanMode) return null;
-
         const language = this.language(input.ctx);
         const dictionary = input.ctx.bot.getResource<DictionaryResource>(`dictionary-${language}`);
         const history = new Set(input.history);

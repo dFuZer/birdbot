@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process;
-use std::time::Instant;
+use std::time::Instant;`
 
 fn read_words_from_dictionary(file_path: &str) -> io::Result<Vec<String>> {
     let file = File::open(file_path)?;

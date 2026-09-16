@@ -69,6 +69,14 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
 
     playerScores.words++;
     playerScores.currentWordsWithoutDeath++;
+
+    const trainingFeedback = BirdBotTrainingService.evaluateCreatorWord(
+        ctx,
+        currentChatter.authId,
+        word,
+        currentPrompt,
+    );
+    if (trainingFeedback) ctx.utils.sendChatMessage(trainingFeedback);
     if (playerScores.currentWordsWithoutDeath > playerScores.maxWordsWithoutDeath) {
         const oldMax = playerScores.maxWordsWithoutDeath;
         playerScores.maxWordsWithoutDeath = playerScores.currentWordsWithoutDeath;
@@ -254,32 +262,24 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
         }
     }
 
-    const trainingFeedback = BirdBotTrainingService.evaluateCreatorWord(
-        ctx,
-        currentChatter.authId,
-        word,
-        currentPrompt,
-    );
-    if (trainingFeedback) ctx.utils.sendChatMessage(trainingFeedback);
-
     if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
-        void BirdBotParityApiService.recordWordMilestones({
-            accountName: currentChatter.authId,
-            gameId: BirdBotUtils.getApiGameData(ctx).id,
-            turnKey,
-            word,
-            durationMs: previousHandlersCtx.durationMs,
-            reactionMs: previousHandlersCtx.reactionMs,
-            accuracyStreak: playerScores.currentWordsWithoutDeath,
-        });
+        const game = BirdBotUtils.getApiGameData(ctx);
         BirdBotUtils.queueSuccessfulWordRegistration(ctx, turnKey, {
             word,
             submitResult: "success",
             prompt: currentPrompt,
-            game: BirdBotUtils.getApiGameData(ctx),
+            game,
             player: BirdBotUtils.getApiPlayerData(currentChatter),
             durationMs: previousHandlersCtx.durationMs,
             reactionMs: previousHandlersCtx.reactionMs,
+            milestones: BirdBotParityApiService.buildWordMilestones({
+                gameId: game.id,
+                turnKey,
+                word,
+                durationMs: previousHandlersCtx.durationMs,
+                reactionMs: previousHandlersCtx.reactionMs,
+                accuracyStreak: playerScores.currentWordsWithoutDeath,
+            }),
         });
     }
 }
@@ -464,6 +464,7 @@ const birdbotEventHandlers: BotEventHandlers = {
             CommonTEH.setMilestone,
             (ctx, previousHandlersCtx) => {
                 if (previousHandlersCtx.roundEnded) {
+                    BirdBotGameplayStateService.clearRoundScoreBlock(ctx);
                     ctx.utils.joinRound();
                     BirdBotUtils.resetRoomMetadata(ctx);
                 }
@@ -557,14 +558,6 @@ const birdbotEventHandlers: BotEventHandlers = {
                 const isMe = ctx.room.roomState.myPeerId === playerPeerId;
                 const currentChatter = ctx.room.roomState.roomData!.chatters.find((c) => c.peerId === playerPeerId);
                 if (!currentChatter) return;
-
-                const trainingFeedback = BirdBotTrainingService.evaluateCreatorWord(
-                    ctx,
-                    currentChatter.authId,
-                    word,
-                    gameData.milestone.syllable,
-                );
-                if (trainingFeedback) ctx.utils.sendChatMessage(trainingFeedback);
 
                 const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
                 const currentRoomLanguage = BirdBotUtils.getCurrentRoomLanguage(ctx);

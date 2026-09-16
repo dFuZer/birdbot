@@ -164,9 +164,15 @@ export default class BirdBotUtils {
         const timeSurvived = gameRecap.diedAt - ctx.room.roomState.roundStartTimestamp;
 
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        // Snapshot before any async work: round end resets scoresByPeerId while the recap API is in-flight.
+        const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByPeerId[peerId], l(ctx));
+        const training = BirdBotGameplayStateService.metadata(ctx).training;
+        if (training?.list && gamer.authId === training.creatorAuthId) {
+            training.list.successes = 0;
+            training.list.attempts = 0;
+        }
 
         if (!BirdBotGameplayStateService.isScoreEligible(ctx)) {
-            const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByPeerId[peerId], l(ctx));
             ctx.utils.sendChatMessage(
                 t("parity.gameplay.unrankedScores", {
                     username: gamer.nickname,
@@ -223,7 +229,6 @@ export default class BirdBotUtils {
                     })
                 );
             } else {
-                const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByPeerId[peerId], l(ctx));
                 if (data.oldXpData.level < data.newXpData.level) {
                     ctx.utils.sendChatMessage(
                         t("general.playerStats.diedLevelUp", {

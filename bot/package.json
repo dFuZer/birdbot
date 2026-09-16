@@ -5,7 +5,7 @@
     "scripts": {
         "build": "tsc",
         "start": "node dist/index.js",
-        "u": "tsc && node dist/index.unstable.js"
+        "u": "tsc && BIRDBOT_DEBUG=1 node dist/index.unstable.js"
     },
     "peerDependencies": {
         "typescript": "^5.8.3"

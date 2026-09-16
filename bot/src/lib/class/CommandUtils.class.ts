@@ -69,6 +69,7 @@ export const RANKED_WORD_INPUT_SAFE_COMMAND_IDS: ReadonlySet<string> = new Set([
     "privateRoom",
     "getBomb",
     "train",
+    "createRoom",
 ]);
 
 export default class CommandUtils {

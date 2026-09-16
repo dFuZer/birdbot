@@ -19,15 +19,17 @@ import {
     ListedRecord,
     listedRecords,
     listedRecordsPerLanguage,
+    SemiListedRecord,
     modesEnumSchema,
     PAYPAL_DONATE_LINK,
     recordAliases,
     recordsUtils,
+    semiListedRecordsPerLanguage,
     sortWordsModeRecords,
     WEBSITE_LINK,
 } from "./BirdBotConstants";
 import BirdBotDefinitions from "./BirdBotDefinitions.class";
-import { API_KEY, API_URL } from "./BirdBotEnv";
+import { API_KEY, API_URL, IS_UNSTABLE_DEV_MODE } from "./BirdBotEnv";
 import { createBirdBotCommandRegistry } from "./commands/BirdBotCommandRegistry";
 import { birdBotAdminCommands } from "./commands/BirdBotAdminCommands";
 import { birdBotParityCommands } from "./commands/BirdBotParityCommands";
@@ -43,6 +45,7 @@ import {
     PlayerGameScores,
     BirdBotPlaystyle,
     BirdBotTrainingCondition,
+    BirdBotTrainingListState,
     BirdBotTrainingSort,
 } from "./BirdBotTypes";
 import BirdBotUtils, { type ApiResponseAllRecords, type ApiResponseBestScoresSpecificRecord } from "./BirdBotUtils.class";
@@ -388,7 +391,7 @@ const setGameModeCommand = c({
     id: "setGameMode",
     aliases: ["mode", "m"],
     usageDesc: "/mode [gameMode]",
-    exampleUsage: "/mode survival",
+    exampleUsage: "/mode easy",
     roomCreatorRequired: true,
     accessibleInRound: false,
     handler: (ctx) => {
@@ -512,120 +515,191 @@ const setPlaystyleCommand = c({
             return;
         }
         BirdBotGameplayStateService.metadata(ctx).playstyle = playstyle;
-        ctx.utils.sendChatMessage(
-            t("parity.gameplay.playstyleEnabled", { playstyle, lng: l(ctx) }),
-            "success",
-        );
+        ctx.utils.sendChatMessage(t("parity.gameplay.playstyleEnabled", { playstyle, lng: l(ctx) }), "success");
     },
 }) satisfies Command;
+
+const TRAIN_MATCH_LIMIT = 30_000;
 
 const trainCommand = c({
     id: "train",
     aliases: ["train"],
-    usageDesc: "/train [regexes] (-record -alpha -previous -ms -sn -long -short)",
-    exampleUsage: "/train ^pre -long",
+    usageDesc: "/train [regexes] (-record -l -s -sn) — /train [record]",
+    exampleUsage: "/train ^pre -l — /train food",
     roomCreatorRequired: true,
     accessibleInRound: true,
     allowedFromWordInput: true,
     handler: (ctx) => {
-        if (!ctx.gamer.authId) {
-            ctx.utils.sendChatMessage(t("parity.gameplay.trainingLogin", { lng: l(ctx) }), "error");
-            return;
-        }
-        const metadata = BirdBotGameplayStateService.metadata(ctx);
-        if (ctx.args.length === 0 && ctx.params.length === 0) {
-            const enabling = metadata.training === null;
-            BirdBotTrainingService.set(
-                ctx,
-                enabling
-                    ? {
-                          creatorAuthId: ctx.gamer.authId,
-                          source: "dictionary",
-                          sort: "shuffle",
-                          conditions: [],
-                          regexSources: [],
-                          successes: 0,
-                          attempts: 0,
-                      }
-                    : null,
-            );
-            ctx.utils.sendChatMessage(
-                t(enabling ? "parity.gameplay.trainingEnabled" : "parity.gameplay.trainingDisabled", {
-                    lng: l(ctx),
-                }),
-                enabling ? "info" : "success",
-            );
+        const creatorAuthId = ctx.room.constantRoomData.roomCreatorAuthId;
+        if (!ctx.gamer.authId || creatorAuthId === null || ctx.gamer.authId !== creatorAuthId) {
+            ctx.utils.sendChatMessage(t("eventHandler.chat.notRoomCreator", { lng: l(ctx) }), "error");
             return;
         }
 
-        const all = [...ctx.params, ...ctx.args];
-        const record = BirdBotUtils.findValueInAliasesObject(all, recordAliases);
         const language = BirdBotUtils.getCurrentRoomLanguage(ctx);
-        const source =
-            record && listedRecordsPerLanguage[language].includes(record as any) ? (record as ListedRecord) : "dictionary";
+        const listed: readonly ListedRecord[] = listedRecordsPerLanguage[language];
+        const semiListed: readonly SemiListedRecord[] = semiListedRecordsPerLanguage[language];
+
+        const applyList = (
+            list: Omit<BirdBotTrainingListState, "successes" | "attempts">,
+            count: number,
+            sortName: string,
+            listName: string,
+            scoresFirst: boolean,
+        ) => {
+            BirdBotTrainingService.set(ctx, {
+                creatorAuthId: ctx.gamer.authId!,
+                list: { ...list, successes: 0, attempts: 0 },
+            });
+            const announceConfigured = () =>
+                ctx.utils.sendChatMessage(
+                    t("parity.gameplay.trainingConfigured", {
+                        count,
+                        sort: sortName.toUpperCase(),
+                        list: listName.toUpperCase(),
+                        lng: l(ctx),
+                    }),
+                    "success",
+                );
+            if (scoresFirst) BirdBotGameplayStateService.announceScoreCounting(ctx);
+            announceConfigured();
+            if (!scoresFirst) BirdBotGameplayStateService.announceScoreCounting(ctx);
+        };
+
+        for (const arg of ctx.args) {
+            const record = BirdBotUtils.findValueInAliasesObject([arg], recordAliases);
+            if (record && listed.includes(record as ListedRecord)) {
+                const listedRecord = record as ListedRecord;
+                applyList(
+                    { source: listedRecord, sort: "shuffle", conditions: [], regexSources: [] },
+                    BirdBotTrainingService.sourceSize(ctx, listedRecord),
+                    "shuffle",
+                    `${listedRecord}-list`,
+                    false,
+                );
+                return;
+            }
+            if (record && semiListed.includes(record as SemiListedRecord)) {
+                const list = {
+                    source: "dictionary" as const,
+                    sort: "shuffle" as const,
+                    conditions: [{ type: record as SemiListedRecord }],
+                    regexSources: [],
+                };
+                applyList(list, BirdBotTrainingService.countMatches(ctx, list), "shuffle", `${record}-list`, false);
+                return;
+            }
+            if (record === "depleted_syllables") {
+                applyList(
+                    { source: "low_sub_words", sort: "sn", conditions: [], regexSources: [] },
+                    BirdBotTrainingService.sourceSize(ctx, "low_sub_words"),
+                    "sn",
+                    "low-sub-words",
+                    false,
+                );
+                return;
+            }
+            if (record === "alpha") {
+                applyList(
+                    { source: "dictionary", sort: "shuffle", conditions: [{ type: "alpha" }], regexSources: [] },
+                    BirdBotTrainingService.sourceSize(ctx, "dictionary"),
+                    "shuffle",
+                    "dictionary",
+                    false,
+                );
+                return;
+            }
+            if (record === "previous_syllable") {
+                applyList(
+                    { source: "dictionary", sort: "shuffle", conditions: [{ type: "previous_syllable" }], regexSources: [] },
+                    BirdBotTrainingService.sourceSize(ctx, "dictionary"),
+                    "shuffle",
+                    "dictionary",
+                    false,
+                );
+                return;
+            }
+            if (record === "multi_syllable") {
+                applyList(
+                    { source: "dictionary", sort: "ms", conditions: [{ type: "multi_syllable" }], regexSources: [] },
+                    BirdBotTrainingService.sourceSize(ctx, "dictionary"),
+                    "ms",
+                    "dictionary",
+                    false,
+                );
+                return;
+            }
+            if (record === "flips") {
+                ctx.utils.sendChatMessage(t("parity.gameplay.notImplemented", { lng: l(ctx) }), "error");
+                return;
+            }
+        }
+
+        let source: BirdBotTrainingListState["source"] = "dictionary";
+        let listName = `${language}-dictionary`;
         let sort: BirdBotTrainingSort = "shuffle";
         const conditions: BirdBotTrainingCondition[] = [];
-        if (record === "depleted_syllables") sort = "depleted_syllables";
-        if (record === "multi_syllable") {
-            sort = "multi_syllable";
-            conditions.push({ type: "multi_syllable" });
-        }
-        if (record === "alpha") conditions.push({ type: "alpha" });
-        if (record === "previous_syllable") conditions.push({ type: "previous_syllable" });
-        if (record === "hyphen") conditions.push({ type: "hyphen" });
-        if (record === "more_than_20_letters") conditions.push({ type: "more_than_20_letters" });
-        if (ctx.params.some((item) => ["long", "longest", "l"].includes(item))) sort = "longest";
-        if (ctx.params.some((item) => ["short", "shortest", "s"].includes(item))) sort = "shortest";
 
-        const recognizedArgs = new Set(record ? recordAliases[record] : []);
-        const regexSources = ctx.args.filter((arg) => !recognizedArgs.has(arg));
-        if (BirdBotRegexService.compile(regexSources) === null) {
-            ctx.utils.sendChatMessage(t("parity.gameplay.invalidTrainingRegex", { lng: l(ctx) }), "error");
+        for (const param of ctx.params) {
+            const record = BirdBotUtils.findValueInAliasesObject([param], recordAliases);
+            if (record && listed.includes(record as ListedRecord)) {
+                source = record as ListedRecord;
+                listName = `${record}-list`;
+            }
+        }
+
+        for (const param of ctx.params) {
+            const record = BirdBotUtils.findValueInAliasesObject([param], recordAliases);
+            if (record === "hyphen" && semiListed.includes("hyphen")) conditions.push({ type: "hyphen" });
+            if (record === "more_than_20_letters" && semiListed.includes("more_than_20_letters")) {
+                conditions.push({ type: "more_than_20_letters" });
+            }
+            if (param === "l") sort = "l";
+            if (param === "s") sort = "s";
+            if (record === "depleted_syllables") {
+                sort = "sn";
+                source = "low_sub_words";
+            }
+        }
+
+        if (ctx.args.length > 0) {
+            const compiled = BirdBotRegexService.compileDetailed(ctx.args, true);
+            if (!compiled.ok) {
+                ctx.utils.sendChatMessage(
+                    compiled.reason === "expensive"
+                        ? t("parity.gameplay.regexTooExpensive", { lng: l(ctx) })
+                        : t("error.invalid.regex", { regex: compiled.source, lng: l(ctx) }),
+                    "error",
+                );
+                return;
+            }
+            const list = { source, sort, conditions, regexSources: ctx.args };
+            const count = BirdBotTrainingService.countMatches(ctx, list);
+            if (count > TRAIN_MATCH_LIMIT) {
+                ctx.utils.sendChatMessage(
+                    t("parity.gameplay.tooManyTrainingMatches", { max: TRAIN_MATCH_LIMIT, lng: l(ctx) }),
+                    "error",
+                );
+                return;
+            }
+            if (count < 1) {
+                ctx.utils.sendChatMessage(t("parity.gameplay.noTrainingMatches", { lng: l(ctx) }), "error");
+                return;
+            }
+            applyList(list, count, sort, listName, true);
             return;
         }
-        const state = {
-            creatorAuthId: ctx.gamer.authId,
-            source,
-            sort,
-            conditions,
-            regexSources,
-            successes: 0,
-            attempts: 0,
-        } satisfies import("./BirdBotTypes").BirdBotTrainingState;
-        const count = BirdBotTrainingService.countMatches(ctx, state);
-        if (count < 1 || count > 30_000) {
-            ctx.utils.sendChatMessage(
-                t(count > 30_000 ? "parity.gameplay.tooManyTrainingMatches" : "parity.gameplay.noTrainingMatches", {
-                    lng: l(ctx),
-                }),
-                "error",
-            );
-            return;
-        }
-        BirdBotTrainingService.set(ctx, state);
-        ctx.utils.sendChatMessage(
-            t("parity.gameplay.trainingConfigured", { count, sort, lng: l(ctx) }),
-            "info",
-        );
-    },
-}) satisfies Command;
 
-const humanModeCommand = c({
-    id: "humanMode",
-    aliases: ["humanmode", "human", "humain"],
-    usageDesc: "/human",
-    exampleUsage: "/human",
-    roomCreatorRequired: true,
-    accessibleInRound: true,
-    handler: (ctx) => {
         const metadata = BirdBotGameplayStateService.metadata(ctx);
-        metadata.humanMode = !metadata.humanMode;
-        ctx.utils.sendChatMessage(
-            t(metadata.humanMode ? "parity.gameplay.humanEnabled" : "parity.gameplay.humanDisabled", {
-                lng: l(ctx),
-            }),
-            metadata.humanMode ? "info" : "success",
-        );
+        if (metadata.training !== null) {
+            BirdBotTrainingService.set(ctx, null);
+            ctx.utils.sendChatMessage(t("parity.gameplay.trainingDisabled", { lng: l(ctx) }), "success");
+            BirdBotGameplayStateService.announceScoreCounting(ctx);
+            return;
+        }
+        BirdBotTrainingService.set(ctx, { creatorAuthId: ctx.gamer.authId, list: null });
+        ctx.utils.sendChatMessage(t("parity.gameplay.trainingEnabled", { lng: l(ctx) }), "success");
+        BirdBotGameplayStateService.announceScoreCounting(ctx);
     },
 }) satisfies Command;
 
@@ -1483,12 +1557,7 @@ const changeListCommand = c({
         const action = ctx.args[2];
         const adding = ["add", "a", "ad"].includes(action);
         const removing = ["remove", "rem", "delete", "del", "r", "d"].includes(action);
-        if (
-            !language ||
-            !list ||
-            !listedRecordsPerLanguage[language].includes(list as any) ||
-            (!adding && !removing)
-        ) {
+        if (!language || !list || !listedRecordsPerLanguage[language].includes(list as any) || (!adding && !removing)) {
             ctx.utils.sendChatMessage(t("parity.dictionary.listUsage", { lng: l(ctx) }), "info");
             return;
         }
@@ -1836,6 +1905,9 @@ const createRoomCommand = c({
     id: "createRoom",
     aliases: ["createroom", "startroom", "b"],
     usageDesc: "/createroom",
+    adminRequired: IS_UNSTABLE_DEV_MODE,
+    accessibleInRound: true,
+    allowedFromWordInput: true,
     handler: async (ctx) => {
         const gamer = ctx.gamer;
         const bot = ctx.bot.rawBot as BirdBot;
@@ -1895,9 +1967,7 @@ const createRoomCommand = c({
                 botName = economy.cosmetics?.bot_name ?? undefined;
             }
             if (economy.vip?.tier === "VIP_PLUS") {
-                roomName = economy.cosmetics?.room_name
-                    ? `${economy.cosmetics.room_name} 🐤`
-                    : roomName;
+                roomName = economy.cosmetics?.room_name ? `${economy.cosmetics.room_name} 🐤` : roomName;
                 pictureUrl = economy.cosmetics?.picture_url ?? undefined;
             }
         } catch {
@@ -1986,7 +2056,6 @@ export const birdbotCommandRegistry = createBirdBotCommandRegistry([
             setGameModeCommand,
             setPlaystyleCommand,
             trainCommand,
-            humanModeCommand,
             setRoomLanguageCommand,
             changeBonusAlphabetCommand,
             startGameCommand,

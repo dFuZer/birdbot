@@ -15,16 +15,29 @@ export default class BirdBotRegexService {
     ];
 
     public static compile(sources: readonly string[]): RegExp[] | null {
+        const result = this.compileDetailed(sources, false);
+        return result.ok ? result.regexes : null;
+    }
+
+    public static compileDetailed(
+        sources: readonly string[],
+        truncate = false,
+    ):
+        | { ok: true; regexes: RegExp[] }
+        | { ok: false; reason: "invalid"; source: string }
+        | { ok: false; reason: "expensive" } {
         const regexes: RegExp[] = [];
-        try {
-            for (const source of sources) {
-                if (source.length > this.MAX_SOURCE_LENGTH) return null;
-                regexes.push(new RegExp(source));
+        for (const source of sources) {
+            if (!truncate && source.length > this.MAX_SOURCE_LENGTH) {
+                return { ok: false, reason: "invalid", source };
             }
-        } catch {
-            return null;
+            try {
+                regexes.push(new RegExp(truncate ? source.slice(0, this.MAX_SOURCE_LENGTH) : source));
+            } catch {
+                return { ok: false, reason: "invalid", source };
+            }
         }
-        return this.cost(regexes) < this.MAX_COST_MS ? regexes : null;
+        return this.cost(regexes) >= this.MAX_COST_MS ? { ok: false, reason: "expensive" } : { ok: true, regexes };
     }
 
     public static cost(regexes: readonly RegExp[]): number {

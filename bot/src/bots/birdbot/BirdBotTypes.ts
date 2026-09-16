@@ -42,7 +42,7 @@ export type BirdBotPlaystyle =
     | "more_than_20_letters"
     | BirdBotListedRecord;
 
-export type BirdBotTrainingSort = "shuffle" | "depleted_syllables" | "multi_syllable" | "longest" | "shortest";
+export type BirdBotTrainingSort = "shuffle" | "sn" | "ms" | "l" | "s";
 
 export type BirdBotTrainingCondition =
     | { type: "alpha" }
@@ -51,14 +51,20 @@ export type BirdBotTrainingCondition =
     | { type: "hyphen" }
     | { type: "more_than_20_letters" };
 
-export type BirdBotTrainingState = {
-    creatorAuthId: string;
-    source: "dictionary" | BirdBotListedRecord;
+export type BirdBotTrainingSource = "dictionary" | "low_sub_words" | BirdBotListedRecord;
+
+export type BirdBotTrainingListState = {
+    source: BirdBotTrainingSource;
     sort: BirdBotTrainingSort;
     conditions: BirdBotTrainingCondition[];
     regexSources: string[];
     successes: number;
     attempts: number;
+};
+
+export type BirdBotTrainingState = {
+    creatorAuthId: string;
+    list: BirdBotTrainingListState | null;
 };
 
 export type BirdBotSupportedDictionaryId = (typeof birdbotSupportedDictionaryIds)[number];
@@ -109,7 +115,7 @@ export type BirdBotRoomMetadata = {
     gameplayLanguage: BirdBotLanguage;
     playstyle: BirdBotPlaystyle;
     training: BirdBotTrainingState | null;
-    humanMode: boolean;
+    rankedBlockedUntilSeating: boolean;
     scoresByPeerId: Record<string, PlayerGameScores>;
     globalScores: GlobalGameScores;
     remainingSyllables: Record<string, number>;
@@ -140,6 +146,14 @@ export type BirdBotPlayerData = {
     nickname: string;
 };
 
+export type BirdBotWordMilestone = {
+    type: "SPEED" | "ACCURACY";
+    milestone: string;
+    value: number;
+    idempotencyKey: string;
+    metadata: Record<string, unknown>;
+};
+
 export type BirdBotWordData = {
     game: BirdBotGameData;
     player: BirdBotPlayerData;
@@ -149,6 +163,7 @@ export type BirdBotWordData = {
     flip: boolean;
     durationMs?: number;
     reactionMs?: number;
+    milestones?: BirdBotWordMilestone[];
 };
 
 export type PendingBirdBotWordRegistration = {
