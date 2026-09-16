@@ -5,6 +5,14 @@ import { playerSchema } from "./player.zod";
 const submitResultSchema = z.enum(["success", "failsPrompt", "invalidWord", "noText", "alreadyUsed", "bombExploded"]);
 type TSubmitResult = z.infer<typeof submitResultSchema>;
 
+const wordMilestoneSchema = z.object({
+    type: z.enum(["SPEED", "ACCURACY"]),
+    milestone: z.string().trim().min(1).max(80),
+    value: z.number().finite().nonnegative(),
+    idempotencyKey: z.string().trim().min(8).max(120),
+    metadata: z.record(z.unknown()).optional(),
+});
+
 let addWordSchema = z.object({
     player: playerSchema,
     game: gameSchema,
@@ -15,6 +23,7 @@ let addWordSchema = z.object({
     durationMs: z.number().int().nonnegative().max(3_600_000).optional(),
     reactionMs: z.number().int().nonnegative().max(3_600_000).optional(),
     idempotencyKey: z.string().trim().min(8).max(140),
+    milestones: z.array(wordMilestoneSchema).max(20).optional(),
 });
 
-export { addWordSchema, type TSubmitResult };
+export { addWordSchema, wordMilestoneSchema, type TSubmitResult };

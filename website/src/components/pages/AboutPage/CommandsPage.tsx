@@ -27,16 +27,10 @@ const commands: Command[] = [
     },
     {
         trigger: "/searchwords",
-        explanation: "Use this command to search for words in the dictionary.",
+        explanation: "Use this command to search for words in the dictionary. You can pass syllables or regexes, and optionally filter or sort by a record type.",
         id: "searchwords",
         shorthand: "/c",
-        uses: [
-            "/c [prompt]",
-            "/c [...regexps]",
-            "/c (-lang) [prompt]",
-            "/c (-sortByRecord) [prompt]",
-            "/c (-filterByRecord) [prompt]",
-        ],
+        uses: ["/c [prompt]", "/c [...regexes]", "/c (-record) [...syllables|regexes]"],
         exampleUses: [
             { use: "/c test", useDescription: `Search for words containing "test"` },
             { use: "/c ^test", useDescription: `Search for words starting with "test"` },
@@ -44,17 +38,18 @@ const commands: Command[] = [
             { use: "/c -fr test", useDescription: `Search for French words containing "test"` },
             {
                 use: "/c -sn en",
-                useDescription: `Search for words containing "en" and perform well for the SN category (depleted syllables)`,
+                useDescription: `Search for words containing "en" that perform well for the SN category (depleted syllables)`,
             },
             { use: "/c -flip .", useDescription: `Search for the best words containing any prompt to flip (gain a life)` },
             {
                 use: "/c -ms an",
-                useDescription: `Search for the best MS words for the prompt "an", which means the word that contain an a maximum number of times`,
+                useDescription: `Search for the best MS words for the prompt "an" (words that contain "an" the most times)`,
             },
             {
                 use: "/c -hyphen .",
-                useDescription: `Search for words containing any prompt that are hyphenated`,
+                useDescription: `Search for hyphenated words containing any prompt`,
             },
+            { use: "/c -life syll", useDescription: `Search for words containing "syll" that perform well for flips` },
             { use: "/c a b c d e f", useDescription: `Search for words containing A, B, C, D, E, and F` },
         ],
     },
@@ -81,6 +76,25 @@ const commands: Command[] = [
             { use: "/score", useDescription: "Shows your current game scores" },
             { use: "/score dfuzer", useDescription: "Shows dfuzer's current game scores" },
         ],
+    },
+    {
+        trigger: "/xp",
+        explanation: "Shows the XP and level of a given player. If no player is provided, it will show your own XP.",
+        id: "xp",
+        shorthand: "/x",
+        uses: ["/xp", "/xp [username]"],
+        exampleUses: [
+            { use: "/xp", useDescription: "Shows your XP and level" },
+            { use: "/xp dfuzer", useDescription: "Shows dfuzer's XP and level" },
+        ],
+    },
+    {
+        trigger: "/showtime",
+        explanation: "Shows how long the current game has been going.",
+        id: "showtime",
+        shorthand: "/t",
+        uses: ["/showtime", "/time", "/t"],
+        exampleUses: [{ use: "/t", useDescription: "Shows the elapsed time of the current game" }],
     },
     {
         trigger: "/speed",
@@ -139,6 +153,57 @@ const commands: Command[] = [
         exampleUses: [{ use: "/setname dfuzer", useDescription: "Claims the profile name dfuzer" }],
     },
     {
+        trigger: "/cwm",
+        explanation: "Sets the welcome message used when you join a room. Requires VIP. Use clear to remove it.",
+        id: "cwm",
+        condition: "logged-in",
+        uses: ["/cwm [value]", "/cwm clear"],
+        exampleUses: [
+            { use: "/cwm hello everyone", useDescription: "Sets your welcome message" },
+            { use: "/cwm clear", useDescription: "Removes your welcome message" },
+        ],
+    },
+    {
+        trigger: "/cbbn",
+        explanation: "Sets the BirdBot name used in rooms you create. Requires VIP. Use clear to remove it.",
+        id: "cbbn",
+        shorthand: "/cn",
+        condition: "logged-in",
+        uses: ["/cbbn [value]", "/cbbn clear"],
+        exampleUses: [
+            { use: "/cn Birdie", useDescription: "Sets the bot name used in your rooms" },
+            { use: "/cn clear", useDescription: "Resets the bot name" },
+        ],
+    },
+    {
+        trigger: "/crn",
+        explanation: "Sets the name used for rooms you create. Requires VIP+. Use clear to remove it.",
+        id: "crn",
+        condition: "logged-in",
+        uses: ["/crn [value]", "/crn clear"],
+        exampleUses: [
+            { use: "/crn Night Owl", useDescription: "Sets the room name used when you create a room" },
+            { use: "/crn clear", useDescription: "Resets the room name" },
+        ],
+    },
+    {
+        trigger: "/cpp",
+        explanation: "Copies your current jklm.fun profile picture onto BirdBot for rooms you create. Requires VIP+.",
+        id: "cpp",
+        condition: "logged-in",
+        uses: ["/cpp"],
+        exampleUses: [{ use: "/cpp", useDescription: "Copies your current profile picture onto BirdBot" }],
+    },
+    {
+        trigger: "/link",
+        explanation:
+            "Links your Discord account to your jklm.fun account using a token from the website. This unlocks website features.",
+        id: "link",
+        condition: "logged-in",
+        uses: ["/link [token]"],
+        exampleUses: [{ use: "/link abc123", useDescription: "Links your account with the given token" }],
+    },
+    {
         trigger: "/connect",
         explanation: "Explains how to log in to jklm.fun.",
         id: "connect",
@@ -150,11 +215,24 @@ const commands: Command[] = [
         explanation: "Shows the player profile of a given player, including their records and statistics.",
         id: "profile",
         shorthand: "/p",
-        uses: ["/profile [username]", "/profile [username] (-language -mode)"],
+        uses: ["/p", "/p [username]", "/p [username] (-language -mode)"],
         exampleUses: [
-            { use: "/profile dfuzer", useDescription: "Shows dfuzer's profile" },
-            { use: "/profile -fr dfuzer", useDescription: "Shows dfuzer's profile for French language" },
-            { use: "/profile -fr -regular dfuzer", useDescription: "Shows dfuzer's profile for French language in regular mode" },
+            { use: "/p", useDescription: "Shows your own profile if you are logged in" },
+            { use: "/p dfuzer", useDescription: "Shows dfuzer's profile" },
+            { use: "/p -fr dfuzer", useDescription: "Shows dfuzer's profile for French language" },
+            { use: "/p -fr -regular dfuzer", useDescription: "Shows dfuzer's profile for French language in regular mode" },
+        ],
+    },
+    {
+        trigger: "/definition",
+        explanation: "Looks up the definition of a word (French and English). You can pass a page number and a language flag.",
+        id: "definition",
+        shorthand: "/d",
+        uses: ["/d [word]", "/d [word] [page]", "/d (-language) [word] [page]"],
+        exampleUses: [
+            { use: "/d test", useDescription: `Shows the first definition of "test"` },
+            { use: "/d test 2", useDescription: `Shows the second definition of "test"` },
+            { use: "/d -fr maison 1", useDescription: `Shows the first French definition of "maison"` },
         ],
     },
     {
@@ -163,19 +241,58 @@ const commands: Command[] = [
         id: "startnow",
         shorthand: "/sn",
         condition: "room-owner",
-        uses: ["/startnow"],
-        exampleUses: [{ use: "/startnow", useDescription: "Starts the game immediately" }],
+        uses: ["/startnow", "/start", "/sn"],
+        exampleUses: [{ use: "/sn", useDescription: "Starts the game immediately" }],
     },
     {
         trigger: "/mode",
-        explanation: "Sets the game mode for the room.",
+        explanation:
+            "Sets the game mode for the room. Available modes: regular, easy, blitz, sub500, sub50, freeplay, and custom.",
         id: "mode",
         shorthand: "/m",
         condition: "room-owner",
-        uses: ["/mode [gameMode]"],
+        uses: [
+            "/mode [gameMode]",
+            "/mode custom [difficulty] [turn] [age] [startingLives] [maxLives]",
+        ],
         exampleUses: [
             { use: "/mode regular", useDescription: "Sets the game mode to regular" },
             { use: "/mode blitz", useDescription: "Sets the game mode to blitz" },
+            { use: "/mode easy", useDescription: "Sets the game mode to easy" },
+            {
+                use: "/mode custom 0 5 8 2 3",
+                useDescription: "Custom mode: difficulty 0, 5s turn, prompt age 8, 2 starting lives, 3 max lives",
+            },
+        ],
+    },
+    {
+        trigger: "/playstyle",
+        explanation:
+            "Sets how BirdBot chooses words. Playstyles: regular, alpha, previous, life (flips), sn (depleted syllables), ms (multi-syllable), or a listed record such as plant or food.",
+        id: "playstyle",
+        shorthand: "/ps",
+        condition: "room-owner",
+        uses: ["/playstyle [regular|alpha|previous|life|sn|ms|record]", "/ps [playstyle]"],
+        exampleUses: [
+            { use: "/ps alpha", useDescription: "BirdBot prioritizes alpha words" },
+            { use: "/ps sn", useDescription: "BirdBot prioritizes depleted-syllable words" },
+            { use: "/ps plant", useDescription: "BirdBot prioritizes words from the plant list" },
+            { use: "/ps regular", useDescription: "Resets BirdBot to the default playstyle" },
+        ],
+    },
+    {
+        trigger: "/train",
+        explanation:
+            "Activates a training mode where you have to place as many words from a training list as possible. Call /train with no arguments to toggle training on or off. You can train on a record list, or on regex matches with optional sort flags (-l longest, -s shortest, -sn depleted syllables).",
+        id: "train",
+        condition: "room-owner",
+        uses: ["/train", "/train [record]", "/train [regexes] (-record -l -s -sn)"],
+        exampleUses: [
+            { use: "/train", useDescription: "Toggles training mode on or off" },
+            { use: "/train food", useDescription: "Trains on the food word list" },
+            { use: "/train ^pre -l", useDescription: `Trains on words starting with "pre", sorted by longest first` },
+            { use: "/train -hyphen .", useDescription: "Trains on hyphenated words" },
+            { use: "/train -sn", useDescription: "Trains on low-substitution words, sorted for depleted syllables" },
         ],
     },
     {
@@ -191,6 +308,19 @@ const commands: Command[] = [
         ],
     },
     {
+        trigger: "/bl",
+        explanation:
+            "Changes the bonus alphabet. Use default to restore language defaults, reset to clear then set letters, or letter:count pairs to override specific letters.",
+        id: "bl",
+        condition: "room-owner",
+        uses: ["/bl default", "/bl reset", "/bl a:1 b:0", "/bl reset x:1"],
+        exampleUses: [
+            { use: "/bl default", useDescription: "Restores the language default bonus letters" },
+            { use: "/bl a:2 z:1", useDescription: "Sets A to 2 and Z to 1, keeping other language defaults" },
+            { use: "/bl reset q:1", useDescription: "Clears all bonus letters, then sets Q to 1" },
+        ],
+    },
+    {
         trigger: "/raresyllables",
         explanation: "Shows the rare syllables in a given word.",
         id: "raresyllables",
@@ -202,16 +332,33 @@ const commands: Command[] = [
         ],
     },
     {
+        trigger: "/news",
+        explanation: "Shows the latest published BirdBot news.",
+        id: "news",
+        uses: ["/news"],
+        exampleUses: [{ use: "/news", useDescription: "Shows the latest BirdBot news" }],
+    },
+    {
         trigger: "/createroom",
-        explanation: "Creates a new room with specified language and mode.",
+        explanation: "Creates a new room with specified language and mode. Add private to create a private room.",
         id: "createroom",
         shorthand: "/b",
         condition: "logged-in",
-        uses: ["/createroom", "/createroom (-language -mode)"],
+        uses: ["/createroom", "/createroom (-language -mode)", "/createroom private"],
         exampleUses: [
             { use: "/createroom", useDescription: "Creates a new room with default settings" },
             { use: "/createroom fr regular", useDescription: "Creates a new room with French language and regular mode" },
+            { use: "/b private en blitz", useDescription: "Creates a private English blitz room" },
         ],
+    },
+    {
+        trigger: "/destroy",
+        explanation: "Destroys the current room.",
+        id: "destroy",
+        shorthand: "/dr",
+        condition: "room-owner",
+        uses: ["/destroy"],
+        exampleUses: [{ use: "/destroy", useDescription: "Destroys the current room" }],
     },
     {
         trigger: "/mod",
@@ -253,6 +400,13 @@ const commands: Command[] = [
         trigger: "/uptime",
         explanation: "Shows the uptime of the bot.",
         id: "uptime",
+    },
+    {
+        trigger: "/boom",
+        explanation: "Boom.",
+        id: "boom",
+        uses: ["/boom"],
+        exampleUses: [{ use: "/boom", useDescription: "💥" }],
     },
 ];
 
@@ -320,6 +474,7 @@ export default function CommandsPage() {
     return (
         <div className="flex flex-col gap-4">
             <h1 className="text-2xl font-bold">Commands</h1>
+            <p className="text-sm text-neutral-500">Updated 16 Sept 2026</p>
             <p className="text-sm text-neutral-600">You can find all of the commands available on BirdBot below.</p>
             <div className="my-2 space-y-2">
                 <div className="flex items-center gap-4">

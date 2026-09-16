@@ -1,11 +1,32 @@
 import type { RouteHandlerMethod } from "fastify";
 import { Prisma } from "@prisma/client";
+import type { z } from "zod";
 import addGameIfNotExist from "../helpers/addGameIfNotExist";
 import addPlayerIfNotExist from "../helpers/addPlayerIfNotExist";
 import { submitResultEnumToDatabaseEnumMap } from "../helpers/maps";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
-import { addWordSchema } from "../schemas/word.zod";
+import { addWordSchema, wordMilestoneSchema } from "../schemas/word.zod";
+import { recordMilestone } from "../services/parity.service";
+
+type WordMilestone = z.infer<typeof wordMilestoneSchema>;
+
+async function persistWordMilestones(playerId: string, milestones: WordMilestone[] | undefined) {
+    if (!milestones?.length) return;
+    await Promise.all(
+        milestones.map((milestone) =>
+            recordMilestone({
+                playerId,
+                type: milestone.type,
+                milestone: milestone.milestone,
+                value: milestone.value,
+                source: "authoritative-word-event",
+                idempotencyKey: milestone.idempotencyKey,
+                metadata: milestone.metadata ?? {},
+            }),
+        ),
+    );
+}
 
 export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
     Logger.log({ message: "-- addWord route handler --", path: "addWord.route.ts" });
@@ -25,10 +46,15 @@ export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
     try {
         const existing = await prisma.word.findUnique({
             where: { idempotency_key: wordData.idempotencyKey },
-            select: { id: true },
+            select: { id: true, player_id: true },
         });
         if (existing) {
-            return res.status(200).send({ message: "Word already recorded", idempotent: true });
+            await persistWordMilestones(existing.player_id, wordData.milestones);
+            return res.status(200).send({
+                message: "Word already recorded",
+                idempotent: true,
+                playerId: existing.player_id,
+            });
         }
 
         const [player, game] = await Promise.all([
@@ -49,9 +75,22 @@ export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
                 idempotency_key: wordData.idempotencyKey,
             },
         });
-        return res.status(200).send({ message: "Word added successfully" });
+        await persistWordMilestones(player.id, wordData.milestones);
+        return res.status(200).send({ message: "Word added successfully", playerId: player.id });
     } catch (e) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+            const existing = await prisma.word.findUnique({
+                where: { idempotency_key: wordData.idempotencyKey },
+                select: { player_id: true },
+            });
+            if (existing) {
+                await persistWordMilestones(existing.player_id, wordData.milestones);
+                return res.status(200).send({
+                    message: "Word already recorded",
+                    idempotent: true,
+                    playerId: existing.player_id,
+                });
+            }
             return res.status(200).send({ message: "Word already recorded", idempotent: true });
         }
         Logger.error({ message: "Failed to add word", path: "addWord.route.ts", errorType: "unknown", error: e });
