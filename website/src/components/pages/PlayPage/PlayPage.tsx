@@ -171,10 +171,12 @@ export default function PlayPage() {
     const [state, setState] = useState<{
         isLoading: boolean;
         isError: boolean;
+        roomsLoaded: boolean;
         rooms: IRoom[];
     }>({
         isLoading: true,
         isError: false,
+        roomsLoaded: false,
         rooms: [],
     });
 
@@ -182,10 +184,10 @@ export default function PlayPage() {
         setState((prev) => ({ ...prev, isLoading: true }));
         void fetchRooms()
             .then((data) => {
-                setState(() => ({ rooms: data, isError: false, isLoading: false }));
+                setState(() => ({ rooms: data, isError: false, isLoading: false, roomsLoaded: true }));
             })
             .catch(() => {
-                setState(() => ({ isError: true, isLoading: false, rooms: [] }));
+                setState(() => ({ isError: true, isLoading: false, roomsLoaded: false, rooms: [] }));
             });
     }, []);
 
@@ -213,7 +215,7 @@ export default function PlayPage() {
             )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {!state.isError && state.rooms.map((room) => <RoomCard key={room.roomCode} room={room} />)}
-                <CreateRoomCard onRoomCreated={refreshRooms} />
+                {state.roomsLoaded && <CreateRoomCard onRoomCreated={refreshRooms} />}
             </div>
         </div>
     );

@@ -21,10 +21,16 @@ export const ABOUT_LINKS: ILink = {
     ],
 };
 
-export const LINKS: ILink[] = [
+export const MAIN_LINKS: ILink[] = [
     { href: "/", label: "Home", hideHeader: true },
     { href: "/play", label: "Play" },
     { href: "/players", label: "Players" },
     { href: "/records", label: "Records" },
     ABOUT_LINKS,
 ];
+
+export const MONITORING_LINKS: ILink[] = [{ href: "/open-monitoring", label: "Open monitoring" }];
+
+export const HEADER_LINK_GROUPS: ILink[][] = [MAIN_LINKS.filter((link) => !link.hideHeader), MONITORING_LINKS];
+
+export const LINKS: ILink[] = [...MAIN_LINKS, ...MONITORING_LINKS];

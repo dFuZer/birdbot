@@ -1,19 +1,25 @@
 import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
 import OptionalImage from "@/components/ui/OptionalImage";
+import { cn } from "@/lib/tailwindUtils";
 import Link from "next/link";
 import { gridColsTailwindClass } from "./RecordListLayout";
 
 export default function PlayerRow<T extends IPlayerScoreCommonProps>({
     playerData,
     PlayerRowContentSection,
+    className,
 }: {
     playerData: T;
     PlayerRowContentSection: React.ReactNode;
+    className?: string;
 }) {
     return (
         <Link
             href={`/p/${encodeURIComponent(playerData.accountName)}`}
-            className={`grid w-full items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-1.5 ${gridColsTailwindClass}`}
+            className={cn(
+                `grid w-full items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-1.5 ${gridColsTailwindClass}`,
+                className,
+            )}
         >
             <div>
                 <div className="flex h-5 w-5 items-center justify-center rounded-md p-4 font-semibold">{playerData.rank}</div>

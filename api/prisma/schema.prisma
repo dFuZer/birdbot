@@ -142,6 +142,7 @@ model GameRecap {
     player Player @relation(fields: [player_id], references: [id])
 
     @@unique([game_id, player_id])
+    @@index([died_at, id], map: "game_recap_died_at_id_idx")
     @@map("game_recap")
 }
 
@@ -163,6 +164,7 @@ model Word {
     player Player @relation(fields: [player_id], references: [id])
     game   Game   @relation(fields: [game_id], references: [id])
 
+    @@index([game_id, created_at, id], map: "word_game_created_id_idx")
     @@map("word")
 }
 

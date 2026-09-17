@@ -1,6 +1,6 @@
 "use client";
 
-import { LINKS } from "@/lib/links";
+import { HEADER_LINK_GROUPS } from "@/lib/links";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { atom, useAtom } from "jotai";
 import Link from "next/link";
@@ -45,20 +45,25 @@ export default function MobileHeader() {
                 className={`absolute top-0 left-0 -z-1 flex h-screen w-full flex-col overflow-hidden bg-neutral-50 py-2 pt-[calc(var(--header-height)-1px)] ${open ? "visible" : "invisible"}`}
             >
                 <div className="h-[1px] bg-neutral-200"></div>
-                {LINKS.map((link, index) => (
-                    <Link
-                        ref={index === 0 ? firstLinkRef : undefined}
-                        key={link.href}
-                        tabIndex={open ? 0 : -1}
-                        role="menuitem"
-                        onClick={(e) => {
-                            closeIfSameLocation(e, link.href);
-                        }}
-                        className="mx-2 rounded-full px-8 py-3 font-semibold hover:bg-neutral-200"
-                        href={link.href}
-                    >
-                        {link.label}
-                    </Link>
+                {HEADER_LINK_GROUPS.map((group, groupIndex) => (
+                    <div key={group[0]?.href ?? groupIndex} className="flex flex-col">
+                        {groupIndex > 0 && <div className="mx-8 my-1 h-px bg-neutral-200" aria-hidden="true" />}
+                        {group.map((link, index) => (
+                            <Link
+                                ref={groupIndex === 0 && index === 0 ? firstLinkRef : undefined}
+                                key={link.href}
+                                tabIndex={open ? 0 : -1}
+                                role="menuitem"
+                                onClick={(e) => {
+                                    closeIfSameLocation(e, link.href);
+                                }}
+                                className="mx-2 rounded-full px-8 py-3 font-semibold hover:bg-neutral-200"
+                                href={link.href}
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
                 ))}
             </div>
             <div className="flex min-w-[6rem] flex-1 justify-end">

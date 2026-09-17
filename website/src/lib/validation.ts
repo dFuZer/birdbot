@@ -12,6 +12,9 @@ import {
 export const sortModeEnumSchema = z.enum(["xp", "records", "pp"]);
 export type SortModeEnum = z.infer<typeof sortModeEnumSchema>;
 
+export const openMonitoringTabEnumSchema = z.enum(["graphs", "recaps"]);
+export type OpenMonitoringTabEnum = z.infer<typeof openMonitoringTabEnumSchema>;
+
 export function isValidRecordParam(record: TSearchParamOption): record is RecordsEnum {
     return recordsEnumSchema.safeParse(record).success;
 }
@@ -26,6 +29,10 @@ export function isValidLanguageParam(language: TSearchParamOption): language is 
 
 export function isValidPlayersPageSortParam(sortParam: TSearchParamOption): sortParam is SortModeEnum {
     return sortModeEnumSchema.safeParse(sortParam).success;
+}
+
+export function isValidOpenMonitoringTabParam(tabParam: TSearchParamOption): tabParam is OpenMonitoringTabEnum {
+    return openMonitoringTabEnumSchema.safeParse(tabParam).success;
 }
 
 export function tryGetNumberFromParam(numberParam: TSearchParamOption): number | undefined {

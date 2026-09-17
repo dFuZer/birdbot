@@ -17,6 +17,20 @@ export async function ensureLeaderboardUniqueIndexes() {
         CREATE UNIQUE INDEX IF NOT EXISTS pp_leaderboard_player_language_uidx
         ON pp_leaderboard (player_id, language)
     `);
+    try {
+        await prisma.$executeRawUnsafe(`
+            CREATE UNIQUE INDEX IF NOT EXISTS player_word_metrics_player_id_uidx
+            ON player_word_metrics (player_id)
+        `);
+    } catch (error) {
+        if (!getErrorMessage(error).toLowerCase().includes("does not exist")) {
+            throw error;
+        }
+        Logger.warn({
+            message: "Skipping player_word_metrics unique index; view does not exist yet",
+            path: LOG_PATH,
+        });
+    }
 }
 
 function getErrorMessage(error: unknown) {
@@ -40,7 +54,7 @@ function isConcurrentRefreshBusy(error: unknown) {
     return message.includes("already being refreshed") || message.includes("cannot refresh materialized view");
 }
 
-async function refreshView(name: "leaderboard" | "pp_leaderboard") {
+async function refreshView(name: "leaderboard" | "pp_leaderboard" | "player_word_metrics") {
     try {
         await prisma.$executeRawUnsafe(`REFRESH MATERIALIZED VIEW CONCURRENTLY ${name}`);
     } catch (error) {
@@ -61,6 +75,17 @@ async function refreshOnce() {
     await ensureLeaderboardUniqueIndexes();
     await refreshView("leaderboard");
     await refreshView("pp_leaderboard");
+    try {
+        await refreshView("player_word_metrics");
+    } catch (error) {
+        if (!getErrorMessage(error).toLowerCase().includes("does not exist")) {
+            throw error;
+        }
+        Logger.warn({
+            message: "Skipping player_word_metrics refresh; view does not exist yet",
+            path: LOG_PATH,
+        });
+    }
 }
 
 export default function refreshMaterializedViews() {

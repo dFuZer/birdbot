@@ -2,19 +2,26 @@ import { IPlayerScoreCommonProps } from "@/components/pages/common/types";
 import OptionalImage from "@/components/ui/OptionalImage";
 import { getTrophyGraphicByRank } from "@/components/ui/TrophyGraphic";
 import getPlaceStringFromRank from "@/lib/stringGenerators";
+import { cn } from "@/lib/tailwindUtils";
 import Link from "next/link";
 
 export default function PlayerCard<T extends IPlayerScoreCommonProps>({
     playerData,
     PlayerCardContentSection,
+    className,
 }: {
     playerData: T;
     PlayerCardContentSection: React.ReactNode;
+    className?: string;
 }) {
     return (
         <Link
             href={`/p/${encodeURIComponent(playerData.accountName)}`}
-            className={`rounded-xl border border-neutral-200 bg-white p-4 text-nowrap ${playerData.rank === 1 ? "col-span-1 sm:col-span-2 md:col-span-1" : ""}`}
+            className={cn(
+                "rounded-xl border border-neutral-200 bg-white p-4 text-nowrap",
+                playerData.rank === 1 && "col-span-1 sm:col-span-2 md:col-span-1",
+                className,
+            )}
         >
             <div className="flex items-center gap-8">
                 <div className="relative h-10 flex-1 items-center">

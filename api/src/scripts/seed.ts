@@ -64,6 +64,7 @@ async function seed() {
                     g."mode",
                     v.record_type
                 ) gr.player_id,
+                gr.id AS game_recap_id,
                 g."language",
                 g."mode",
                 v.record_type,
@@ -136,11 +137,14 @@ async function seed() {
                 g."language",
                 g."mode",
                 v.record_type,
-                v.score DESC
+                v.score DESC,
+                gr.died_at DESC,
+                gr.id DESC
             ),
             lbct1 AS (
                 SELECT
                 player_id,
+                game_recap_id,
                 "language",
                 "mode",
                 "record_type",
@@ -194,6 +198,7 @@ async function seed() {
             lbct2 AS (
                 SELECT
                 lbct1.player_id AS player_id,
+                lbct1.game_recap_id AS game_recap_id,
                 lbct1."language" AS "language",
                 lbct1."mode" AS "mode",
                 lbct1.record_type AS record_type,
@@ -292,6 +297,47 @@ async function seed() {
     await prisma.$executeRaw`
         CREATE UNIQUE INDEX IF NOT EXISTS pp_leaderboard_player_language_uidx
         ON pp_leaderboard (player_id, language)
+    `;
+
+    await prisma.$executeRaw`
+        CREATE INDEX IF NOT EXISTS word_success_player_word_idx
+        ON word (player_id, word)
+        WHERE submit_result = 'SUCCESS'
+    `;
+
+    await prisma.$executeRaw`
+        DROP MATERIALIZED VIEW IF EXISTS player_word_metrics
+    `;
+
+    await prisma.$executeRaw`
+        CREATE MATERIALIZED VIEW player_word_metrics AS
+        WITH player_word AS (
+            SELECT player_id, word, COUNT(*)::bigint AS times_used
+            FROM word
+            WHERE submit_result = 'SUCCESS'
+            GROUP BY player_id, word
+        ),
+        word_player_count AS (
+            SELECT word, COUNT(*)::int AS player_count
+            FROM player_word
+            GROUP BY word
+        )
+        SELECT
+            pw.player_id,
+            SUM(pw.times_used)::bigint AS words_placed,
+            COUNT(*)::int AS distinct_words,
+            COUNT(*) FILTER (WHERE wpc.player_count = 1)::int AS exclusive_words,
+            (COUNT(*)::double precision / NULLIF(SUM(pw.times_used), 0)) AS variety,
+            (COUNT(*) FILTER (WHERE wpc.player_count = 1)::double precision
+                / NULLIF(SUM(pw.times_used), 0)) AS unicity
+        FROM player_word pw
+        INNER JOIN word_player_count wpc ON wpc.word = pw.word
+        GROUP BY pw.player_id
+    `;
+
+    await prisma.$executeRaw`
+        CREATE UNIQUE INDEX IF NOT EXISTS player_word_metrics_player_id_uidx
+        ON player_word_metrics (player_id)
     `;
 }
 

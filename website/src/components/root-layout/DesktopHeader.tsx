@@ -1,5 +1,5 @@
 import { katibehFont } from "@/app/fonts";
-import { LINKS } from "@/lib/links";
+import { HEADER_LINK_GROUPS } from "@/lib/links";
 import Link from "next/link";
 import BirdBotLogo from "~/public/icon.svg";
 import AuthButton from "./AuthButton";
@@ -18,10 +18,15 @@ export default async function DesktopHeader() {
                 </div>
             </Link>
             <div className="flex items-center gap-1 font-normal">
-                {LINKS.map((link) => (
-                    <Link key={link.href} className="px-1.5" href={link.href}>
-                        {link.label}
-                    </Link>
+                {HEADER_LINK_GROUPS.map((group, groupIndex) => (
+                    <div key={group[0]?.href ?? groupIndex} className="flex items-center gap-1">
+                        {groupIndex > 0 && <div className="mx-2 h-5 w-px bg-neutral-300" aria-hidden="true" />}
+                        {group.map((link) => (
+                            <Link key={link.href} className="px-1.5" href={link.href}>
+                                {link.label}
+                            </Link>
+                        ))}
+                    </div>
                 ))}
             </div>
             <div className="flex min-w-[6rem] items-center justify-end gap-4 font-medium">

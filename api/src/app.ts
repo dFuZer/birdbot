@@ -7,6 +7,11 @@ import { addPlayersRouteHandler } from "./routes/addPlayers.route";
 import { addWordRouteHandler } from "./routes/addWord.route";
 import { getBestScoresForCategoryRouteHandler } from "./routes/getBestScoresForCategory.route";
 import { getLeaderboardRouteHandler } from "./routes/getLeaderboard.route";
+import { getOpenMonitoringRouteHandler } from "./routes/getOpenMonitoring.route";
+import { getGameRecapRouteHandler } from "./routes/getGameRecap.route";
+import { getGameRecapExportRouteHandler } from "./routes/getGameRecapExport.route";
+import { getGameRecapsRouteHandler } from "./routes/getGameRecaps.route";
+import { getGameWordsRouteHandler } from "./routes/getGameWords.route";
 import { getPlayerProfileRouteHandler } from "./routes/getPlayerProfile.route";
 import { getUserProfileRouteHandler } from "./routes/getUserProfile.route";
 import { healthRouteHandler } from "./routes/health.route";
@@ -97,6 +102,13 @@ app.get("/user", { preHandler: authMiddleware }, getUserProfileRouteHandler);
 
 // Get leaderboard
 app.get("/leaderboard", getLeaderboardRouteHandler);
+
+// Open monitoring scatter (variety vs unicity)
+app.get("/open-monitoring", { preHandler: authMiddleware }, getOpenMonitoringRouteHandler);
+app.get("/game-recaps", { preHandler: authMiddleware }, getGameRecapsRouteHandler);
+app.get("/game-recaps/:recapId/export", { preHandler: authMiddleware }, getGameRecapExportRouteHandler);
+app.get("/game-recaps/:recapId", { preHandler: authMiddleware }, getGameRecapRouteHandler);
+app.get("/games/:gameId/words", { preHandler: authMiddleware }, getGameWordsRouteHandler);
 app.get("/economy/:playerId", { preHandler: authMiddleware }, getEconomyProfileRouteHandler);
 app.get("/meta/records", { preHandler: authMiddleware }, getMetaRecordsRouteHandler);
 app.get("/moderation/:playerId", { preHandler: authMiddleware }, getModerationStateRouteHandler);

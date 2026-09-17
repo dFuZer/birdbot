@@ -66,12 +66,14 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             discord_user_id: string | null;
             discord_avatar_hash: string | null;
             account_name: string;
+            game_recap_id: string | null;
         }[];
 
         const bestScores: Results = await prisma.$queryRaw`
             SELECT l.player_id,
                 l.score,
                 l.rank,
+                l.game_recap_id,
                 p.xp,
                 wu.oauth_identifier AS discord_user_id,
                 wu.oauth_avatar AS discord_avatar_hash,
@@ -115,6 +117,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
                 rank: score.rank,
                 xp: getLevelDataFromXp(score.xp),
                 avatarUrl: getDiscordAvatarUrl(score.discord_user_id, score.discord_avatar_hash),
+                recapId: score.game_recap_id,
             })),
             maxPage,
         };
