@@ -132,11 +132,11 @@ The older Croco.games bot archive lives under `archive/BBV7` for historical refe
 
 #### Safe admin commands (DB staff)
 
-- `/reconnect` — reconnect the current room sockets
+- `/reconnectbot` — reconnect the current room sockets
 - `/health` — room + API status
 - `/staff` — add/remove/show admins and automods
-- `/givefeathers`, `/givexp`, `/setxp`, `/suppress`, `/getid`, `/creatorid`
-- `/broadcast`, `/rooms`, `/destroyallrooms`, `/diag`
+- `/givefeathers`, `/givexp`, `/setxp`, `/suppress`, `/playerid`, `/creatorid`
+- `/broadcast`, `/listrooms`, `/destroyallrooms`, `/dictionaryqueue`
 
 Destructive BBV7 reload/cache-wipe and profile-file delete flows are intentionally not ported.
 

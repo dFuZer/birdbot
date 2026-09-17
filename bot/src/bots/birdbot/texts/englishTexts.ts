@@ -72,14 +72,17 @@ export const englishTexts = {
         news: { description: "Shows the latest published BirdBot news." },
         trust: { description: "Administrates API-backed reviewer trust state." },
         blacklist: { description: "Administrates API-backed room blacklist state." },
-        connect: {
+        loginHelp: {
             description: "Explains how to log in to jklm.fun.",
             result: "To connect to jklm.fun, open https://jklm.fun, click your nickname at the top right, and select Twitch or Discord.",
         },
+        reconnectBot: { description: "Reconnects BirdBot to the current room." },
+        playerId: { description: "Shows a player's account, profile, and internal IDs." },
+        dictionaryQueue: { description: "Shows the words queued for French dictionary diagnostics." },
         admin: {
             creatorId: "Room creator auth id: {{id}}",
             reconnecting: "Reconnecting this room...",
-            getId: "Match: {{account}} / {{username}} ({{playerId}})",
+            playerId: "Match: {{account}} / {{username}} ({{playerId}})",
             suppressUsage: "Usage: /suppress [player] [reason?]",
             suppressResult: "Suppressed {{player}}: {{suppressed}}",
             giveFeathersUsage: "Usage: /givefeathers [player] [amount]",
@@ -194,10 +197,10 @@ export const englishTexts = {
         },
         changeBonusAlphabet: {
             description:
-                "Changes the bonus alphabet. Use /bl default to restore language defaults, /bl reset to clear then set letters, or /bl a:1 b:0 to override letters.",
+                "Changes the bonus alphabet. Use /bonusalphabet default to restore language defaults, /bonusalphabet reset to clear then set letters, or /bonusalphabet a:1 b:0 to override letters.",
             setting: "Changing bonus letters...",
             invalidFormat:
-                "$t(error.intro) Invalid format. Examples: /bl default — /bl a:1 z:0 — /bl reset q:1",
+                "$t(error.intro) Invalid format. Examples: /bonusalphabet default — /bonusalphabet a:1 z:0 — /bonusalphabet reset q:1",
             invalidRange: "$t(error.intro) Letter counts must be between 0 and 99.",
         },
         destroyRoom: {
@@ -283,8 +286,8 @@ export const englishTexts = {
             tokenNotFound: "$t(error.intro) The token is invalid or expired.",
             success: "Your Discord account has been linked to your jklm.fun account. You can now use the website features.",
         },
-        test: {
-            description: "Test command for admins.",
+        testWord: {
+            description: "Queues one or more words for dictionary QA.",
         },
     },
     general: {

@@ -21,15 +21,15 @@ function reportError(ctx: CommandHandlerCtx, error: unknown): void {
     ctx.utils.sendChatMessage(t("error.api.inaccessible", { lng: l(ctx) }), "error");
 }
 
-const connectCommand = c({
-    id: "connect",
-    aliases: ["connect"],
-    usageDesc: "/connect",
-    exampleUsage: "/connect",
+const loginHelpCommand = c({
+    id: "loginHelp",
+    aliases: ["loginhelp", "connect"],
+    usageDesc: "/loginhelp",
+    exampleUsage: "/loginhelp",
     accessibleInRound: true,
     allowedFromWordInput: true,
     handler: (ctx) => {
-        ctx.utils.sendChatMessage(t("command.connect.result", { lng: l(ctx) }), "info");
+        ctx.utils.sendChatMessage(t("command.loginHelp.result", { lng: l(ctx) }), "info");
     },
 });
 
@@ -51,10 +51,11 @@ const creatorIdCommand = c({
     },
 });
 
-const reconnectCommand = c({
-    id: "reconnect",
-    aliases: ["reconnect", "reco"],
-    usageDesc: "/reconnect",
+const reconnectBotCommand = c({
+    id: "reconnectBot",
+    aliases: ["reconnectbot", "reconnect", "reco"],
+    usageDesc: "/reconnectbot",
+    exampleUsage: "/reconnectbot",
     adminRequired: true,
     hidden: true,
     accessibleInRound: true,
@@ -64,11 +65,11 @@ const reconnectCommand = c({
     },
 });
 
-const getIdCommand = c({
-    id: "getId",
-    aliases: ["getid"],
-    usageDesc: "/getid [player]",
-    exampleUsage: "/getid dfuzer",
+const playerIdCommand = c({
+    id: "playerId",
+    aliases: ["playerid", "getid"],
+    usageDesc: "/playerid [player]",
+    exampleUsage: "/playerid dfuzer",
     adminRequired: true,
     hidden: true,
     accessibleInRound: true,
@@ -81,7 +82,7 @@ const getIdCommand = c({
         try {
             const player = await BirdBotParityApiService.resolvePlayer(query);
             ctx.utils.sendChatMessage(
-                t("command.admin.getId", {
+                t("command.admin.playerId", {
                     account: player.playerAccountName,
                     playerId: player.playerId,
                     username: player.playerUsername ?? "-",
@@ -304,11 +305,12 @@ const broadcastCommand = c({
     },
 });
 
-const diagnosticCommand = c({
-    id: "diagnostic",
-    aliases: ["diag", "diagnostic"],
+const dictionaryQueueCommand = c({
+    id: "dictionaryQueue",
+    aliases: ["dictionaryqueue", "diag", "diagnostic"],
     adminRequired: true,
-    usageDesc: "/diag",
+    usageDesc: "/dictionaryqueue",
+    exampleUsage: "/dictionaryqueue",
     hidden: true,
     accessibleInRound: true,
     handler: (ctx) => {
@@ -351,8 +353,9 @@ const destroyAllRoomsCommand = c({
 
 const showAllRoomsCommand = c({
     id: "showAllRooms",
-    aliases: ["rooms", "roomlist", "listrooms", "listroom"],
-    usageDesc: "/rooms",
+    aliases: ["listrooms", "rooms", "roomlist", "listroom"],
+    usageDesc: "/listrooms",
+    exampleUsage: "/listrooms",
     adminRequired: true,
     hidden: true,
     accessibleInRound: true,
@@ -437,17 +440,17 @@ const staffCommand = c({
 });
 
 export const birdBotAdminCommands: Command[] = [
-    connectCommand,
+    loginHelpCommand,
     creatorIdCommand,
-    reconnectCommand,
-    getIdCommand,
+    reconnectBotCommand,
+    playerIdCommand,
     suppressCommand,
     giveFeathersCommand,
     giveXpCommand,
     setXpCommand,
     healthCommand,
     broadcastCommand,
-    diagnosticCommand,
+    dictionaryQueueCommand,
     destroyAllRoomsCommand,
     showAllRoomsCommand,
     staffCommand,

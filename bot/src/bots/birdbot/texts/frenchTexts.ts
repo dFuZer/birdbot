@@ -80,14 +80,17 @@ export const frenchTexts = {
         news: { description: "Donne les actualités les plus récentes du bot." },
         trust: { description: "Permet d'administrer la trust list via l'API." },
         blacklist: { description: "Permet d'administrer la blacklist via l'API." },
-        connect: {
+        loginHelp: {
             description: "Explique comment se connecter à JKLM.fun.",
             result: "Pour se connecter à JKLM.fun, aller sur la page principale du site sur jklm.fun, puis cliquez sur votre pseudo en haut à droite et sélectionnez Twitch ou Discord.",
         },
+        reconnectBot: { description: "Reconnecte BirdBot à la room actuelle." },
+        playerId: { description: "Affiche les identifiants de compte, de profil et internes d'un joueur." },
+        dictionaryQueue: { description: "Affiche les mots en attente de diagnostic du dictionnaire français." },
         admin: {
             creatorId: "Auth id du créateur de la room: {{id}}",
             reconnecting: "Reconnexion de cette room...",
-            getId: "Correspondance: {{account}} / {{username}} ({{playerId}})",
+            playerId: "Correspondance: {{account}} / {{username}} ({{playerId}})",
             suppressUsage: "Usage: /suppress [joueur] [raison ?]",
             suppressResult: "Suppression de {{player}}: {{suppressed}}",
             giveFeathersUsage: "Usage: /givefeathers [joueur] [montant]",
@@ -206,10 +209,10 @@ export const frenchTexts = {
         },
         changeBonusAlphabet: {
             description:
-                "Change l'alphabet bonus. /bl default pour les valeurs par défaut, /bl reset pour tout remettre à 0 puis définir, ou /bl a:1 b:0 pour modifier des lettres.",
+                "Change l'alphabet bonus. /bonusalphabet default pour les valeurs par défaut, /bonusalphabet reset pour tout remettre à 0 puis définir, ou /bonusalphabet a:1 b:0 pour modifier des lettres.",
             setting: "Changement des règles...",
             invalidFormat:
-                "$t(error.intro) Format invalide. Usage (exemple): /bl a:1 b:2 c:3 d:4   -   Usage (exemple 2): /bl reset a:10   -   /bl default",
+                "$t(error.intro) Format invalide. Usage (exemple): /bonusalphabet a:1 b:2 c:3 d:4   -   Usage (exemple 2): /bonusalphabet reset a:10   -   /bonusalphabet default",
             invalidRange: "$t(error.intro) La valeur pour chaque lettre doit être inférieure à 100 et supérieure ou égale à 0.",
         },
         destroyRoom: {
@@ -296,8 +299,8 @@ export const frenchTexts = {
             success:
                 "Votre compte Discord a été relié à votre compte jklm.fun. Vous pouvez maintenant utiliser les fonctionnalités du site.",
         },
-        test: {
-            description: "Commande de test pour les admins.",
+        testWord: {
+            description: "Ajoute un ou plusieurs mots à la file de contrôle qualité du dictionnaire.",
         },
     },
     general: {

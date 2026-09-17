@@ -73,14 +73,17 @@ export const portugueseTexts = {
         news: { description: "Mostra as últimas notícias publicadas." },
         trust: { description: "Administra a confiança dos revisores pela API." },
         blacklist: { description: "Administra a lista negra de salas pela API." },
-        connect: {
+        loginHelp: {
             description: "Explica como entrar no jklm.fun.",
             result: "Para se conectar ao jklm.fun, abra https://jklm.fun, clique no seu apelido no canto superior direito e escolha Twitch ou Discord.",
         },
+        reconnectBot: { description: "Reconecta o BirdBot à sala atual." },
+        playerId: { description: "Mostra os identificadores de conta, perfil e interno de um jogador." },
+        dictionaryQueue: { description: "Mostra as palavras na fila de diagnóstico do dicionário francês." },
         admin: {
             creatorId: "Auth id do criador da sala: {{id}}",
             reconnecting: "Reconectando esta sala...",
-            getId: "Correspondência: {{account}} / {{username}} ({{playerId}})",
+            playerId: "Correspondência: {{account}} / {{username}} ({{playerId}})",
             suppressUsage: "Uso: /suppress [jogador] [motivo?]",
             suppressResult: "Suprimido {{player}}: {{suppressed}}",
             giveFeathersUsage: "Uso: /givefeathers [jogador] [quantidade]",
@@ -195,10 +198,10 @@ export const portugueseTexts = {
         },
         changeBonusAlphabet: {
             description:
-                "Muda o alfabeto bônus. /bl default para os valores padrão, /bl reset para zerar e depois definir, ou /bl a:1 b:0 para alterar letras.",
+                "Muda o alfabeto bônus. /bonusalphabet default para os valores padrão, /bonusalphabet reset para zerar e depois definir, ou /bonusalphabet a:1 b:0 para alterar letras.",
             setting: "Alterando as letras bônus...",
             invalidFormat:
-                "$t(error.intro) Formato inválido. Exemplos: /bl default — /bl a:1 z:0 — /bl reset q:1",
+                "$t(error.intro) Formato inválido. Exemplos: /bonusalphabet default — /bonusalphabet a:1 z:0 — /bonusalphabet reset q:1",
             invalidRange: "$t(error.intro) As contagens de letras devem estar entre 0 e 99.",
         },
         destroyRoom: {
@@ -285,8 +288,8 @@ export const portugueseTexts = {
             success:
                 "Sua conta Discord foi relacionada à sua conta jklm.fun. Agora você pode usar as funcionalidades do site.",
         },
-        test: {
-            description: "Comando de teste para admins.",
+        testWord: {
+            description: "Adiciona uma ou mais palavras à fila de controle de qualidade do dicionário.",
         },
     },
     general: {

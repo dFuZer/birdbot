@@ -79,14 +79,17 @@ export const spanishTexts = {
         news: { description: "Muestra las últimas noticias publicadas." },
         trust: { description: "Administra la confianza de revisores mediante la API." },
         blacklist: { description: "Administra la lista negra de salas mediante la API." },
-        connect: {
+        loginHelp: {
             description: "Explica cómo iniciar sesión en jklm.fun.",
             result: "Para conectarte a jklm.fun, abre https://jklm.fun, haz clic en tu apodo arriba a la derecha y elige Twitch o Discord.",
         },
+        reconnectBot: { description: "Reconecta BirdBot a la sala actual." },
+        playerId: { description: "Muestra los identificadores de cuenta, perfil e interno de un jugador." },
+        dictionaryQueue: { description: "Muestra las palabras en cola para diagnosticar el diccionario francés." },
         admin: {
             creatorId: "Auth id del creador de la sala: {{id}}",
             reconnecting: "Reconectando esta sala...",
-            getId: "Coincidencia: {{account}} / {{username}} ({{playerId}})",
+            playerId: "Coincidencia: {{account}} / {{username}} ({{playerId}})",
             suppressUsage: "Uso: /suppress [jugador] [motivo?]",
             suppressResult: "Suprimido {{player}}: {{suppressed}}",
             giveFeathersUsage: "Uso: /givefeathers [jugador] [cantidad]",
@@ -201,10 +204,10 @@ export const spanishTexts = {
         },
         changeBonusAlphabet: {
             description:
-                "Cambia el alfabeto bonus. /bl default para los valores por defecto, /bl reset para poner todo a 0 y luego definir, o /bl a:1 b:0 para modificar letras.",
+                "Cambia el alfabeto bonus. /bonusalphabet default para los valores por defecto, /bonusalphabet reset para poner todo a 0 y luego definir, o /bonusalphabet a:1 b:0 para modificar letras.",
             setting: "Cambiando las letras bonus...",
             invalidFormat:
-                "$t(error.intro) Formato inválido. Ejemplos: /bl default — /bl a:1 z:0 — /bl reset q:1",
+                "$t(error.intro) Formato inválido. Ejemplos: /bonusalphabet default — /bonusalphabet a:1 z:0 — /bonusalphabet reset q:1",
             invalidRange: "$t(error.intro) Los contadores de letras deben estar entre 0 y 99.",
         },
         destroyRoom: {
@@ -292,8 +295,8 @@ export const spanishTexts = {
             success:
                 "Tu cuenta Discord ha sido relacionada con tu cuenta jklm.fun. Ahora puedes usar las funcionalidades del sitio.",
         },
-        test: {
-            description: "Comando de prueba para admins.",
+        testWord: {
+            description: "Añade una o más palabras a la cola de control de calidad del diccionario.",
         },
     },
     general: {

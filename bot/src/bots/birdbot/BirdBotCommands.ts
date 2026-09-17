@@ -1353,9 +1353,9 @@ const showTimeCommand = c({
 
 const changeBonusAlphabetCommand = c({
     id: "changeBonusAlphabet",
-    aliases: ["bl", "changebl", "changebonusalphabet"],
-    usageDesc: "/bl default - /bl reset - /bl a:1 b:0 - /bl reset x:1",
-    exampleUsage: "/bl default - /bl a:2 z:1 - /bl reset q:1",
+    aliases: ["bonusalphabet", "bl", "changebl", "changebonusalphabet"],
+    usageDesc: "/bonusalphabet default - /bonusalphabet reset - /bonusalphabet a:1 b:0 - /bonusalphabet reset x:1",
+    exampleUsage: "/bonusalphabet default - /bonusalphabet a:2 z:1 - /bonusalphabet reset q:1",
     roomCreatorRequired: true,
     accessibleInRound: false,
     handler: (ctx) => {
@@ -1546,10 +1546,10 @@ const getDefinitionCommand = c({
 }) satisfies Command;
 
 const testWordCommand = c({
-    id: "test",
-    aliases: ["test"],
-    usageDesc: "/test [word]",
-    exampleUsage: "/test example",
+    id: "testWord",
+    aliases: ["testword", "test"],
+    usageDesc: "/testword [word]",
+    exampleUsage: "/testword example",
     accessibleInRound: true,
     allowedFromWordInput: true,
     handler: async (ctx) => {
