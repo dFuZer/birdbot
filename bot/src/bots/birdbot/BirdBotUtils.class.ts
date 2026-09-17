@@ -4,13 +4,7 @@ import { CommandOrEventCtx } from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import { defaultBonusAlphabetsByDictionaryId, dictionaryManifests } from "../../lib/constants/gameConstants";
-import type {
-    Chatter,
-    CustomBonusAlphabet,
-    DictionaryId,
-    DictionaryLessGameRules,
-    GameRules,
-} from "../../lib/types/gameTypes";
+import type { Chatter, CustomBonusAlphabet, DictionaryId, DictionaryLessGameRules, GameRules } from "../../lib/types/gameTypes";
 import { bonusAlphabetToLetters } from "../../lib/types/gameTypes";
 import type { BotEventHandlerFn, EventCtx } from "../../lib/types/libEventTypes";
 import { birdbotLanguageToDictionaryId, birdbotModeRules, dictionaryIdToBirdbotLanguage, recordsUtils } from "./BirdBotConstants";
@@ -27,6 +21,7 @@ import {
     BirdBotWordData,
     DictionaryResource,
     ExperienceData,
+    getBirdBotRoomKind,
     PlayerGameScores,
 } from "./BirdBotTypes";
 import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
@@ -66,9 +61,8 @@ export default class BirdBotUtils {
         if (currentPlayer.peerId !== ctx.room.roomState.myPeerId) return;
         const myPlayer = currentPlayer;
         const history = ctx.room.roomState.wordHistory;
-        const prompt = ctx.room.roomState.gameData!.milestone.name === "round"
-            ? ctx.room.roomState.gameData!.milestone.syllable
-            : "";
+        const prompt =
+            ctx.room.roomState.gameData!.milestone.name === "round" ? ctx.room.roomState.gameData!.milestone.syllable : "";
         if (!prompt) return;
 
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
@@ -108,7 +102,7 @@ export default class BirdBotUtils {
         dictionary: string[],
         letterRarityScores: Record<string, number>,
         dictionaryId: DictionaryId,
-        n: number
+        n: number,
     ): { word: string; score: number }[] => {
         const necessaryLetters = dictionaryManifests[dictionaryId].bonusLetters;
         return dictionary
@@ -143,7 +137,7 @@ export default class BirdBotUtils {
     public static getTopSnWords = (
         dictionary: string[],
         syllablesCount: Record<string, number>,
-        n: number
+        n: number,
     ): { word: string; score: number }[] => {
         return dictionary
             .map((word) => {
@@ -171,7 +165,7 @@ export default class BirdBotUtils {
                 path: "BirdBotUtils.class.ts",
             });
             throw new Error(
-                `Chatter ${peerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`
+                `Chatter ${peerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`,
             );
         }
         const timeSurvived = gameRecap.diedAt - ctx.room.roomState.roundStartTimestamp;
@@ -239,7 +233,7 @@ export default class BirdBotUtils {
                     t("general.playerStats.diedNoWords", {
                         username: gamer.nickname,
                         lng: l(ctx),
-                    })
+                    }),
                 );
             } else {
                 if (data.oldXpData.level < data.newXpData.level) {
@@ -256,7 +250,7 @@ export default class BirdBotUtils {
                             oldTotalLevelXp: data.oldXpData.totalLevelXp,
                             newTotalLevelXp: data.newXpData.totalLevelXp,
                             lng: l(ctx),
-                        })
+                        }),
                     );
                 } else {
                     ctx.utils.sendChatMessage(
@@ -266,7 +260,7 @@ export default class BirdBotUtils {
                             scores,
                             gainedXp: data.newXpData.xp - data.oldXpData.xp,
                             lng: l(ctx),
-                        })
+                        }),
                     );
                 }
             }
@@ -337,11 +331,11 @@ export default class BirdBotUtils {
     };
 
     public static registerGameRecap = async (gameRecap: BirdBotGameRecap) => {
-        const idempotencyKey = BirdBotApiWriteQueue.makeRecapKey(
-            gameRecap.game.id,
-            gameRecap.player.accountName,
-        );
-        const res = (await BirdBotApiWriteQueue.enqueueGameRecap(gameRecap as unknown as Record<string, unknown>, idempotencyKey)) as {
+        const idempotencyKey = BirdBotApiWriteQueue.makeRecapKey(gameRecap.game.id, gameRecap.player.accountName);
+        const res = (await BirdBotApiWriteQueue.enqueueGameRecap(
+            gameRecap as unknown as Record<string, unknown>,
+            idempotencyKey,
+        )) as {
             oldXpData: ExperienceData;
             newXpData: ExperienceData;
         } | null;
@@ -351,20 +345,12 @@ export default class BirdBotUtils {
     public static registerWord = async (wordData: BirdBotWordData, turnKey = "unknown") => {
         if (!wordData.player.accountName) return null;
         if (await BirdBotModerationService.isBlacklisted(wordData.player.accountName)) return null;
-        const idempotencyKey = BirdBotApiWriteQueue.makeWordKey(
-            wordData.game.id,
-            turnKey,
-            wordData.submitResult,
-        );
+        const idempotencyKey = BirdBotApiWriteQueue.makeWordKey(wordData.game.id, turnKey, wordData.submitResult);
         BirdBotApiWriteQueue.enqueueWord({ ...wordData, idempotencyKey });
         return null;
     };
 
-    public static queueSuccessfulWordRegistration = (
-        ctx: EventCtx,
-        turnKey: string,
-        data: Omit<BirdBotWordData, "flip">
-    ) => {
+    public static queueSuccessfulWordRegistration = (ctx: EventCtx, turnKey: string, data: Omit<BirdBotWordData, "flip">) => {
         if (!BirdBotGameplayStateService.isScoreEligible(ctx)) return;
         if (!data.player.accountName) return;
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
@@ -428,7 +414,7 @@ export default class BirdBotUtils {
     };
 
     public static isMainRoom = (ctx: CommandOrEventCtx) => {
-        return ctx.room.constantRoomData.roomCreatorAuthId === null;
+        return getBirdBotRoomKind(ctx.room.constantRoomData.targetConfig, ctx.room.constantRoomData.roomCreatorAuthId) === "main";
     };
 
     public static bonusAlphabetsEqual = (a: CustomBonusAlphabet | undefined, b: CustomBonusAlphabet | undefined) => {
@@ -556,7 +542,7 @@ export default class BirdBotUtils {
                                 lng: l(ctx),
                             }),
                             lng: l(ctx),
-                        })
+                        }),
                     );
                 }
                 foundCorrespondingGameMode = true;
@@ -630,7 +616,7 @@ export default class BirdBotUtils {
     }) => {
         if (recordType) {
             return await this.getJsonFromApi<ApiResponseBestScoresSpecificRecord>(
-                `/records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`
+                `/records?lang=${language}&mode=${gameMode}&page=${page ?? 1}&perPage=5&record=${recordType}`,
             );
         } else {
             return await this.getJsonFromApi<ApiResponseAllRecords>(`/records?lang=${language}&mode=${gameMode}`);
@@ -694,7 +680,7 @@ export default class BirdBotUtils {
         word: string,
         letterRarityScores: Record<string, number>,
         requiredLetters: string,
-        placedLetters: string
+        placedLetters: string,
     ) => {
         const requiredLettersSet = new Set(requiredLetters);
         const placedLettersSet = new Set(placedLetters);
@@ -847,7 +833,7 @@ export default class BirdBotUtils {
             word,
             dictionaryResource.metadata.letterRarityScores,
             dictionaryManifests[roomDictionaryId].bonusLetters,
-            ""
+            "",
         );
         if (flipScore > dictionaryResource.metadata.topFlipWords[dictionaryResource.metadata.topFlipWords.length - 1][1]) {
             dictionaryResource.metadata.topFlipWords.push([word, flipScore]);
@@ -884,7 +870,7 @@ export default class BirdBotUtils {
         ctx: EventCtx,
         roomLanguage: BirdBotLanguage,
         wordIndex: number,
-        word: string
+        word: string,
     ) => {
         const dictionaryResource = ctx.bot.getResource<DictionaryResource>(`dictionary-${roomLanguage}`);
         dictionaryResource.resource.splice(wordIndex, 1);
@@ -1056,7 +1042,7 @@ export default class BirdBotUtils {
                     count: x[1],
                     formattedScore: recordsUtils[x[0]].format(x[1]),
                     lng,
-                })
+                }),
             )
             .join(" — ");
     };

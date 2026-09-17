@@ -67,6 +67,8 @@ export type BirdBotTrainingState = {
     list: BirdBotTrainingListState | null;
 };
 
+export type BirdBotRoomKind = "main" | "owned" | "ephemeral";
+
 export type BirdBotSupportedDictionaryId = (typeof birdbotSupportedDictionaryIds)[number];
 
 export type PlayerGameScores = {
@@ -108,7 +110,19 @@ export type GlobalGameScores = {
 
 export type BirdbotRoomTargetConfig = {
     birdbotGameMode: BirdBotGameMode;
+    /**
+     * Optional for persisted rooms created before room kinds were introduced.
+     * A missing kind is inferred from roomCreatorAuthId when the room is loaded.
+     */
+    roomKind?: BirdBotRoomKind;
+    /** Null while a game is active, otherwise the beginning of the idle window. */
+    ephemeralIdleSince?: number | null;
 } & RoomTargetConfig;
+
+export function getBirdBotRoomKind(targetConfig: RoomTargetConfig, roomCreatorAuthId: string | null): BirdBotRoomKind {
+    const configuredKind = (targetConfig as BirdbotRoomTargetConfig).roomKind;
+    return configuredKind ?? (roomCreatorAuthId === null ? "main" : "owned");
+}
 
 export type BirdBotRoomMetadata = {
     gameMode: BirdBotGameMode | "custom";

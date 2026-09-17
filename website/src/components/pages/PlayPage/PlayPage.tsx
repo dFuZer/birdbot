@@ -1,11 +1,14 @@
 "use client";
 
 import { katibehFont } from "@/app/fonts";
-import { LanguageEnum, getTimeDisplayFromMilliseconds } from "@/lib/records";
-import { ArrowPathIcon, ClockIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import { Button } from "@/components/ui/button";
+import { LanguageEnum, ModesEnum, getTimeDisplayFromMilliseconds } from "@/lib/records";
+import { ArrowPathIcon, ClockIcon, PlusCircleIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Flag from "../common/Flag";
+import LanguageSelect from "../common/LanguageSelect";
+import ModeSelect from "../common/ModeSelect";
 
 export interface IRoom {
     roomName: string;
@@ -54,6 +57,88 @@ function RoomCard({ room }: { room: IRoom }) {
     );
 }
 
+function CreateRoomCard({ onRoomCreated }: { onRoomCreated: () => void }) {
+    const [language, setLanguage] = useState<LanguageEnum>("en");
+    const [mode, setMode] = useState<ModesEnum>("regular");
+    const [isCreating, setIsCreating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [createdRoomUrl, setCreatedRoomUrl] = useState<string | null>(null);
+
+    async function createRoom() {
+        setError(null);
+        setCreatedRoomUrl(null);
+        setIsCreating(true);
+
+        try {
+            const response = await fetch("/api/create-ephemeral-room", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ language, mode }),
+            });
+            const payload = (await response.json().catch(() => null)) as { roomCode?: unknown; message?: unknown } | null;
+            if (!response.ok || typeof payload?.roomCode !== "string") {
+                throw new Error(
+                    typeof payload?.message === "string" ? payload.message : "Unable to create a room. Please try again.",
+                );
+            }
+            const roomUrl = `https://jklm.fun/${payload.roomCode}`;
+            const roomTab = window.open(roomUrl, "_blank");
+            if (roomTab) {
+                roomTab.opener = null;
+            } else {
+                setCreatedRoomUrl(roomUrl);
+                setError("The room was created, but the new tab was blocked.");
+            }
+            onRoomCreated();
+        } catch (requestError) {
+            setError(requestError instanceof Error ? requestError.message : "Unable to create a room. Please try again.");
+        } finally {
+            setIsCreating(false);
+        }
+    }
+
+    return (
+        <section className="border-primary-200 bg-primary-50/40 flex flex-col rounded-xl border p-4 shadow-sm">
+            <div className="flex items-center gap-2">
+                <PlusCircleIcon className="text-primary-700 size-6" />
+                <h2 className="text-lg font-semibold">Create a temporary room</h2>
+            </div>
+            <p className="mt-2 text-sm text-neutral-600">
+                The room closes after 20 minutes without a game. Connect to JKLM.fun and type{" "}
+                <span className="whitespace-nowrap">/b</span> to create permanent rooms.
+            </p>
+            <div className="mt-4 flex gap-2">
+                <div className="min-w-0 flex-1 [&>button]:w-full">
+                    <LanguageSelect language={language} onChangeLanguage={setLanguage} />
+                </div>
+                <div className="min-w-0 flex-1 [&>button]:w-full">
+                    <ModeSelect mode={mode} onChangeMode={setMode} />
+                </div>
+            </div>
+            <Button className="mt-4 w-full" variant="primary" disabled={isCreating} onClick={createRoom}>
+                {isCreating ? (
+                    <>
+                        <ArrowPathIcon className="size-4 animate-spin" />
+                        Creating room…
+                    </>
+                ) : (
+                    "Create and open room"
+                )}
+            </Button>
+            {error && (
+                <p className="mt-3 text-sm text-red-700" role="alert">
+                    {error}{" "}
+                    {createdRoomUrl && (
+                        <a className="font-semibold underline" href={createdRoomUrl} target="_blank" rel="noreferrer">
+                            Open room
+                        </a>
+                    )}
+                </p>
+            )}
+        </section>
+    );
+}
+
 const fetchRooms = async () => {
     const response = await fetch("/api/get-room-list", {
         method: "GET",
@@ -93,21 +178,22 @@ export default function PlayPage() {
         rooms: [],
     });
 
+    const refreshRooms = useCallback(() => {
+        setState((prev) => ({ ...prev, isLoading: true }));
+        void fetchRooms()
+            .then((data) => {
+                setState(() => ({ rooms: data, isError: false, isLoading: false }));
+            })
+            .catch(() => {
+                setState(() => ({ isError: true, isLoading: false, rooms: [] }));
+            });
+    }, []);
+
     useEffect(() => {
-        function refreshRooms() {
-            setState((prev) => ({ ...prev, isLoading: true }));
-            fetchRooms()
-                .then((data) => {
-                    setState(() => ({ rooms: data, isError: false, isLoading: false }));
-                })
-                .catch(() => {
-                    setState(() => ({ isError: true, isLoading: false, rooms: [] }));
-                });
-        }
         refreshRooms();
         const interval = setInterval(refreshRooms, 4000);
         return () => clearInterval(interval);
-    }, []);
+    }, [refreshRooms]);
 
     return (
         <div className="adaptivePadding my-20">
@@ -120,17 +206,15 @@ export default function PlayPage() {
                     </div>
                 )}
             </div>
-            {state.isError ? (
+            {state.isError && (
                 <div className="text-center text-neutral-950">
                     <p>Error loading rooms. The bot may be down.</p>
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {state.rooms.map((room) => (
-                        <RoomCard key={room.roomCode} room={room} />
-                    ))}
-                </div>
             )}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {!state.isError && state.rooms.map((room) => <RoomCard key={room.roomCode} room={room} />)}
+                <CreateRoomCard onRoomCreated={refreshRooms} />
+            </div>
         </div>
     );
 }

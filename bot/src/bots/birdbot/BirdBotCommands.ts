@@ -666,7 +666,12 @@ const trainCommand = c({
             }
             if (record === "previous_syllable") {
                 applyList(
-                    { source: "dictionary", sort: "shuffle", conditions: [{ type: "previous_syllable" }], regexSources: [] },
+                    {
+                        source: "dictionary",
+                        sort: "shuffle",
+                        conditions: [{ type: "previous_syllable" }],
+                        regexSources: [],
+                    },
                     BirdBotTrainingService.sourceSize(ctx, "dictionary"),
                     "shuffle",
                     "dictionary",
@@ -978,9 +983,7 @@ const searchWordsCommand = c({
             const exactMatch = activeRoomPrompts.some((prompt) => word.includes(prompt));
             if (!exactMatch) {
                 const lowercaseWord = word.toLowerCase();
-                const lowercasePrompt = activeRoomPrompts.find((prompt) =>
-                    lowercaseWord.includes(prompt.toLowerCase()),
-                );
+                const lowercasePrompt = activeRoomPrompts.find((prompt) => lowercaseWord.includes(prompt.toLowerCase()));
                 if (lowercasePrompt) {
                     caseInsensitiveOnlyMatches++;
                     if (caseInsensitiveOnlySamples.length < 5) {
@@ -1157,8 +1160,8 @@ const playerProfileCommand = c({
                         return (
                             (performance.mode !== "regular"
                                 ? `[${t(`lib.mode.${performance.mode}`, {
-                                    lng: l(ctx),
-                                })}] `
+                                      lng: l(ctx),
+                                  })}] `
                                 : "") +
                             t(`lib.recordType.${performance.record_type}.score`, {
                                 context: "specific",
@@ -1195,9 +1198,7 @@ const playerRecordsCommand = c({
             dictionaryIdToBirdbotLanguage[ctx.room.roomState.gameData!.rules.dictionaryId as BirdBotSupportedDictionaryId];
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         const language =
-            BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases) ??
-            currentRoomLanguage ??
-            defaultLanguage;
+            BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases) ?? currentRoomLanguage ?? defaultLanguage;
         const requestedMode = findTargetGameMode(ctx.params);
         const mode = requestedMode ?? (roomMetadata.gameMode === "custom" ? defaultMode : roomMetadata.gameMode);
         const playerData = await fetchPlayerProfile(ctx, targetUsername, { language, mode });
@@ -1228,7 +1229,9 @@ const playerRecordsCommand = c({
             .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
             .map((record) => {
                 const recordUtils = recordsUtils[record.record_type];
-                return `${t(`lib.recordType.${record.record_type}.recordName`, { lng: l(ctx) })}: ${recordUtils.format(record.score)}`;
+                return `${t(`lib.recordType.${record.record_type}.recordName`, { lng: l(ctx) })}: ${recordUtils.format(
+                    record.score,
+                )}`;
             })
             .join(" — ");
 
@@ -2053,6 +2056,7 @@ const createRoomCommand = c({
             targetConfig: {
                 dictionaryId: targetDictionaryId,
                 birdbotGameMode: targetMode ?? defaultMode,
+                roomKind: "owned",
                 isPublic: !isPrivate,
                 roomName,
                 botName,

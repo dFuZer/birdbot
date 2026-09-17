@@ -2,22 +2,20 @@ import Bot, { PeriodicTask } from "../../lib/class/Bot.class";
 import Logger from "../../lib/class/Logger.class";
 import type Room from "../../lib/class/Room.class";
 import birdbotEventHandlers from "./BirdBotEventHandlers";
-import type { BirdBotLanguage, BirdbotRoomTargetConfig } from "./BirdBotTypes";
+import { type BirdBotLanguage, type BirdbotRoomTargetConfig, getBirdBotRoomKind } from "./BirdBotTypes";
 import BirdBotParityApiService from "./services/BirdBotParityApi.service";
 import BirdBotStaffSync from "./services/BirdBotStaffSync.service";
 
 export default class BirdBot extends Bot {
+    public static readonly MAX_EPHEMERAL_ROOMS = 15;
+
     public creatingRoomQueue: string[];
     public mainRoomLanguages: BirdBotLanguage[];
     private readonly creatingPermanentRoomDictionaryIds: Set<string>;
+    private creatingEphemeralRoomCount: number;
+    private readonly roomPersistenceQueues: Map<string, Promise<void>>;
 
-    constructor({
-        periodicTasks,
-        mainRoomLanguages,
-    }: {
-        periodicTasks?: PeriodicTask[];
-        mainRoomLanguages: BirdBotLanguage[];
-    }) {
+    constructor({ periodicTasks, mainRoomLanguages }: { periodicTasks?: PeriodicTask[]; mainRoomLanguages: BirdBotLanguage[] }) {
         super({
             handlers: birdbotEventHandlers,
             periodicTasks,
@@ -25,6 +23,8 @@ export default class BirdBot extends Bot {
         this.creatingRoomQueue = [];
         this.mainRoomLanguages = mainRoomLanguages;
         this.creatingPermanentRoomDictionaryIds = new Set();
+        this.creatingEphemeralRoomCount = 0;
+        this.roomPersistenceQueues = new Map();
         this.onRoomConnected = (room) => this.persistRoom(room);
         this.onRoomDestroyed = (room) => this.unpersistRoom(room);
     }
@@ -34,17 +34,21 @@ export default class BirdBot extends Bot {
         targetConfig,
         callback,
         errorCallback,
+        limitCallback,
     }: {
         targetConfig: BirdbotRoomTargetConfig;
         roomCreatorAuthId: string | null;
         callback?: (roomCode: string) => void;
         errorCallback?: () => void;
+        limitCallback?: () => void;
     }) {
+        const roomKind = getBirdBotRoomKind(targetConfig, roomCreatorAuthId);
+        targetConfig.roomKind = roomKind;
         const permanentRoomKey = targetConfig.dictionaryId;
-        if (roomCreatorAuthId === null) {
+        if (roomKind === "main") {
             const existingRoom = Object.values(this.rooms).find(
                 (room) =>
-                    room.constantRoomData.roomCreatorAuthId === null &&
+                    getBirdBotRoomKind(room.constantRoomData.targetConfig, room.constantRoomData.roomCreatorAuthId) === "main" &&
                     room.constantRoomData.targetConfig.dictionaryId === permanentRoomKey,
             );
             if (existingRoom || this.creatingPermanentRoomDictionaryIds.has(permanentRoomKey)) {
@@ -52,6 +56,13 @@ export default class BirdBot extends Bot {
                 return;
             }
             this.creatingPermanentRoomDictionaryIds.add(permanentRoomKey);
+        }
+        if (roomKind === "ephemeral") {
+            if (this.getEphemeralRoomCount() + this.creatingEphemeralRoomCount >= BirdBot.MAX_EPHEMERAL_ROOMS) {
+                limitCallback?.();
+                return;
+            }
+            this.creatingEphemeralRoomCount++;
         }
 
         try {
@@ -62,10 +73,28 @@ export default class BirdBot extends Bot {
                 errorCallback,
             });
         } finally {
-            if (roomCreatorAuthId === null) {
+            if (roomKind === "main") {
                 this.creatingPermanentRoomDictionaryIds.delete(permanentRoomKey);
             }
+            if (roomKind === "ephemeral") {
+                this.creatingEphemeralRoomCount--;
+            }
         }
+    }
+
+    public getEphemeralRoomCount(): number {
+        return Object.values(this.rooms).filter(
+            (room) =>
+                getBirdBotRoomKind(room.constantRoomData.targetConfig, room.constantRoomData.roomCreatorAuthId) === "ephemeral",
+        ).length;
+    }
+
+    public setEphemeralIdleSince(room: Room, idleSince: number | null): void {
+        const targetConfig = room.constantRoomData.targetConfig as BirdbotRoomTargetConfig;
+        if (getBirdBotRoomKind(targetConfig, room.constantRoomData.roomCreatorAuthId) !== "ephemeral") return;
+        if (targetConfig.ephemeralIdleSince === idleSince) return;
+        targetConfig.ephemeralIdleSince = idleSince;
+        void this.persistRoom(room);
     }
 
     public async rejoinPersistedRooms(): Promise<void> {
@@ -82,14 +111,14 @@ export default class BirdBot extends Bot {
         }
 
         for (const persisted of rooms) {
-            const alreadyJoined = Object.values(this.rooms).some(
-                (room) => room.constantRoomData.roomCode === persisted.roomCode,
-            );
+            const alreadyJoined = Object.values(this.rooms).some((room) => room.constantRoomData.roomCode === persisted.roomCode);
             if (alreadyJoined) continue;
             try {
+                const targetConfig = persisted.targetConfig as BirdbotRoomTargetConfig;
+                targetConfig.roomKind = getBirdBotRoomKind(targetConfig, persisted.creatorAuthId);
                 await this.joinRoom({
                     roomCode: persisted.roomCode,
-                    targetConfig: persisted.targetConfig as BirdbotRoomTargetConfig,
+                    targetConfig,
                     roomCreatorAuthId: persisted.creatorAuthId,
                     userToken: persisted.userToken,
                     serverUrl: persisted.serverUrl ?? undefined,
@@ -112,7 +141,19 @@ export default class BirdBot extends Bot {
         return Object.values(this.rooms).some((room) => room.constantRoomData.roomCode === roomCode);
     }
 
-    private async persistRoom(room: Room): Promise<void> {
+    public async persistRoom(room: Room): Promise<void> {
+        const roomCode = room.constantRoomData.roomCode;
+        const previousWrite = this.roomPersistenceQueues.get(roomCode) ?? Promise.resolve();
+        const nextWrite = previousWrite.then(() => this.persistRoomNow(room));
+        this.roomPersistenceQueues.set(roomCode, nextWrite);
+        await nextWrite.finally(() => {
+            if (this.roomPersistenceQueues.get(roomCode) === nextWrite) {
+                this.roomPersistenceQueues.delete(roomCode);
+            }
+        });
+    }
+
+    private async persistRoomNow(room: Room): Promise<void> {
         try {
             await BirdBotParityApiService.upsertBotRoom({
                 roomCode: room.constantRoomData.roomCode,
@@ -131,6 +172,7 @@ export default class BirdBot extends Bot {
     }
 
     private async unpersistRoom(room: Room): Promise<void> {
+        await this.roomPersistenceQueues.get(room.constantRoomData.roomCode);
         await this.dropPersistedRoom(room.constantRoomData.roomCode);
     }
 

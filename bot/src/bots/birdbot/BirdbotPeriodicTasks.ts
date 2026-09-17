@@ -8,8 +8,10 @@ import {
     BirdBotLanguage,
     BirdBotRoomMetadata,
     BirdBotSupportedDictionaryId,
+    BirdbotRoomTargetConfig,
     CacheableDictionaryMetadata,
     DictionaryResource,
+    getBirdBotRoomKind,
 } from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 import { t } from "./texts/BirdBotTextUtils";
@@ -53,7 +55,9 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
             const bot = ctx.bot as BirdBot;
             const currentMainRoomLanguages = Object.entries(bot.rooms)
                 .filter(([, room]) => {
-                    return room.constantRoomData.roomCreatorAuthId === null;
+                    return (
+                        getBirdBotRoomKind(room.constantRoomData.targetConfig, room.constantRoomData.roomCreatorAuthId) === "main"
+                    );
                 })
                 .map(([, room]) => {
                     return room.constantRoomData.targetConfig.dictionaryId;
@@ -74,10 +78,34 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                     targetConfig: {
                         dictionaryId: birdbotLanguageToDictionaryId[missingMainRoomLanguages[0]],
                         birdbotGameMode: "regular",
+                        roomKind: "main",
                         isPublic: true,
                         roomName: `🐤 BirdBot ${t(`lib.language.${missingMainRoomLanguages[0]}.flag`, { lng: "en" })}`,
                     },
                 });
+            }
+        },
+    },
+    {
+        intervalInMs: 30 * 1000,
+        setIntervalTimeout: undefined,
+        setTimeoutTimeout: undefined,
+        fn: (ctx) => {
+            const bot = ctx.bot as BirdBot;
+            const now = Date.now();
+            const maxIdleMs = 20 * 60 * 1000;
+            for (const room of Object.values(bot.rooms)) {
+                const targetConfig = room.constantRoomData.targetConfig as BirdbotRoomTargetConfig;
+                if (getBirdBotRoomKind(targetConfig, room.constantRoomData.roomCreatorAuthId) !== "ephemeral") {
+                    continue;
+                }
+                const idleSince = targetConfig.ephemeralIdleSince;
+                if (typeof idleSince !== "number" || now - idleSince < maxIdleMs) continue;
+                Logger.log({
+                    message: `Ephemeral room ${room.constantRoomData.roomCode} was idle for 20 minutes. Destroying...`,
+                    path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
+                });
+                Utilitary.destroyRoom(bot, room);
             }
         },
     },
@@ -141,7 +169,7 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                                 topFlipWords: dictionaryMetadata.topFlipWords,
                                 topSnWords: dictionaryMetadata.topSnWords,
                             } satisfies CacheableDictionaryMetadata),
-                        ].join("\n")
+                        ].join("\n"),
                     );
 
                     return;
