@@ -7,7 +7,7 @@ import { ArrowDownTrayIcon, ExclamationTriangleIcon } from "@heroicons/react/24/
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 
-const DEFAULT_MIN_WORDS = 20;
+const DEFAULT_MIN_WORDS = 500;
 
 const VarietyUnicityChart = dynamic(() => import("./VarietyUnicityChart"), {
     ssr: false,
@@ -17,13 +17,6 @@ const VarietyUnicityChart = dynamic(() => import("./VarietyUnicityChart"), {
 export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[] }) {
     const [query, setQuery] = useState("");
     const [minWords, setMinWords] = useState(DEFAULT_MIN_WORDS);
-
-    const maxWordsPlaced = useMemo(() => {
-        if (players.length === 0) {
-            return DEFAULT_MIN_WORDS;
-        }
-        return Math.max(DEFAULT_MIN_WORDS, ...players.map((player) => player.wordsPlaced));
-    }, [players]);
 
     const filteredPlayers = useMemo(() => {
         return players.filter((player) => player.wordsPlaced >= minWords);
@@ -65,9 +58,9 @@ export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[]
                     Minimum words placed: {minWords.toLocaleString()}
                     <input
                         type="range"
-                        min={1}
-                        max={maxWordsPlaced}
-                        value={Math.min(minWords, maxWordsPlaced)}
+                        min={100}
+                        max={10_000}
+                        value={minWords}
                         onChange={(event) => setMinWords(Number(event.target.value))}
                         className="accent-primary-600 h-9"
                     />
