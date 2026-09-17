@@ -50,7 +50,7 @@ export let postDiscordOAuthToken: RouteHandlerMethod = async function (req, res)
         return res.status(500).send({ message: "Failed to get user" });
     }
 
-    const userData: { id: string; username: string; avatar: string; global_name: string } = await userResponse.json();
+    const userData: { id: string; username: string; avatar: string | null; global_name: string } = await userResponse.json();
 
     const websiteUser: { id: string; oauth_identifier: string }[] = await prisma.$queryRaw`
         SELECT * FROM website_user

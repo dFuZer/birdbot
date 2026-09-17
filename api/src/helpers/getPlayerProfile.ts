@@ -1,5 +1,6 @@
 import prisma from "../prisma";
 import { TLanguage, TMode } from "../schemas/records.zod";
+import { getDiscordAvatarUrl } from "./discord";
 import {
     databaseEnumToLanguageEnumMap,
     databaseEnumToModeEnumMap,
@@ -21,8 +22,27 @@ export default async function getPlayerProfile({
     mode: TMode;
     language: TLanguage;
 }) {
-    const playerQuery: { id: string; account_name: string; xp: number; username: string; avatar_url: string }[] =
-        await prisma.$queryRaw`SELECT p.id, p.account_name, COALESCE(p.metadata->>'profile_name', p.metadata->>'latest_username') as username, p.xp, p.metadata->>'avatar_url' as avatar_url FROM player p WHERE p.id = ${playerId}::UUID LIMIT 1`;
+    const playerQuery: {
+        id: string;
+        account_name: string;
+        xp: number;
+        username: string;
+        discord_user_id: string | null;
+        discord_avatar_hash: string | null;
+    }[] = await prisma.$queryRaw`
+        SELECT
+            p.id,
+            p.account_name,
+            COALESCE(p.metadata->>'profile_name', p.metadata->>'latest_username') AS username,
+            p.xp,
+            wu.oauth_identifier AS discord_user_id,
+            wu.oauth_avatar AS discord_avatar_hash
+        FROM player p
+        LEFT JOIN website_user_to_player wup ON wup.player_id = p.id
+        LEFT JOIN website_user wu ON wu.id = wup.website_user_id
+        WHERE p.id = ${playerId}::UUID
+        LIMIT 1
+    `;
     const player = playerQuery[0];
 
     if (!player) {
@@ -86,7 +106,7 @@ export default async function getPlayerProfile({
     }
 
     const res = {
-        avatarUrl: player.avatar_url,
+        avatarUrl: getDiscordAvatarUrl(player.discord_user_id, player.discord_avatar_hash),
         playerId: player.id,
         playerAccountName: player.account_name,
         playerUsername: player.username,

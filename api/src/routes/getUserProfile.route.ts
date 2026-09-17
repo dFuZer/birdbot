@@ -1,6 +1,7 @@
 import type { WebsiteSession, WebsiteUser, WebsiteUserToPlayer, WebsiteUserToPlayerToken } from "@prisma/client";
 import type { RouteHandlerMethod } from "fastify";
 import { z } from "zod";
+import { getDiscordAvatarUrl } from "../helpers/discord";
 import { getLevelDataFromXp } from "../helpers/xp";
 import prisma from "../prisma";
 
@@ -84,7 +85,7 @@ export let getUserProfileRouteHandler: RouteHandlerMethod = async function (req,
             : undefined,
         linkingToken: userToken.length > 0 ? userToken[0].token : undefined,
         websiteUserData: {
-            avatarUrl: `https://cdn.discordapp.com/avatars/${user.oauth_identifier}/${user.oauth_avatar}.jpg?size=1024`,
+            avatarUrl: getDiscordAvatarUrl(user.oauth_identifier, user.oauth_avatar),
             username: user.oauth_username,
             provider: user.oauth_provider,
             globalName: user.oauth_global_name,

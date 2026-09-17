@@ -15,7 +15,7 @@ export interface IMyPlayerProfileData {
         username: string;
         provider: string;
         globalName: string;
-        avatarUrl: string;
+        avatarUrl?: string;
     };
 }
 

@@ -23,33 +23,6 @@ async function seed() {
     `;
 
     await prisma.$executeRaw`
-        CREATE OR REPLACE FUNCTION set_player_avatar_url() RETURNS TRIGGER AS $$
-        DECLARE
-            auth_avatar_hash TEXT;
-            auth_id TEXT;
-            avatar_url TEXT;
-        BEGIN
-            SELECT wu.oauth_avatar, wu.oauth_identifier
-            INTO auth_avatar_hash, auth_id
-            FROM website_user wu
-            WHERE wu.id = NEW.website_user_id
-            LIMIT 1;
-
-            IF auth_avatar_hash IS NOT NULL AND auth_id IS NOT NULL THEN
-                avatar_url := 'https://cdn.discordapp.com/avatars/' || auth_id || '/' || auth_avatar_hash || '.jpg?size=1024';
-                
-                PERFORM set_player_metadata_key(
-                    NEW.player_id,
-                    'avatar_url',
-                    avatar_url
-                );
-            END IF;
-            RETURN NEW;
-        END;
-        $$ LANGUAGE plpgsql;
-    `;
-
-    await prisma.$executeRaw`
         CREATE OR REPLACE FUNCTION set_player_latest_username() RETURNS TRIGGER AS $$
             BEGIN
                 PERFORM set_player_metadata_key(
@@ -67,21 +40,10 @@ async function seed() {
     `;
 
     await prisma.$executeRaw`
-        DROP TRIGGER IF EXISTS set_player_avatar_url_trigger ON public.website_user_to_player;
-    `;
-
-    await prisma.$executeRaw`
         CREATE TRIGGER set_player_latest_username_trigger
         AFTER INSERT OR UPDATE ON player_username
         FOR EACH ROW
         EXECUTE FUNCTION set_player_latest_username();
-    `;
-
-    await prisma.$executeRaw`
-        CREATE TRIGGER set_player_avatar_url_trigger
-        AFTER INSERT OR UPDATE ON website_user_to_player
-        FOR EACH ROW
-        EXECUTE FUNCTION set_player_avatar_url();
     `;
 
     await prisma.$executeRaw`

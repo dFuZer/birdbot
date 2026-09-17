@@ -330,7 +330,7 @@ model WebsiteUser {
     oauth_identifier  String @unique
     oauth_username    String
     oauth_global_name String
-    oauth_avatar      String
+    oauth_avatar      String?
     oauth_provider    String
 
     WebsiteSession           WebsiteSession[]

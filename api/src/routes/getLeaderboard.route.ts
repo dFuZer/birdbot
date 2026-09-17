@@ -1,5 +1,6 @@
 import { RouteHandlerMethod } from "fastify";
 import { z } from "zod";
+import { getDiscordAvatarUrl } from "../helpers/discord";
 import { databaseEnumToLanguageEnumMap, PrismaLanguage } from "../helpers/maps";
 import { getLevelDataFromXp } from "../helpers/xp";
 import Logger from "../lib/logger";
@@ -30,7 +31,8 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             pp_sum: number;
             rank: number;
             language: PrismaLanguage;
-            avatar_url: string;
+            discord_user_id: string | null;
+            discord_avatar_hash: string | null;
             username: string;
             account_name: string;
             xp: number;
@@ -40,7 +42,8 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 ppl.pp_sum,
                 p.account_name,
                 p.metadata->>'latest_username' as username,
-                p.metadata->>'avatar_url' as avatar_url,
+                wu.oauth_identifier AS discord_user_id,
+                wu.oauth_avatar AS discord_avatar_hash,
                 ppl.language,
                 p.xp,
                 CAST(ROW_NUMBER() OVER (
@@ -50,6 +53,12 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             INNER JOIN player p
             ON
                 p.id = ppl.player_id
+            LEFT JOIN website_user_to_player wup
+            ON
+                wup.player_id = p.id
+            LEFT JOIN website_user wu
+            ON
+                wu.id = wup.website_user_id
             ORDER BY
                 "rank" ASC
             LIMIT
@@ -76,7 +85,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 rank: row.rank,
                 name: row.username,
                 accountName: row.account_name,
-                avatarUrl: row.avatar_url,
+                avatarUrl: getDiscordAvatarUrl(row.discord_user_id, row.discord_avatar_hash),
                 xp: getLevelDataFromXp(row.xp),
                 language: databaseEnumToLanguageEnumMap[row.language],
             })),
@@ -88,18 +97,26 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             rank: number;
             username: string;
             account_name: string;
-            avatar_url: string;
+            discord_user_id: string | null;
+            discord_avatar_hash: string | null;
         }[] = await prisma.$queryRaw`
             SELECT
                 p.id AS player_id,
                 p.xp,
                 p.account_name,
                 p.metadata->>'latest_username' as username,
-                p.metadata->>'avatar_url' as avatar_url,
+                wu.oauth_identifier AS discord_user_id,
+                wu.oauth_avatar AS discord_avatar_hash,
                 CAST(ROW_NUMBER() OVER (
                 ORDER BY p.xp DESC) AS int) AS "rank"
             FROM
                 player p
+            LEFT JOIN website_user_to_player wup
+            ON
+                wup.player_id = p.id
+            LEFT JOIN website_user wu
+            ON
+                wu.id = wup.website_user_id
             ORDER BY
                 "rank" ASC
             LIMIT
@@ -124,7 +141,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 rank: row.rank,
                 accountName: row.account_name,
                 name: row.username,
-                avatarUrl: row.avatar_url,
+                avatarUrl: getDiscordAvatarUrl(row.discord_user_id, row.discord_avatar_hash),
             })),
         });
     } else if (mode === "records") {
@@ -134,7 +151,8 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             xp: number;
             account_name: string;
             username: string;
-            avatar_url: string;
+            discord_user_id: string | null;
+            discord_avatar_hash: string | null;
             rank: number;
         }[] = await prisma.$queryRaw`
             WITH ct AS (
@@ -146,13 +164,20 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 p.xp,
                 p.account_name,
                 p.metadata->>'latest_username' as username,
-                p.metadata->>'avatar_url' as avatar_url,
+                wu.oauth_identifier AS discord_user_id,
+                wu.oauth_avatar AS discord_avatar_hash,
                 CAST(count(*) OVER (PARTITION BY l.player_id) AS int) AS records_count
             FROM
                 leaderboard l
             INNER JOIN player p
             ON
                 l.player_id = p.id
+            LEFT JOIN website_user_to_player wup
+            ON
+                wup.player_id = p.id
+            LEFT JOIN website_user wu
+            ON
+                wu.id = wup.website_user_id
             WHERE
                 "rank" = 1)
             SELECT
@@ -179,7 +204,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 accountName: row.account_name,
                 name: row.username,
                 rank: row.rank,
-                avatarUrl: row.avatar_url,
+                avatarUrl: getDiscordAvatarUrl(row.discord_user_id, row.discord_avatar_hash),
             })),
         });
     }

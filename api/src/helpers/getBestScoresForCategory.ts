@@ -1,6 +1,7 @@
 import { z } from "zod";
 import prisma from "../prisma";
 import { getRecords, TLanguage, TMode, TRecord } from "../schemas/records.zod";
+import { getDiscordAvatarUrl } from "./discord";
 import {
     databaseFieldToRecordEnumMap,
     GameRecapRecordField,
@@ -22,7 +23,6 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             player_username: string;
             score: number;
             record_type: GameRecapRecordField;
-            avatar_url: string;
             account_name: string;
             xp: number;
         }[];
@@ -32,7 +32,6 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
                 l.score,
                 l.record_type,
                 p.xp,
-                p.metadata->>'avatar_url' as avatar_url,
                 p.metadata->>'latest_username' as player_username,
                 p.account_name
             FROM leaderboard l
@@ -64,7 +63,8 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             score: number;
             rank: number;
             xp: number;
-            avatar_url: string;
+            discord_user_id: string | null;
+            discord_avatar_hash: string | null;
             account_name: string;
         }[];
 
@@ -73,12 +73,17 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
                 l.score,
                 l.rank,
                 p.xp,
-                p.metadata->>'avatar_url' as avatar_url,
+                wu.oauth_identifier AS discord_user_id,
+                wu.oauth_avatar AS discord_avatar_hash,
                 p.metadata->>'latest_username' as player_username,
                 p.account_name
             FROM leaderboard l
             INNER JOIN player p
             ON l.player_id = p.id
+            LEFT JOIN website_user_to_player wup
+            ON wup.player_id = p.id
+            LEFT JOIN website_user wu
+            ON wu.id = wup.website_user_id
             WHERE "mode" = ${enumMode}::"game_mode"
             AND "language" = ${enumLang}::"language"
             AND "record_type" = ${enumRecord}
@@ -109,7 +114,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
                 score: score.score,
                 rank: score.rank,
                 xp: getLevelDataFromXp(score.xp),
-                avatarUrl: score.avatar_url,
+                avatarUrl: getDiscordAvatarUrl(score.discord_user_id, score.discord_avatar_hash),
             })),
             maxPage,
         };
