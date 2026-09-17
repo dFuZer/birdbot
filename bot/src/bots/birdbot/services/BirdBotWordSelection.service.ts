@@ -1,3 +1,4 @@
+import Logger from "../../../lib/class/Logger.class";
 import type { EventCtx } from "../../../lib/types/libEventTypes";
 import {
     dictionaryIdToBirdbotLanguage,
@@ -34,56 +35,102 @@ export default class BirdBotWordSelectionService {
         const valid = (word: string) => word.includes(input.prompt) && !history.has(word);
         const effectiveStyle: BirdBotPlaystyle =
             input.lives < input.maxLives || metadata.playstyle === "flips" ? "flips" : metadata.playstyle;
+        const remainingBonusLetters = input.bonusLetters;
+
+        let selectedWord: string | null = null;
+        let selectionSource = "none";
 
         if (effectiveStyle !== "flips") {
             const testWord = dictionary.metadata.testWords.find((item) => valid(item.word));
-            if (testWord) return testWord.word;
+            if (testWord) {
+                selectedWord = testWord.word;
+                selectionSource = "testWord";
+            }
         }
 
-        const regular = () => this.random(dictionary.resource, valid);
-        switch (effectiveStyle) {
-            case "regular":
-                return regular();
-            case "flips":
-                return (
-                    this.best(dictionary.resource, valid, (word) =>
-                        this.flipValue(
-                            word,
-                            dictionary.metadata.letterRarityScores,
-                            input.requiredLetters,
-                            input.bonusLetters,
-                        ),
-                    ) ?? regular()
-                );
-            case "alpha": {
-                const letter = String.fromCharCode(97 + (input.scores.alpha % 26));
-                return this.random(dictionary.resource, (word) => valid(word) && word.startsWith(letter)) ?? regular();
+        if (selectedWord === null) {
+            const regular = () => this.random(dictionary.resource, valid);
+            switch (effectiveStyle) {
+                case "regular":
+                    selectedWord = regular();
+                    selectionSource = "regular";
+                    break;
+                case "flips":
+                    selectedWord =
+                        this.best(dictionary.resource, valid, (word) =>
+                            this.flipValue(
+                                word,
+                                dictionary.metadata.letterRarityScores,
+                                remainingBonusLetters,
+                            ),
+                        ) ?? regular();
+                    selectionSource = "flips";
+                    break;
+                case "alpha": {
+                    const letter = String.fromCharCode(97 + (input.scores.alpha % 26));
+                    selectedWord =
+                        this.random(dictionary.resource, (word) => valid(word) && word.startsWith(letter)) ??
+                        regular();
+                    selectionSource = "alpha";
+                    break;
+                }
+                case "previous_syllable":
+                    selectedWord = input.scores.previousSyllable
+                        ? this.random(
+                              dictionary.resource,
+                              (word) => valid(word) && word.includes(input.scores.previousSyllable!),
+                          ) ?? regular()
+                        : regular();
+                    selectionSource = "previous_syllable";
+                    break;
+                case "depleted_syllables":
+                    selectedWord =
+                        this.best(dictionary.resource, valid, (word) =>
+                            this.depletionValue(word, metadata.remainingSyllables),
+                        ) ?? regular();
+                    selectionSource = "depleted_syllables";
+                    break;
+                case "multi_syllable":
+                    selectedWord =
+                        this.best(dictionary.resource, valid, (word) =>
+                            this.countOccurrences(word, input.prompt),
+                        ) ?? regular();
+                    selectionSource = "multi_syllable";
+                    break;
+                case "hyphen":
+                    selectedWord =
+                        this.random(dictionary.resource, (word) => valid(word) && word.includes("-")) ?? regular();
+                    selectionSource = "hyphen";
+                    break;
+                case "more_than_20_letters":
+                    selectedWord =
+                        this.random(dictionary.resource, (word) => valid(word) && word.length >= 20) ?? regular();
+                    selectionSource = "more_than_20_letters";
+                    break;
+                default:
+                    selectedWord = this.selectListed(input.ctx, language, effectiveStyle, valid) ?? regular();
+                    selectionSource = `listed:${effectiveStyle}`;
+                    break;
             }
-            case "previous_syllable":
-                return input.scores.previousSyllable
-                    ? this.random(
-                          dictionary.resource,
-                          (word) => valid(word) && word.includes(input.scores.previousSyllable!),
-                      ) ?? regular()
-                    : regular();
-            case "depleted_syllables":
-                return (
-                    this.best(dictionary.resource, valid, (word) =>
-                        this.depletionValue(word, metadata.remainingSyllables),
-                    ) ?? regular()
-                );
-            case "multi_syllable":
-                return (
-                    this.best(dictionary.resource, valid, (word) => this.countOccurrences(word, input.prompt)) ??
-                    regular()
-                );
-            case "hyphen":
-                return this.random(dictionary.resource, (word) => valid(word) && word.includes("-")) ?? regular();
-            case "more_than_20_letters":
-                return this.random(dictionary.resource, (word) => valid(word) && word.length >= 20) ?? regular();
-            default:
-                return this.selectListed(input.ctx, language, effectiveStyle, valid) ?? regular();
         }
+
+        Logger.log({
+            message: `Word selection: word=${selectedWord ?? "(none)"}, playstyle=${effectiveStyle} (configured=${metadata.playstyle}), remainingBonusLetters=${remainingBonusLetters || "(none)"}`,
+            path: "BirdBotWordSelection.service.ts",
+            json: {
+                selectedWord,
+                selectionSource,
+                configuredPlaystyle: metadata.playstyle,
+                effectivePlaystyle: effectiveStyle,
+                lives: input.lives,
+                maxLives: input.maxLives,
+                prompt: input.prompt,
+                requiredLetters: input.requiredLetters,
+                remainingBonusLetters,
+            },
+        });
+
+        return selectedWord;
     }
 
     private static language(ctx: EventCtx): BirdBotLanguage {
@@ -135,15 +182,13 @@ export default class BirdBotWordSelectionService {
     private static flipValue(
         word: string,
         rarity: Record<string, number>,
-        requiredLetters: string,
-        placedLetters: string,
+        remainingLetters: string,
     ): number {
-        const required = new Set(requiredLetters);
-        const placed = new Set(placedLetters);
+        const remaining = new Set(remainingLetters);
         const seen = new Set<string>();
         let score = 0;
         for (const letter of word) {
-            if (!seen.has(letter) && required.has(letter) && !placed.has(letter)) score += rarity[letter] ?? 0;
+            if (!seen.has(letter) && remaining.has(letter)) score += rarity[letter] ?? 0;
             seen.add(letter);
         }
         return score;

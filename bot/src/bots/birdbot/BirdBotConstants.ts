@@ -193,6 +193,43 @@ export const recordAliases = {
     adverb: ["adverb", "adverbs", "ad", "adv", "adverbe"],
 } satisfies Record<BirdBotRecordType, string[]>;
 
+/** BBV7 category thresholds used by /speed and /accuracy meta records. */
+export const bbv7MetaRecordMilestones = {
+    word: 250,
+    flips: 25,
+    alpha: 104,
+    depleted_syllables: 100,
+    multi_syllable: 100,
+    previous_syllable: 50,
+    hyphen: 100,
+    more_than_20_letters: 100,
+    slur: 100,
+    creature: 100,
+    ethnonym: 100,
+    chemical: 100,
+    plant: 100,
+    food: 100,
+    adverb: 100,
+} satisfies Partial<Record<BirdBotRecordType, number>>;
+
+export const scoreKeyPerMetaRecord = {
+    word: "words",
+    flips: "flips",
+    alpha: "alpha",
+    depleted_syllables: "depletedSyllables",
+    multi_syllable: "multiSyllables",
+    previous_syllable: "previousSyllableScore",
+    hyphen: "hyphenWords",
+    more_than_20_letters: "moreThan20LettersWords",
+    slur: "slurs",
+    creature: "creatures",
+    ethnonym: "ethnonyms",
+    chemical: "chemicals",
+    plant: "plants",
+    food: "foods",
+    adverb: "adverbs",
+} satisfies Record<keyof typeof bbv7MetaRecordMilestones, keyof PlayerGameScores>;
+
 export const sortWordsModeRecords = ["flips", "multi_syllable", "depleted_syllables"] satisfies BirdBotRecordType[];
 export const filterWordsModeRecords = [
     "hyphen",

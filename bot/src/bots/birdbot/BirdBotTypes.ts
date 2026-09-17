@@ -116,6 +116,7 @@ export type BirdBotRoomMetadata = {
     playstyle: BirdBotPlaystyle;
     training: BirdBotTrainingState | null;
     rankedBlockedUntilSeating: boolean;
+    nextDelayMs: number;
     scoresByPeerId: Record<string, PlayerGameScores>;
     globalScores: GlobalGameScores;
     remainingSyllables: Record<string, number>;
@@ -148,7 +149,8 @@ export type BirdBotPlayerData = {
 
 export type BirdBotWordMilestone = {
     type: "SPEED" | "ACCURACY";
-    milestone: string;
+    category: BirdBotRecordType;
+    milestone: number;
     value: number;
     idempotencyKey: string;
     metadata: Record<string, unknown>;

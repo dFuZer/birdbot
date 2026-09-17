@@ -11,13 +11,20 @@ import { recordMilestone } from "../services/parity.service";
 
 type WordMilestone = z.infer<typeof wordMilestoneSchema>;
 
-async function persistWordMilestones(playerId: string, milestones: WordMilestone[] | undefined) {
+async function persistWordMilestones(
+    playerId: string,
+    game: { lang: "fr" | "en" | "de" | "es" | "brpt" | "it"; mode: "regular" | "easy" | "blitz" | "sub500" | "sub50" | "freeplay" },
+    milestones: WordMilestone[] | undefined,
+) {
     if (!milestones?.length) return;
     await Promise.all(
         milestones.map((milestone) =>
             recordMilestone({
                 playerId,
                 type: milestone.type,
+                language: game.lang,
+                mode: game.mode,
+                category: milestone.category,
                 milestone: milestone.milestone,
                 value: milestone.value,
                 source: "authoritative-word-event",
@@ -49,7 +56,7 @@ export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
             select: { id: true, player_id: true },
         });
         if (existing) {
-            await persistWordMilestones(existing.player_id, wordData.milestones);
+            await persistWordMilestones(existing.player_id, wordData.game, wordData.milestones);
             return res.status(200).send({
                 message: "Word already recorded",
                 idempotent: true,
@@ -75,7 +82,7 @@ export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
                 idempotency_key: wordData.idempotencyKey,
             },
         });
-        await persistWordMilestones(player.id, wordData.milestones);
+        await persistWordMilestones(player.id, wordData.game, wordData.milestones);
         return res.status(200).send({ message: "Word added successfully", playerId: player.id });
     } catch (e) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -84,7 +91,7 @@ export let addWordRouteHandler: RouteHandlerMethod = async function (req, res) {
                 select: { player_id: true },
             });
             if (existing) {
-                await persistWordMilestones(existing.player_id, wordData.milestones);
+                await persistWordMilestones(existing.player_id, wordData.game, wordData.milestones);
                 return res.status(200).send({
                     message: "Word already recorded",
                     idempotent: true,

@@ -1,7 +1,8 @@
 import { createHash } from "crypto";
 import { z } from "zod";
 import { API_KEY, API_URL } from "../BirdBotEnv";
-import type { BirdBotWordMilestone } from "../BirdBotTypes";
+import { bbv7MetaRecordMilestones, scoreKeyPerMetaRecord } from "../BirdBotConstants";
+import type { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotWordMilestone, PlayerGameScores } from "../BirdBotTypes";
 
 const profileSchema = z.object({
     playerId: z.string().uuid(),
@@ -40,7 +41,10 @@ const economySchema = z.object({
 const milestoneSchema = z.object({
     id: z.string().uuid(),
     type: z.enum(["SPEED", "ACCURACY"]),
-    milestone: z.string(),
+    language: z.enum(["FR", "EN", "DE", "ES", "BRPT", "IT"]),
+    mode: z.enum(["REGULAR", "EASY", "BLITZ", "SUB500", "SUB50", "FREEPLAY"]),
+    category: z.string(),
+    milestone: z.number().int(),
     value: z.number(),
     achieved_at: z.string().or(z.date()),
     source: z.string().nullable().optional(),
@@ -107,6 +111,8 @@ export type BirdBotXpLedger = z.infer<typeof xpLedgerSchema>;
 export type BirdBotStaffList = z.infer<typeof staffSchema>;
 export type BirdBotPersistedRoom = z.infer<typeof botRoomSchema>;
 
+const VIP_PRICE_FEATHERS = 500;
+
 export class BirdBotApiError extends Error {
     public constructor(
         public readonly status: number,
@@ -127,13 +133,24 @@ export default class BirdBotParityApiService {
         return this.request(`/economy/${encodeURIComponent(playerId)}`, economySchema);
     }
 
+    public static hasVip(economy: BirdBotEconomyProfile): boolean {
+        const tier = economy.vip?.tier;
+        return tier === "VIP" || tier === "VIP_PLUS";
+    }
+
     public static async getMilestones(
         type: "SPEED" | "ACCURACY",
-        options: { playerId?: string; milestone?: string; limit?: number } = {},
+        options: {
+            language: BirdBotLanguage;
+            mode: BirdBotGameMode;
+            category?: BirdBotRecordType;
+            milestone?: number;
+            limit?: number;
+        },
     ): Promise<BirdBotMilestone[]> {
-        const params = new URLSearchParams({ type });
-        if (options.playerId) params.set("playerId", options.playerId);
-        if (options.milestone) params.set("milestone", options.milestone);
+        const params = new URLSearchParams({ type, language: options.language, mode: options.mode });
+        if (options.category) params.set("category", options.category);
+        if (options.milestone) params.set("milestone", String(options.milestone));
         if (options.limit) params.set("limit", String(options.limit));
         return this.request(`/meta/records?${params.toString()}`, z.array(milestoneSchema));
     }
@@ -220,18 +237,13 @@ export default class BirdBotParityApiService {
         });
     }
 
-    public static async buyVip(
-        playerId: string,
-        tier: Exclude<BirdBotVipTier, "NONE">,
-        actor: string,
-    ): Promise<void> {
-        const sku = tier === "VIP" ? "VIP" : "VIP_PLUS";
-        const creditsSpent = tier === "VIP" ? 500 : 1000;
+    public static async buyVip(playerId: string, actor: string): Promise<void> {
+        const sku = "VIP";
         const operationId = this.idempotencyKey("purchase", playerId, sku, Date.now().toString());
         await this.request("/economy/purchases", purchaseSchema, "POST", {
             playerId,
             sku,
-            creditsSpent,
+            creditsSpent: VIP_PRICE_FEATHERS,
             idempotencyKey: operationId,
             actor,
             metadata: { source: "birdbot-command" },
@@ -294,51 +306,64 @@ export default class BirdBotParityApiService {
         return this.idempotencyKey(...parts);
     }
 
-    public static buildWordMilestones(input: {
+    public static buildCategoryMilestones(input: {
         gameId: string;
         turnKey: string;
         word: string;
-        durationMs?: number;
-        reactionMs?: number;
-        accuracyStreak: number;
+        elapsedMs: number;
+        wordsUsed: number;
+        before: PlayerGameScores;
+        after: PlayerGameScores;
     }): BirdBotWordMilestone[] {
         const milestones: BirdBotWordMilestone[] = [];
         const metadata = {
             gameId: input.gameId,
             turnKey: input.turnKey,
             word: input.word,
-            durationMs: input.durationMs,
-            reactionMs: input.reactionMs,
+            elapsedMs: input.elapsedMs,
+            wordsUsed: input.wordsUsed,
         };
 
-        for (const [metric, value, thresholds] of [
-            ["duration", input.durationMs, [500, 750, 1000, 1500, 2000, 3000]],
-            ["reaction", input.reactionMs, [100, 250, 500, 750, 1000]],
-        ] as const) {
-            if (value === undefined) continue;
-            for (const threshold of thresholds) {
-                if (value > threshold) continue;
-                const milestone = `${metric}-under-${threshold}ms`;
+        for (const [category, step] of Object.entries(bbv7MetaRecordMilestones) as [
+            keyof typeof bbv7MetaRecordMilestones,
+            number,
+        ][]) {
+            const scoreKey = scoreKeyPerMetaRecord[category];
+            const before = input.before[scoreKey] as number;
+            const after = input.after[scoreKey] as number;
+            const firstCrossed = (Math.floor(before / step) + 1) * step;
+            for (let milestone = firstCrossed; milestone <= after; milestone += step) {
                 milestones.push({
                     type: "SPEED",
+                    category,
                     milestone,
-                    value,
-                    idempotencyKey: this.idempotencyKey(input.gameId, input.turnKey, "SPEED", milestone),
+                    value: input.elapsedMs,
+                    idempotencyKey: this.idempotencyKey(
+                        input.gameId,
+                        input.turnKey,
+                        "SPEED",
+                        category,
+                        String(milestone),
+                    ),
                     metadata,
                 });
+                if (category !== "word") {
+                    milestones.push({
+                        type: "ACCURACY",
+                        category,
+                        milestone,
+                        value: input.wordsUsed,
+                        idempotencyKey: this.idempotencyKey(
+                            input.gameId,
+                            input.turnKey,
+                            "ACCURACY",
+                            category,
+                            String(milestone),
+                        ),
+                        metadata,
+                    });
+                }
             }
-        }
-
-        for (const threshold of [10, 25, 50, 100, 250, 500]) {
-            if (input.accuracyStreak !== threshold) continue;
-            const milestone = `valid-word-streak-${threshold}`;
-            milestones.push({
-                type: "ACCURACY",
-                milestone,
-                value: input.accuracyStreak,
-                idempotencyKey: this.idempotencyKey(input.gameId, input.turnKey, "ACCURACY", milestone),
-                metadata,
-            });
         }
         return milestones;
     }
@@ -353,13 +378,17 @@ export default class BirdBotParityApiService {
         method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE" = "GET",
         body?: unknown,
     ): Promise<T> {
+        const headers: Record<string, string> = {
+            Authorization: `Bearer ${API_KEY}`,
+        };
+        const payload = body === undefined ? undefined : JSON.stringify(body);
+        if (payload !== undefined) {
+            headers["Content-Type"] = "application/json";
+        }
         const response = await fetch(`${API_URL}${path}`, {
             method,
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${API_KEY}`,
-            },
-            body: body === undefined ? undefined : JSON.stringify(body),
+            headers,
+            body: payload,
         });
         if (response.status === 204) {
             return schema.parse(undefined);

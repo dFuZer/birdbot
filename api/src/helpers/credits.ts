@@ -10,7 +10,7 @@ const creditModeMultiplier = {
 } satisfies { [key in TMode]: number };
 
 /**
- * BirdBot credits earned from a scored game.
+ * BirdBot feathers earned from a scored game.
  * Kept intentionally smaller than XP so VIP purchases remain meaningful.
  */
 export function calculateCreditsFromGameRecap(gameRecap: {

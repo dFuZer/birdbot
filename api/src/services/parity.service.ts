@@ -1,4 +1,6 @@
 import { Prisma, type MilestoneType, type VipTier } from "@prisma/client";
+import { languageEnumToDatabaseEnumMap, modeEnumToDatabaseEnumMap } from "../helpers/maps";
+import type { TLanguage, TMode, TRecord } from "../schemas/records.zod";
 import prisma from "../prisma";
 
 type JsonMetadata = Record<string, unknown>;
@@ -99,7 +101,7 @@ type PurchaseInput = {
 };
 
 async function recordPurchase(input: PurchaseInput) {
-    const catalog = { VIP: 500, VIP_PLUS: 1000 } as const;
+    const catalog = { VIP: 500 } as const;
     const expectedPrice = catalog[input.sku as keyof typeof catalog];
     if (expectedPrice === undefined || input.creditsSpent !== expectedPrice) {
         throw new InvalidPurchaseError("Unknown SKU or invalid price");
@@ -155,7 +157,7 @@ async function recordPurchase(input: PurchaseInput) {
             await tx.vipEntitlement.create({
                 data: {
                     player_id: input.playerId,
-                    tier: input.sku === "VIP_PLUS" ? "VIP_PLUS" : "VIP",
+                    tier: "VIP",
                     granted_by: input.actor,
                     reason: `Purchased ${input.sku}`,
                     idempotency_key: `purchase:${input.idempotencyKey}:vip`.slice(0, 120),
@@ -260,22 +262,93 @@ async function grantVip(
     });
 }
 
-async function listMilestones(playerId: string | undefined, type?: MilestoneType, limit = 20, milestone?: string) {
+async function listMilestones(input: {
+    type: MilestoneType;
+    language: TLanguage;
+    mode: TMode;
+    category?: TRecord;
+    milestone?: number;
+    limit?: number;
+}) {
     return prisma.playerMilestone.findMany({
         where: {
-            player_id: playerId,
-            type,
-            ...(milestone ? { milestone } : {}),
+            type: input.type,
+            language: languageEnumToDatabaseEnumMap[input.language],
+            mode: modeEnumToDatabaseEnumMap[input.mode],
+            category: input.category,
+            milestone: input.milestone,
         },
-        orderBy: type === "SPEED" ? { value: "asc" } : type === "ACCURACY" ? { value: "desc" } : { achieved_at: "desc" },
-        take: limit,
-        include: playerId
-            ? undefined
-            : {
-                  player: {
-                      select: { account_name: true, metadata: true },
-                  },
-              },
+        orderBy: [{ value: "asc" }, { achieved_at: "asc" }],
+        take: input.limit ?? 20,
+        include: {
+            player: {
+                select: { account_name: true, metadata: true },
+            },
+        },
+    });
+}
+
+type MilestoneInput = {
+    playerId: string;
+    type: MilestoneType;
+    language: TLanguage;
+    mode: TMode;
+    category: TRecord;
+    milestone: number;
+    value: number;
+    achievedAt?: string;
+    source?: string;
+    idempotencyKey: string;
+    metadata: JsonMetadata;
+};
+
+async function recordMilestone(input: MilestoneInput) {
+    const byIdempotency = await prisma.playerMilestone.findUnique({
+        where: { idempotency_key: input.idempotencyKey },
+    });
+    if (byIdempotency) return byIdempotency;
+
+    const language = languageEnumToDatabaseEnumMap[input.language];
+    const mode = modeEnumToDatabaseEnumMap[input.mode];
+    const achievedAt = input.achievedAt ? new Date(input.achievedAt) : new Date();
+    try {
+        await prisma.$executeRaw(Prisma.sql`
+            INSERT INTO "player_milestone"
+                ("id", "player_id", "type", "language", "mode", "category", "milestone",
+                 "value", "achieved_at", "source", "idempotency_key", "metadata")
+            VALUES
+                (gen_random_uuid(), ${input.playerId}::uuid, ${input.type}::milestone_type,
+                 ${language}::language, ${mode}::game_mode, ${input.category}, ${input.milestone},
+                 ${input.value}, ${achievedAt}, ${input.source ?? null}, ${input.idempotencyKey},
+                 ${JSON.stringify(input.metadata)}::jsonb)
+            ON CONFLICT ("player_id", "type", "language", "mode", "category", "milestone")
+            DO UPDATE SET
+                "value" = EXCLUDED."value",
+                "achieved_at" = EXCLUDED."achieved_at",
+                "source" = EXCLUDED."source",
+                "idempotency_key" = EXCLUDED."idempotency_key",
+                "metadata" = EXCLUDED."metadata"
+            WHERE EXCLUDED."value" < "player_milestone"."value"
+        `);
+    } catch (error) {
+        const raced = await prisma.playerMilestone.findUnique({
+            where: { idempotency_key: input.idempotencyKey },
+        });
+        if (raced) return raced;
+        throw error;
+    }
+
+    return prisma.playerMilestone.findUniqueOrThrow({
+        where: {
+            player_id_type_language_mode_category_milestone: {
+                player_id: input.playerId,
+                type: input.type,
+                language,
+                mode,
+                category: input.category,
+                milestone: input.milestone,
+            },
+        },
     });
 }
 
@@ -316,53 +389,6 @@ async function mutateXp(input: {
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
             return prisma.xpLedger.findUniqueOrThrow({ where: { idempotency_key: input.idempotencyKey } });
-        }
-        throw error;
-    }
-}
-
-async function recordMilestone(input: {
-    playerId: string;
-    type: MilestoneType;
-    milestone: string;
-    value: number;
-    achievedAt?: string;
-    source?: string;
-    idempotencyKey: string;
-    metadata: JsonMetadata;
-}) {
-    const existing = await prisma.playerMilestone.findFirst({
-        where: {
-            OR: [
-                { idempotency_key: input.idempotencyKey },
-                { player_id: input.playerId, type: input.type, milestone: input.milestone },
-            ],
-        },
-    });
-    if (existing) return existing;
-    try {
-        return await prisma.playerMilestone.create({
-            data: {
-                player_id: input.playerId,
-                type: input.type,
-                milestone: input.milestone,
-                value: input.value,
-                achieved_at: input.achievedAt ? new Date(input.achievedAt) : undefined,
-                source: input.source,
-                idempotency_key: input.idempotencyKey,
-                metadata: asJson(input.metadata),
-            },
-        });
-    } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-            return prisma.playerMilestone.findFirstOrThrow({
-                where: {
-                    OR: [
-                        { idempotency_key: input.idempotencyKey },
-                        { player_id: input.playerId, type: input.type, milestone: input.milestone },
-                    ],
-                },
-            });
         }
         throw error;
     }

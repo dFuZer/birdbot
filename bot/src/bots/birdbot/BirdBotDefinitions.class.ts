@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { io, type Socket } from "socket.io-client";
 import Logger from "../../lib/class/Logger.class";
 import type { BirdBotLanguage } from "./BirdBotTypes";
@@ -22,18 +21,12 @@ export type DefinitionError = {
 
 export type DefinitionResult = DefinitionSuccess | DefinitionError;
 
-type PendingCallback = {
-    resolve: (result: DefinitionResult) => void;
-    timeout: NodeJS.Timeout;
-};
-
 /**
  * Socket.IO client for the external word-definition service (defs.opnm.net).
- * Same protocol as BBv7: emit `def` / `def_en`, receive `def` with (word, typeOrSource, data, id).
+ * Uses the `def_sync` acknowledgement protocol so concurrent requests remain correlated.
  */
 export default class BirdBotDefinitions {
     private static socket: Socket | null = null;
-    private static pending = new Map<string, PendingCallback>();
     private static readonly REQUEST_TIMEOUT_MS = 8000;
 
     public static isLanguageSupported(language: string): language is SupportedDefinitionLanguage {
@@ -69,30 +62,6 @@ export default class BirdBotDefinitions {
                 path: "BirdBotDefinitions.class.ts",
             });
         });
-
-        socket.on("def", (word: string, typeOrSource: string, data: unknown, id: string) => {
-            const pending = BirdBotDefinitions.pending.get(id);
-            if (!pending) return;
-            clearTimeout(pending.timeout);
-            BirdBotDefinitions.pending.delete(id);
-
-            if (typeOrSource === "Error 404") {
-                pending.resolve({
-                    error: 404,
-                    suggestion: typeof data === "string" && data.length > 0 ? data : undefined,
-                });
-                return;
-            }
-            if (typeOrSource === "Error 401") {
-                pending.resolve({ error: 404 });
-                return;
-            }
-
-            pending.resolve({
-                definitions: Array.isArray(data) ? data.map(String) : [],
-                source: String(typeOrSource),
-            });
-        });
     }
 
     public static getDefinition(language: BirdBotLanguage, word: string): Promise<DefinitionResult> {
@@ -108,9 +77,9 @@ export default class BirdBotDefinitions {
         }
 
         return new Promise((resolve) => {
-            const id = randomUUID();
+            let settled = false;
             const timeout = setTimeout(() => {
-                BirdBotDefinitions.pending.delete(id);
+                settled = true;
                 Logger.warn({
                     message: `Definitions request timed out for word=${word} lang=${language}`,
                     path: "BirdBotDefinitions.class.ts",
@@ -118,13 +87,28 @@ export default class BirdBotDefinitions {
                 resolve({ error: 404 });
             }, BirdBotDefinitions.REQUEST_TIMEOUT_MS);
 
-            BirdBotDefinitions.pending.set(id, { resolve, timeout });
+            socket.emit("def_sync", { word, lang: language }, (_word: string, typeOrSource: string, data: unknown) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
 
-            if (language === "fr") {
-                socket.emit("def", word, -1, id);
-            } else {
-                socket.emit("def_en", word, -1, id);
-            }
+                if (typeOrSource === "Error 404") {
+                    resolve({
+                        error: 404,
+                        suggestion: typeof data === "string" && data.length > 0 ? data : undefined,
+                    });
+                    return;
+                }
+                if (typeOrSource === "Error 401") {
+                    resolve({ error: 404 });
+                    return;
+                }
+
+                resolve({
+                    definitions: Array.isArray(data) ? data.map(String) : [],
+                    source: String(typeOrSource),
+                });
+            });
         });
     }
 }

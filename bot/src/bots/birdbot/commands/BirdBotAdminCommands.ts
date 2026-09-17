@@ -138,11 +138,11 @@ const suppressCommand = c({
     },
 });
 
-const giveCreditsCommand = c({
-    id: "giveCredits",
-    aliases: ["givecredits", "gc"],
-    usageDesc: "/givecredits [player] [amount]",
-    exampleUsage: "/givecredits dfuzer 100",
+const giveFeathersCommand = c({
+    id: "giveFeathers",
+    aliases: ["givefeathers", "gf", "givecredits", "gc"],
+    usageDesc: "/givefeathers [player] [amount]",
+    exampleUsage: "/givefeathers dfuzer 100",
     adminRequired: true,
     hidden: true,
     accessibleInRound: true,
@@ -151,7 +151,7 @@ const giveCreditsCommand = c({
         const amountRaw = ctx.args[1];
         const amount = Number(amountRaw);
         if (!target || !Number.isFinite(amount) || !Number.isInteger(amount) || amount === 0) {
-            ctx.utils.sendChatMessage(t("command.admin.giveCreditsUsage", { lng: l(ctx) }), "info");
+            ctx.utils.sendChatMessage(t("command.admin.giveFeathersUsage", { lng: l(ctx) }), "info");
             return;
         }
         try {
@@ -159,11 +159,11 @@ const giveCreditsCommand = c({
             const entry = await BirdBotParityApiService.mutateCredits({
                 playerId: player.playerId,
                 amount,
-                reason: "admin-givecredits",
+                reason: "admin-givefeathers",
                 actor: ctx.gamer.authId!,
             });
             ctx.utils.sendChatMessage(
-                t("command.admin.giveCreditsResult", {
+                t("command.admin.giveFeathersResult", {
                     amount,
                     player: player.playerUsername || player.playerAccountName,
                     balance: entry.balance_after,
@@ -442,7 +442,7 @@ export const birdBotAdminCommands: Command[] = [
     reconnectCommand,
     getIdCommand,
     suppressCommand,
-    giveCreditsCommand,
+    giveFeathersCommand,
     giveXpCommand,
     setXpCommand,
     healthCommand,

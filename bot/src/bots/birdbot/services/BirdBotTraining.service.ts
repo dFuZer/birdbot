@@ -41,7 +41,7 @@ export default class BirdBotTrainingService {
         const compiled = BirdBotRegexService.compileDetailed(list.regexSources, true);
         if (!compiled.ok) return null;
         const regexes = compiled.regexes;
-        const valid = this.matches(ctx, list, word, prompt, scores, trainSet, regexes);
+        const valid = this.matches(ctx, list, word, prompt, scores, trainSet, regexes, true);
         const suggestions = this.suggestions(ctx, list, prompt, scores, trainDict, trainSet, regexes);
         if (valid) {
             list.successes++;
@@ -55,6 +55,8 @@ export default class BirdBotTrainingService {
         }
         if (suggestions.length === 0) return null;
         list.attempts++;
+        const minTurnDuration = ctx.room.roomState.gameData!.rules.minTurnDuration;
+        BirdBotGameplayStateService.metadata(ctx).nextDelayMs = Math.min(4500, minTurnDuration * 1000 * 0.66);
         return t("parity.gameplay.trainingFail", {
             successes: list.successes,
             attempts: list.attempts,
@@ -89,7 +91,7 @@ export default class BirdBotTrainingService {
         const availableWords: string[] = [];
 
         const checkWordValidity = (candidate: string): boolean =>
-            this.matches(ctx, state, candidate, prompt, scores, trainSet, regexes);
+            this.matches(ctx, state, candidate, prompt, scores, trainSet, regexes, false);
 
         if (state.sort === "shuffle") {
             const start = Math.floor(Math.random() * trainDict.length);
@@ -138,8 +140,10 @@ export default class BirdBotTrainingService {
         scores: PlayerGameScores,
         trainSet: Set<string>,
         regexes: RegExp[],
+        ignoreHistory: boolean,
     ): boolean {
-        if (!trainSet.has(word) || !word.includes(prompt) || ctx.room.roomState.wordHistory.includes(word)) return false;
+        if (!trainSet.has(word) || !word.includes(prompt)) return false;
+        if (!ignoreHistory && ctx.room.roomState.wordHistory.includes(word)) return false;
         if (!regexes.every((regex) => this.test(regex, word))) return false;
         return state.conditions.every((condition) => this.condition(condition, word, prompt, scores));
     }

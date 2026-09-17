@@ -85,10 +85,23 @@ export default class BirdBotUtils {
             requiredLetters: ctx.room.roomState.gameData!.dictionaryManifest.bonusLetters,
             scores: roomMetadata.scoresByPeerId[myPlayer.peerId]!,
         });
-        this.submitWord({
-            word: foundWord ?? "/suicide",
-            setWord: ctx.utils.setWord,
-        });
+        const submit = () => {
+            if (!ctx.room.isHealthy()) return;
+            const gameData = ctx.room.roomState.gameData;
+            if (gameData?.milestone.name !== "round") return;
+            if (Utilitary.getCurrentPlayer(gameData)?.peerId !== ctx.room.roomState.myPeerId) return;
+            this.submitWord({
+                word: foundWord ?? "/suicide",
+                setWord: ctx.utils.setWord,
+            });
+        };
+        const delay = roomMetadata.nextDelayMs ?? 0;
+        roomMetadata.nextDelayMs = 0;
+        if (delay > 0) {
+            setTimeout(submit, delay);
+            return;
+        }
+        submit();
     };
 
     public static getTopFlipWords = (
@@ -1070,6 +1083,7 @@ export default class BirdBotUtils {
         roomMetadata.pendingWordRegistrations.clear();
         roomMetadata.flipTurnKeys.clear();
         roomMetadata.scoredWordTurnKeys.clear();
+        roomMetadata.nextDelayMs = 0;
         for (const player of ctx.room.roomState.gameData!.players) {
             this.initializeScoresForPlayerId(roomMetadata, player.profile.peerId);
         }

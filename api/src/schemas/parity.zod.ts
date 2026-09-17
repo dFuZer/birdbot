@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { languageEnumSchema, modeEnumSchema, recordsEnumSchema } from "./records.zod";
 
 const actor = z.string().trim().min(1).max(80);
 const idempotencyKey = z.string().trim().min(8).max(120);
@@ -70,7 +71,10 @@ const vipSchema = z.object({
 const milestoneSchema = z.object({
     playerId: z.string().uuid(),
     type: z.enum(["SPEED", "ACCURACY"]),
-    milestone: z.string().trim().min(1).max(80),
+    language: languageEnumSchema,
+    mode: modeEnumSchema,
+    category: recordsEnumSchema,
+    milestone: z.number().int().positive(),
     value: z.number().finite().nonnegative(),
     achievedAt: z.string().datetime().optional(),
     source: z.string().trim().max(80).optional(),
@@ -79,9 +83,11 @@ const milestoneSchema = z.object({
 });
 
 const milestoneQuerySchema = z.object({
-    playerId: z.string().uuid().optional(),
-    type: z.enum(["SPEED", "ACCURACY"]).optional(),
-    milestone: z.string().trim().min(1).max(80).optional(),
+    type: z.enum(["SPEED", "ACCURACY"]),
+    language: languageEnumSchema,
+    mode: modeEnumSchema,
+    category: recordsEnumSchema.optional(),
+    milestone: z.coerce.number().int().positive().optional(),
     limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 

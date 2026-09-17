@@ -170,7 +170,10 @@ model PlayerMilestone {
     id              String        @id @default(uuid()) @db.Uuid
     player_id       String        @db.Uuid
     type            MilestoneType
-    milestone       String        @db.VarChar(80)
+    language        Language
+    mode            GameMode
+    category        String        @db.VarChar(40)
+    milestone       Int
     value           Float
     achieved_at     DateTime      @default(now())
     source          String?       @db.VarChar(80)
@@ -179,8 +182,9 @@ model PlayerMilestone {
 
     player Player @relation(fields: [player_id], references: [id])
 
-    @@unique([player_id, type, milestone])
-    @@index([player_id, type, achieved_at])
+    @@unique([player_id, type, language, mode, category, milestone])
+    @@index([type, language, mode, category, milestone, value])
+    @@index([player_id, type, language, mode])
     @@map("player_milestone")
 }
 

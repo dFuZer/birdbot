@@ -1,15 +1,26 @@
 import type { Command, CommandHandlerCtx } from "../../../lib/class/CommandUtils.class";
 import CommandUtils from "../../../lib/class/CommandUtils.class";
+import Utilitary from "../../../lib/class/Utilitary.class";
+import {
+    bbv7MetaRecordMilestones,
+    languageEnumSchema,
+    listedRecordsPerLanguage,
+    modesEnumSchema,
+    recordAliases,
+    recordsUtils,
+    semiListedRecordsPerLanguage,
+} from "../BirdBotConstants";
+import type { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotRoomMetadata } from "../BirdBotTypes";
 import BirdBotModerationService from "../services/BirdBotModeration.service";
 import BirdBotParityApiService, {
     BirdBotApiError,
     type BirdBotEconomyProfile,
     type BirdBotMilestone,
-    type BirdBotVipTier,
 } from "../services/BirdBotParityApi.service";
 import { l, t } from "../texts/BirdBotTextUtils";
 
 const c = CommandUtils.createCommandHelper;
+type MetaRecordCategory = keyof typeof bbv7MetaRecordMilestones;
 
 function reportError(ctx: CommandHandlerCtx, error: unknown): void {
     if (error instanceof BirdBotApiError && error.status === 404) {
@@ -38,70 +49,186 @@ function profileNameFromMilestone(record: BirdBotMilestone): string {
     return profileName || record.player?.account_name || "unknown";
 }
 
-function formatMilestone(ctx: CommandHandlerCtx, record: BirdBotMilestone): string {
-    const value = t(
-        record.type === "SPEED" ? "command.parity.milestoneSpeed" : "command.parity.milestoneAccuracy",
-        { value: Math.round(record.value), lng: l(ctx) },
-    );
-    return `${record.milestone.replace(/-/g, " ")}: ${value}`;
+const globalMetaCategories = [
+    "word",
+    "flips",
+    "alpha",
+    "depleted_syllables",
+    "multi_syllable",
+    "previous_syllable",
+] satisfies MetaRecordCategory[];
+
+function categoriesForLanguage(language: BirdBotLanguage): BirdBotRecordType[] {
+    return [
+        ...globalMetaCategories,
+        "time",
+        "no_death",
+        ...semiListedRecordsPerLanguage[language],
+        ...listedRecordsPerLanguage[language],
+    ];
+}
+
+function resolveMetaCategory(language: BirdBotLanguage, alias: string): BirdBotRecordType | undefined {
+    return categoriesForLanguage(language).find((record) => recordAliases[record].includes(alias));
+}
+
+function parseMetaScope(ctx: CommandHandlerCtx): {
+    language: BirdBotLanguage;
+    mode: BirdBotGameMode;
+    category?: BirdBotRecordType;
+    page: number;
+} {
+    const metadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+    let language = metadata.gameplayLanguage;
+    let mode = metadata.gameMode === "custom" ? "regular" : metadata.gameMode;
+    for (const param of ctx.params) {
+        const parsedLanguage = languageEnumSchema.safeParse(param);
+        if (parsedLanguage.success) language = parsedLanguage.data;
+        const parsedMode = modesEnumSchema.safeParse(param === "hardcore" ? "blitz" : param);
+        if (parsedMode.success) mode = parsedMode.data;
+    }
+    const category = ctx.args[0] ? resolveMetaCategory(language, ctx.args[0]) : undefined;
+    const pageNumber = Number(ctx.args[1]);
+    const page = Number.isFinite(pageNumber) ? Math.max(1, Math.floor(pageNumber)) : 1;
+    return { language, mode, category, page };
+}
+
+function formatMetaValue(type: "SPEED" | "ACCURACY", value: number, language: BirdBotLanguage): string {
+    return type === "SPEED"
+        ? Utilitary.formatTime(value)
+        : t("command.parity.accuracyValue", { value: Math.round(value), lng: language });
+}
+
+function metaCategoryName(category: BirdBotRecordType, language: BirdBotLanguage): string {
+    return t(`lib.recordType.${category}.recordName`, { lng: language });
 }
 
 function recordsCommand(type: "SPEED" | "ACCURACY", aliases: Command["aliases"]): Command {
     return c({
         id: type === "SPEED" ? "speedRecords" : "accuracyRecords",
         aliases,
-        usageDesc: `/${aliases[0]} [account name or profile name]`,
-        exampleUsage: `/${aliases[0]} - /${aliases[0]} dfuzer`,
+        usageDesc: `/${aliases[0]} [category] [page] [-language] [-mode]`,
+        exampleUsage: `/${aliases[0]} - /${aliases[0]} alpha 2 -fr -regular`,
         accessibleInRound: true,
         allowedFromWordInput: true,
         handler: async (ctx) => {
             try {
-                const targetText = ctx.normalizedTextAfterCommand.trim();
-                if (!targetText) {
-                    const records = await BirdBotParityApiService.getMilestones(type, { limit: 8 });
+                const scope = parseMetaScope(ctx);
+                if (ctx.args[0] && !scope.category) {
                     ctx.utils.sendChatMessage(
-                        records.length
-                            ? t("command.parity.globalMilestones", {
-                                  type: type.toLowerCase(),
-                                  records: records
-                                      .map(
-                                          (record) =>
-                                              `${profileNameFromMilestone(record)} — ${formatMilestone(ctx, record)}`,
-                                      )
-                                      .join(" — "),
-                                  lng: l(ctx),
-                              })
-                            : t("command.parity.noGlobalMilestones", {
-                                  type: type.toLowerCase(),
-                                  lng: l(ctx),
-                              }),
+                        t("command.parity.recordDoesNotExist", { record: ctx.args[0], lng: l(ctx) }),
+                        "error",
+                    );
+                    return;
+                }
+
+                if (scope.category) {
+                    if (type === "ACCURACY" && scope.category === "word") {
+                        ctx.utils.sendChatMessage(
+                            t("command.parity.noRecordsForCategory", {
+                                category: metaCategoryName(scope.category, scope.language),
+                                lng: l(ctx),
+                            }),
+                            "neutral",
+                        );
+                        return;
+                    }
+                    const base =
+                        scope.category in bbv7MetaRecordMilestones
+                            ? bbv7MetaRecordMilestones[scope.category as MetaRecordCategory]
+                            : undefined;
+                    if (!base) {
+                        ctx.utils.sendChatMessage(
+                            t("command.parity.noRecordsForCategory", {
+                                category: metaCategoryName(scope.category, scope.language),
+                                lng: l(ctx),
+                            }),
+                            "neutral",
+                        );
+                        return;
+                    }
+                    const milestone = base * scope.page;
+                    const records = await BirdBotParityApiService.getMilestones(type, {
+                        language: scope.language,
+                        mode: scope.mode,
+                        category: scope.category,
+                        milestone,
+                        limit: 5,
+                    });
+                    if (!records.length) {
+                        ctx.utils.sendChatMessage(
+                            t(
+                                scope.page === 1
+                                    ? "command.parity.noRecordsForCategory"
+                                    : "command.parity.pageDoesNotExist",
+                                {
+                                    category: metaCategoryName(scope.category, scope.language),
+                                    page: scope.page,
+                                    lng: l(ctx),
+                                },
+                            ),
+                            "neutral",
+                        );
+                        return;
+                    }
+                    const milestoneLabel =
+                        scope.category === "alpha" ? recordsUtils.alpha.format(milestone) : String(milestone);
+                    ctx.utils.sendChatMessage(
+                        t("command.parity.categoryRecords", {
+                            category: metaCategoryName(scope.category, scope.language),
+                            milestone: milestoneLabel,
+                            records: records
+                                .map(
+                                    (record) =>
+                                        `${profileNameFromMilestone(record)}: ${formatMetaValue(type, record.value, l(ctx))}`,
+                                )
+                                .join(" — "),
+                            lng: l(ctx),
+                        }),
                         "neutral",
                     );
                     return;
                 }
-                const target = await resolveTarget(ctx, targetText);
-                const records = await BirdBotParityApiService.getMilestones(type, { playerId: target.playerId });
-                const label = target.playerUsername || target.playerAccountName;
+
+                const categories = categoriesForLanguage(scope.language).filter(
+                    (category): category is MetaRecordCategory =>
+                        category in bbv7MetaRecordMilestones && (type === "SPEED" || category !== "word"),
+                );
+                const bestRecords = (
+                    await Promise.all(
+                        categories.map(async (category) => {
+                            const milestone = bbv7MetaRecordMilestones[category];
+                            if (!milestone) return null;
+                            const records = await BirdBotParityApiService.getMilestones(type, {
+                                language: scope.language,
+                                mode: scope.mode,
+                                category,
+                                milestone,
+                                limit: 1,
+                            });
+                            return records[0] ? { category, record: records[0] } : null;
+                        }),
+                    )
+                ).filter((item): item is NonNullable<typeof item> => item !== null);
                 ctx.utils.sendChatMessage(
-                    records.length
-                        ? t("command.parity.milestones", {
-                              player: label,
-                              type: type.toLowerCase(),
-                              records: records.slice(0, 8).map((record) => formatMilestone(ctx, record)).join(" — "),
+                    bestRecords.length
+                        ? t("command.parity.globalRecords", {
+                              mode: t(`lib.mode.${scope.mode}`, { lng: l(ctx) }),
+                              records: bestRecords
+                                  .map(
+                                      ({ category, record }) =>
+                                          `${metaCategoryName(category, scope.language)} — ${profileNameFromMilestone(record)}: ${formatMetaValue(type, record.value, l(ctx))}`,
+                                  )
+                                  .join(" — "),
                               lng: l(ctx),
                           })
-                        : t("command.parity.noMilestones", {
-                              player: label,
-                              type: type.toLowerCase(),
+                        : t("command.parity.noRecordsYet", {
+                              mode: t(`lib.mode.${scope.mode}`, { lng: l(ctx) }),
                               lng: l(ctx),
                           }),
                     "neutral",
                 );
             } catch (error) {
-                if (error instanceof Error && error.message === "LOGIN_REQUIRED") {
-                    ctx.utils.sendChatMessage(t("command.parity.loginOrPlayer", { lng: l(ctx) }), "error");
-                    return;
-                }
                 reportError(ctx, error);
             }
         },
@@ -111,11 +238,11 @@ function recordsCommand(type: "SPEED" | "ACCURACY", aliases: Command["aliases"])
 const speedRecordsCommand = recordsCommand("SPEED", ["speedrecords", "speed", "s"]);
 const accuracyRecordsCommand = recordsCommand("ACCURACY", ["accuracyrecords", "accuracy", "accu", "acc", "a"]);
 
-const creditsCommand = c({
-    id: "credits",
-    aliases: ["credits", "credit"],
-    usageDesc: "/credits",
-    exampleUsage: "/credits",
+const feathersCommand = c({
+    id: "feathers",
+    aliases: ["feathers", "feather", "credits", "credit"],
+    usageDesc: "/feathers",
+    exampleUsage: "/feathers",
     accessibleInRound: true,
     allowedFromWordInput: true,
     handler: async (ctx) => {
@@ -123,7 +250,7 @@ const creditsCommand = c({
             const player = await resolveTarget(ctx);
             const economy = await BirdBotParityApiService.getEconomy(player.playerId);
             ctx.utils.sendChatMessage(
-                t("command.parity.credits", { count: economy.balance, lng: l(ctx) }),
+                t("command.parity.feathers", { count: economy.balance, lng: l(ctx) }),
                 "neutral",
             );
         } catch (error) {
@@ -133,7 +260,11 @@ const creditsCommand = c({
 });
 
 function vipLabel(economy: BirdBotEconomyProfile): string {
-    return economy.vip?.tier ?? "NONE";
+    return BirdBotParityApiService.hasVip(economy) ? "VIP" : "NONE";
+}
+
+function hasVipAccess(ctx: CommandHandlerCtx, economy: BirdBotEconomyProfile): boolean {
+    return ctx.utils.userIsAdmin(ctx.gamer.authId) || BirdBotParityApiService.hasVip(economy);
 }
 
 const economyCommand = c({
@@ -152,7 +283,7 @@ const economyCommand = c({
             ctx.utils.sendChatMessage(
                 t("command.parity.economy", {
                     player: label,
-                    credits: economy.balance,
+                    feathers: economy.balance,
                     tier: vipLabel(economy),
                     purchases: economy.purchases.length,
                     lng: l(ctx),
@@ -168,41 +299,31 @@ const economyCommand = c({
 const buyCommand = c({
     id: "buy",
     aliases: ["buy", "acheter", "achat"],
-    usageDesc: "/buy [VIP|VIP+]",
-    exampleUsage: "/buy VIP - /buy VIP+",
+    usageDesc: "/buy VIP",
+    exampleUsage: "/buy VIP",
     accessibleInRound: true,
     handler: async (ctx) => {
         if (!ctx.gamer.authId) {
             ctx.utils.sendChatMessage(t("command.parity.purchaseLogin", { lng: l(ctx) }), "error");
             return;
         }
-        const requested = ctx.args[0]?.replace(/\+/g, "_PLUS").toUpperCase();
-        if (requested !== "VIP" && requested !== "VIP_PLUS") {
+        const requested = ctx.args[0]?.toUpperCase();
+        if (requested !== "VIP") {
             ctx.utils.sendChatMessage(t("command.parity.availableSkus", { lng: l(ctx) }), "info");
             return;
         }
         try {
             const player = await resolveTarget(ctx);
             const economy = await BirdBotParityApiService.getEconomy(player.playerId);
-            const rank: Record<BirdBotVipTier, number> = { NONE: 0, VIP: 1, VIP_PLUS: 2 };
-            if (rank[economy.vip?.tier ?? "NONE"] >= rank[requested]) {
-                ctx.utils.sendChatMessage(
-                    t("command.parity.alreadyVip", { tier: economy.vip?.tier ?? "NONE", lng: l(ctx) }),
-                    "info",
-                );
+            if (BirdBotParityApiService.hasVip(economy)) {
+                ctx.utils.sendChatMessage(t("command.parity.alreadyVip", { lng: l(ctx) }), "info");
                 return;
             }
-            await BirdBotParityApiService.buyVip(player.playerId, requested, ctx.gamer.authId);
-            ctx.utils.sendChatMessage(
-                t("command.parity.purchasedVip", {
-                    tier: requested === "VIP_PLUS" ? "VIP+" : "VIP",
-                    lng: l(ctx),
-                }),
-                "success",
-            );
+            await BirdBotParityApiService.buyVip(player.playerId, ctx.gamer.authId);
+            ctx.utils.sendChatMessage(t("command.parity.purchasedVip", { lng: l(ctx) }), "success");
         } catch (error) {
             if (error instanceof BirdBotApiError && error.status === 409) {
-                ctx.utils.sendChatMessage(t("command.parity.insufficientCredits", { lng: l(ctx) }), "error");
+                ctx.utils.sendChatMessage(t("command.parity.insufficientFeathers", { lng: l(ctx) }), "error");
                 return;
             }
             reportError(ctx, error);
@@ -261,7 +382,6 @@ function cosmeticCommand(config: {
     id: string;
     aliases: Command["aliases"];
     field: "welcomeMessage" | "roomName" | "botName" | "pictureUrl";
-    requiredTier: Exclude<BirdBotVipTier, "NONE">;
     maxLength: number;
 }): Command {
     return c({
@@ -294,15 +414,8 @@ function cosmeticCommand(config: {
             try {
                 const player = await resolveTarget(ctx);
                 const economy = await BirdBotParityApiService.getEconomy(player.playerId);
-                const rank: Record<BirdBotVipTier, number> = { NONE: 0, VIP: 1, VIP_PLUS: 2 };
-                if (rank[economy.vip?.tier ?? "NONE"] < rank[config.requiredTier]) {
-                    ctx.utils.sendChatMessage(
-                        t("command.parity.cosmeticTier", {
-                            tier: config.requiredTier.replace("_PLUS", "+"),
-                            lng: l(ctx),
-                        }),
-                        "error",
-                    );
+                if (!hasVipAccess(ctx, economy)) {
+                    ctx.utils.sendChatMessage(t("command.parity.cosmeticTier", { lng: l(ctx) }), "error");
                     return;
                 }
                 await BirdBotParityApiService.setCosmetic(
@@ -326,30 +439,27 @@ function cosmeticCommand(config: {
 
 const welcomeMessageCommand = cosmeticCommand({
     id: "welcomeMessage",
-    aliases: ["cwm", "changewm", "changewelcomemessage"],
+    aliases: ["welcomemessage", "changewelcomemessage", "cwm", "changewm"],
     field: "welcomeMessage",
-    requiredTier: "VIP",
     maxLength: 75,
 });
 const roomNameCommand = cosmeticCommand({
     id: "roomName",
-    aliases: ["crn", "changeroomname"],
+    aliases: ["roomname", "changeroomname", "crn"],
     field: "roomName",
-    requiredTier: "VIP_PLUS",
     maxLength: 15,
 });
 const botNameCommand = cosmeticCommand({
     id: "botName",
-    aliases: ["cbbn", "cn", "changebirdbotname"],
+    aliases: ["botname", "changebotname", "cbbn", "cn", "changebirdbotname"],
     field: "botName",
-    requiredTier: "VIP",
     maxLength: 15,
 });
 const pictureCommand = c({
     id: "picture",
-    aliases: ["cpp", "cp", "changepfp", "changeprofilepicture"],
-    usageDesc: "/cpp",
-    exampleUsage: "/cpp",
+    aliases: ["profilepicture", "changeprofilepicture", "changepfp", "cpp", "cp"],
+    usageDesc: "/profilepicture",
+    exampleUsage: "/profilepicture",
     accessibleInRound: true,
     handler: async (ctx) => {
         if (!ctx.gamer.authId) {
@@ -359,12 +469,8 @@ const pictureCommand = c({
         try {
             const player = await resolveTarget(ctx);
             const economy = await BirdBotParityApiService.getEconomy(player.playerId);
-            const rank: Record<BirdBotVipTier, number> = { NONE: 0, VIP: 1, VIP_PLUS: 2 };
-            if (rank[economy.vip?.tier ?? "NONE"] < rank.VIP_PLUS) {
-                ctx.utils.sendChatMessage(
-                    t("command.parity.cosmeticTier", { tier: "VIP+", lng: l(ctx) }),
-                    "error",
-                );
+            if (!hasVipAccess(ctx, economy)) {
+                ctx.utils.sendChatMessage(t("command.parity.cosmeticTier", { lng: l(ctx) }), "error");
                 return;
             }
 
@@ -497,17 +603,20 @@ function moderationCommand(kind: "trust" | "blacklist"): Command {
     });
 }
 
+export const birdBotVipCommands: Command[] = [
+    welcomeMessageCommand,
+    botNameCommand,
+    roomNameCommand,
+    pictureCommand,
+];
+
 export const birdBotParityCommands: Command[] = [
     speedRecordsCommand,
     accuracyRecordsCommand,
-    creditsCommand,
+    feathersCommand,
     economyCommand,
     buyCommand,
     setNameCommand,
-    welcomeMessageCommand,
-    roomNameCommand,
-    botNameCommand,
-    pictureCommand,
     newsCommand,
     moderationCommand("trust"),
     moderationCommand("blacklist"),

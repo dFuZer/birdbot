@@ -61,6 +61,7 @@ export const RANKED_WORD_INPUT_SAFE_COMMAND_IDS: ReadonlySet<string> = new Set([
     "currentGameScore",
     "getDefinition",
     "playerProfile",
+    "playerRecords",
     "records",
     "showTime",
     "speedRecords",

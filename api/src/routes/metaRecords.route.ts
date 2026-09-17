@@ -5,9 +5,7 @@ import { listMilestones, recordMilestone } from "../services/parity.service";
 const getMetaRecordsRouteHandler: RouteHandlerMethod = async (req, res) => {
     const parsed = milestoneQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).send({ message: "Invalid query", issues: parsed.error.issues });
-    return res.send(
-        await listMilestones(parsed.data.playerId, parsed.data.type, parsed.data.limit, parsed.data.milestone),
-    );
+    return res.send(await listMilestones(parsed.data));
 };
 
 const writeMetaRecordRouteHandler: RouteHandlerMethod = async (req, res) => {

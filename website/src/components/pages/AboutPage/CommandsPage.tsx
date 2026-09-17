@@ -27,7 +27,8 @@ const commands: Command[] = [
     },
     {
         trigger: "/searchwords",
-        explanation: "Use this command to search for words in the dictionary. You can pass syllables or regexes, and optionally filter or sort by a record type.",
+        explanation:
+            "Use this command to search for words in the dictionary. You can pass syllables or regexes, and optionally filter or sort by a record type.",
         id: "searchwords",
         shorthand: "/c",
         uses: ["/c [prompt]", "/c [...regexes]", "/c (-record) [...syllables|regexes]"],
@@ -99,36 +100,37 @@ const commands: Command[] = [
     {
         trigger: "/speed",
         explanation:
-            "Shows global speed milestones, or a specific player's milestones when a name is provided. Alias: /s.",
+            "Shows the fastest elapsed times to reach category score milestones. Add a category and milestone page, or use -language and -mode filters.",
         id: "speed",
         shorthand: "/s",
-        uses: ["/speed", "/speed [player]", "/s"],
+        uses: ["/speed", "/speed [category] [page]", "/s", "/speed [category] [page] -[language] -[mode]"],
         exampleUses: [
-            { use: "/s", useDescription: "Shows the global speed milestone board" },
-            { use: "/s dfuzer", useDescription: "Shows dfuzer's speed milestones" },
+            { use: "/s", useDescription: "Shows the best first-tier speed record in each category" },
+            { use: "/s alpha 2 -fr -regular", useDescription: "Shows the five fastest French regular alpha-208 records" },
         ],
     },
     {
         trigger: "/accuracy",
-        explanation: "Shows global accuracy streak milestones, or a specific player's milestones.",
+        explanation:
+            "Shows the fewest valid words used to reach category score milestones. Word accuracy is intentionally excluded.",
         id: "accuracy",
-        shorthand: "/acc",
-        uses: ["/accuracy", "/accuracy [player]", "/acc"],
+        shorthand: "/a",
+        uses: ["/accuracy", "/accuracy [category] [page]", "/acc", "/a"],
         exampleUses: [
-            { use: "/acc", useDescription: "Shows the global accuracy milestone board" },
-            { use: "/acc dfuzer", useDescription: "Shows dfuzer's accuracy milestones" },
+            { use: "/a", useDescription: "Shows the best first-tier accuracy record in each category" },
+            { use: "/accuracy long 2 -en", useDescription: "Shows the five best English 200-long-word attempts" },
         ],
     },
     {
-        trigger: "/credits",
-        explanation: "Shows your BirdBot credit balance. Credits are earned from scored games and can buy VIP.",
-        id: "credits",
-        uses: ["/credits"],
-        exampleUses: [{ use: "/credits", useDescription: "Shows your credit balance" }],
+        trigger: "/feathers",
+        explanation: "Shows your BirdBot feather balance. Feathers are earned from scored games and can buy VIP.",
+        id: "feathers",
+        uses: ["/feathers"],
+        exampleUses: [{ use: "/feathers", useDescription: "Shows your feather balance" }],
     },
     {
         trigger: "/economy",
-        explanation: "Shows credits, VIP tier, and recent purchases for you or another player.",
+        explanation: "Shows feathers, VIP status, and recent purchases for you or another player.",
         id: "economy",
         uses: ["/economy", "/economy [player]", "/vip"],
         exampleUses: [
@@ -138,11 +140,11 @@ const commands: Command[] = [
     },
     {
         trigger: "/buy",
-        explanation: "Purchases VIP (500 credits) or VIP+ (1000 credits).",
+        explanation: "Purchases VIP for 500 feathers.",
         id: "buy",
         condition: "logged-in",
-        uses: ["/buy vip", "/buy vip+"],
-        exampleUses: [{ use: "/buy vip", useDescription: "Buys VIP if you have enough credits" }],
+        uses: ["/buy vip"],
+        exampleUses: [{ use: "/buy vip", useDescription: "Buys VIP if you have enough feathers" }],
     },
     {
         trigger: "/setname",
@@ -151,48 +153,6 @@ const commands: Command[] = [
         condition: "logged-in",
         uses: ["/setname [name]"],
         exampleUses: [{ use: "/setname dfuzer", useDescription: "Claims the profile name dfuzer" }],
-    },
-    {
-        trigger: "/cwm",
-        explanation: "Sets the welcome message used when you join a room. Requires VIP. Use clear to remove it.",
-        id: "cwm",
-        condition: "logged-in",
-        uses: ["/cwm [value]", "/cwm clear"],
-        exampleUses: [
-            { use: "/cwm hello everyone", useDescription: "Sets your welcome message" },
-            { use: "/cwm clear", useDescription: "Removes your welcome message" },
-        ],
-    },
-    {
-        trigger: "/cbbn",
-        explanation: "Sets the BirdBot name used in rooms you create. Requires VIP. Use clear to remove it.",
-        id: "cbbn",
-        shorthand: "/cn",
-        condition: "logged-in",
-        uses: ["/cbbn [value]", "/cbbn clear"],
-        exampleUses: [
-            { use: "/cn Birdie", useDescription: "Sets the bot name used in your rooms" },
-            { use: "/cn clear", useDescription: "Resets the bot name" },
-        ],
-    },
-    {
-        trigger: "/crn",
-        explanation: "Sets the name used for rooms you create. Requires VIP+. Use clear to remove it.",
-        id: "crn",
-        condition: "logged-in",
-        uses: ["/crn [value]", "/crn clear"],
-        exampleUses: [
-            { use: "/crn Night Owl", useDescription: "Sets the room name used when you create a room" },
-            { use: "/crn clear", useDescription: "Resets the room name" },
-        ],
-    },
-    {
-        trigger: "/cpp",
-        explanation: "Copies your current jklm.fun profile picture onto BirdBot for rooms you create. Requires VIP+.",
-        id: "cpp",
-        condition: "logged-in",
-        uses: ["/cpp"],
-        exampleUses: [{ use: "/cpp", useDescription: "Copies your current profile picture onto BirdBot" }],
     },
     {
         trigger: "/link",
@@ -224,6 +184,18 @@ const commands: Command[] = [
         ],
     },
     {
+        trigger: "/playerrecords",
+        explanation: "Shows a player's records for a specific language and game mode.",
+        id: "playerrecords",
+        shorthand: "/pr",
+        uses: ["/playerrecords", "/playerrecords [username]", "/pr [username] (-language -mode)"],
+        exampleUses: [
+            { use: "/pr", useDescription: "Shows your own records" },
+            { use: "/pr dfuzer", useDescription: "Shows dfuzer's records" },
+            { use: "/pr dfuzer -fr -regular", useDescription: "Shows dfuzer's French regular-mode records" },
+        ],
+    },
+    {
         trigger: "/definition",
         explanation: "Looks up the definition of a word (French and English). You can pass a page number and a language flag.",
         id: "definition",
@@ -251,10 +223,7 @@ const commands: Command[] = [
         id: "mode",
         shorthand: "/m",
         condition: "room-owner",
-        uses: [
-            "/mode [gameMode]",
-            "/mode custom [difficulty] [turn] [age] [startingLives] [maxLives]",
-        ],
+        uses: ["/mode [gameMode]", "/mode custom [difficulty] [turn] [age] [startingLives] [maxLives]"],
         exampleUses: [
             { use: "/mode regular", useDescription: "Sets the game mode to regular" },
             { use: "/mode blitz", useDescription: "Sets the game mode to blitz" },
@@ -361,6 +330,24 @@ const commands: Command[] = [
         exampleUses: [{ use: "/destroy", useDescription: "Destroys the current room" }],
     },
     {
+        trigger: "/private",
+        explanation: "Makes the current room private.",
+        id: "private",
+        shorthand: "/priv",
+        condition: "room-owner",
+        uses: ["/private", "/priv", "/pv"],
+        exampleUses: [{ use: "/private", useDescription: "Makes the room private" }],
+    },
+    {
+        trigger: "/public",
+        explanation: "Makes the current room public.",
+        id: "public",
+        shorthand: "/pub",
+        condition: "room-owner",
+        uses: ["/public", "/pub", "/pb"],
+        exampleUses: [{ use: "/public", useDescription: "Makes the room public" }],
+    },
+    {
         trigger: "/mod",
         explanation: "Gives moderator capabilities to a user.",
         id: "mod",
@@ -408,13 +395,245 @@ const commands: Command[] = [
         uses: ["/boom"],
         exampleUses: [{ use: "/boom", useDescription: "💥" }],
     },
+    {
+        trigger: "/test",
+        explanation:
+            "Queues one or more words for dictionary QA. This command is available only to BirdBot administrators and trusted dictionary reviewers.",
+        id: "test",
+        uses: ["/test [word]", "/test [word1] [word2]"],
+        exampleUses: [
+            { use: "/test example", useDescription: "Queues “example” for dictionary review" },
+            { use: "/test word1 word2", useDescription: "Queues multiple words for dictionary review" },
+        ],
+    },
+    {
+        trigger: "/changelist",
+        explanation:
+            "Adds words to or removes words from a listed-record word list. This command is available only to BirdBot administrators and trusted list reviewers.",
+        id: "changelist",
+        shorthand: "/cl",
+        uses: ["/cl [language] [list] [add|remove] [words...]"],
+        exampleUses: [
+            { use: "/cl en plant add sunflower", useDescription: "Adds “sunflower” to the English plant list" },
+            { use: "/cl en plant remove sunflower", useDescription: "Removes “sunflower” from the English plant list" },
+        ],
+    },
+    {
+        trigger: "/trustlist",
+        explanation: "Shows or changes a player's API-backed reviewer trust state.",
+        id: "trustlist",
+        shorthand: "/trust",
+        condition: "admin",
+        uses: ["/trust [add|remove|show] [player]"],
+        exampleUses: [
+            { use: "/trust add dfuzer", useDescription: "Grants reviewer trust to dfuzer" },
+            { use: "/trust remove dfuzer", useDescription: "Removes reviewer trust from dfuzer" },
+            { use: "/trust show dfuzer", useDescription: "Shows dfuzer's reviewer trust state" },
+        ],
+    },
+    {
+        trigger: "/blacklist",
+        explanation: "Shows or changes a player's API-backed room blacklist state.",
+        id: "blacklist",
+        condition: "admin",
+        uses: ["/blacklist [add|remove|show] [player]"],
+        exampleUses: [
+            { use: "/blacklist add dfuzer", useDescription: "Adds dfuzer to the room blacklist" },
+            { use: "/blacklist remove dfuzer", useDescription: "Removes dfuzer from the room blacklist" },
+            { use: "/blacklist show dfuzer", useDescription: "Shows dfuzer's blacklist state" },
+        ],
+    },
+    {
+        trigger: "/welcomemessage",
+        explanation: "Sets the welcome message used when you join a room. Requires VIP. Use clear to remove it.",
+        id: "welcomemessage",
+        shorthand: "/cwm",
+        condition: "vip",
+        uses: ["/welcomemessage [value]", "/welcomemessage clear", "/cwm [value]"],
+        exampleUses: [
+            { use: "/welcomemessage hello everyone", useDescription: "Sets your welcome message" },
+            { use: "/welcomemessage clear", useDescription: "Removes your welcome message" },
+        ],
+    },
+    {
+        trigger: "/botname",
+        explanation: "Sets the BirdBot name used in rooms you create. Requires VIP. Use clear to remove it.",
+        id: "botname",
+        shorthand: "/cbbn",
+        condition: "vip",
+        uses: ["/botname [value]", "/botname clear", "/cbbn [value]"],
+        exampleUses: [
+            { use: "/botname Birdie", useDescription: "Sets the bot name used in your rooms" },
+            { use: "/botname clear", useDescription: "Resets the bot name" },
+        ],
+    },
+    {
+        trigger: "/roomname",
+        explanation: "Sets the name used for rooms you create. Requires VIP. Use clear to remove it.",
+        id: "roomname",
+        shorthand: "/crn",
+        condition: "vip",
+        uses: ["/roomname [value]", "/roomname clear", "/crn [value]"],
+        exampleUses: [
+            { use: "/roomname Night Owl", useDescription: "Sets the room name used when you create a room" },
+            { use: "/roomname clear", useDescription: "Resets the room name" },
+        ],
+    },
+    {
+        trigger: "/profilepicture",
+        explanation: "Copies your current jklm.fun profile picture onto BirdBot for rooms you create. Requires VIP.",
+        id: "profilepicture",
+        shorthand: "/cpp",
+        condition: "vip",
+        uses: ["/profilepicture", "/cpp"],
+        exampleUses: [{ use: "/profilepicture", useDescription: "Copies your current profile picture onto BirdBot" }],
+    },
+    {
+        trigger: "/creatorid",
+        explanation: "Shows the authentication ID of the current room's creator.",
+        id: "creatorid",
+        condition: "admin",
+        uses: ["/creatorid"],
+        exampleUses: [{ use: "/creatorid", useDescription: "Shows the current room creator's authentication ID" }],
+    },
+    {
+        trigger: "/reconnect",
+        explanation: "Disconnects and reconnects BirdBot to the current room.",
+        id: "reconnect",
+        shorthand: "/reco",
+        condition: "admin",
+        uses: ["/reconnect", "/reco"],
+        exampleUses: [{ use: "/reconnect", useDescription: "Reconnects BirdBot to the room" }],
+    },
+    {
+        trigger: "/getid",
+        explanation: "Resolves a player and shows their account name, profile name, and internal player ID.",
+        id: "getid",
+        condition: "admin",
+        uses: ["/getid [player]"],
+        exampleUses: [{ use: "/getid dfuzer", useDescription: "Shows dfuzer's account and internal player IDs" }],
+    },
+    {
+        trigger: "/suppress",
+        explanation: "Suppresses and blacklists a player, with an optional moderation reason.",
+        id: "suppress",
+        condition: "admin",
+        uses: ["/suppress [player] [reason?]"],
+        exampleUses: [{ use: "/suppress dfuzer abuse", useDescription: "Suppresses dfuzer with “abuse” as the reason" }],
+    },
+    {
+        trigger: "/givefeathers",
+        explanation: "Adds or removes feathers from a player's balance.",
+        id: "givefeathers",
+        shorthand: "/gf",
+        condition: "admin",
+        uses: [
+            "/givefeathers [player] [amount]",
+            "/gf [player] [amount]",
+            "/givecredits [player] [amount]",
+            "/gc [player] [amount]",
+        ],
+        exampleUses: [
+            { use: "/givefeathers dfuzer 100", useDescription: "Adds 100 feathers to dfuzer's balance" },
+            { use: "/givefeathers dfuzer -100", useDescription: "Removes 100 feathers from dfuzer's balance" },
+        ],
+    },
+    {
+        trigger: "/givexp",
+        explanation: "Adds or removes XP from a player.",
+        id: "givexp",
+        condition: "admin",
+        uses: ["/givexp [player] [amount]"],
+        exampleUses: [
+            { use: "/givexp dfuzer 500", useDescription: "Adds 500 XP to dfuzer" },
+            { use: "/givexp dfuzer -500", useDescription: "Removes 500 XP from dfuzer" },
+        ],
+    },
+    {
+        trigger: "/setxp",
+        explanation: "Sets a player's total XP to an exact non-negative value.",
+        id: "setxp",
+        condition: "admin",
+        uses: ["/setxp [player] [amount]"],
+        exampleUses: [{ use: "/setxp dfuzer 1000", useDescription: "Sets dfuzer's total XP to 1,000" }],
+    },
+    {
+        trigger: "/health",
+        explanation: "Shows room connection counts, API availability, and process uptime.",
+        id: "health",
+        shorthand: "/status",
+        condition: "admin",
+        uses: ["/health", "/status"],
+        exampleUses: [{ use: "/health", useDescription: "Shows BirdBot's current health status" }],
+    },
+    {
+        trigger: "/broadcast",
+        explanation: "Broadcasts a message to every connected BirdBot room.",
+        id: "broadcast",
+        shorthand: "/bc",
+        condition: "admin",
+        uses: ["/broadcast [message]", "/bc [message]"],
+        exampleUses: [{ use: "/broadcast Maintenance soon", useDescription: "Sends the message to every connected room" }],
+    },
+    {
+        trigger: "/diag",
+        explanation: "Shows the words currently queued for French dictionary diagnostics.",
+        id: "diagnostic",
+        shorthand: "/diagnostic",
+        condition: "admin",
+        uses: ["/diag", "/diagnostic"],
+        exampleUses: [{ use: "/diag", useDescription: "Shows the current dictionary diagnostic queue" }],
+    },
+    {
+        trigger: "/destroyallrooms",
+        explanation: "Announces maintenance and destroys every room managed by BirdBot.",
+        id: "destroyallrooms",
+        condition: "admin",
+        uses: ["/destroyallrooms"],
+        exampleUses: [{ use: "/destroyallrooms", useDescription: "Destroys every managed room" }],
+    },
+    {
+        trigger: "/rooms",
+        explanation: "Lists every managed room code and its current game milestone.",
+        id: "rooms",
+        shorthand: "/roomlist",
+        condition: "admin",
+        uses: ["/rooms", "/roomlist", "/listrooms", "/listroom"],
+        exampleUses: [{ use: "/rooms", useDescription: "Shows all rooms currently managed by BirdBot" }],
+    },
+    {
+        trigger: "/staff",
+        explanation: "Shows or changes the BirdBot administrator and automoderator lists.",
+        id: "staff",
+        condition: "admin",
+        uses: ["/staff show", "/staff [add|remove] [admin|automod] [player]"],
+        exampleUses: [
+            { use: "/staff show", useDescription: "Shows all administrators and automoderators" },
+            { use: "/staff add automod dfuzer", useDescription: "Adds dfuzer as an automoderator" },
+            { use: "/staff remove admin dfuzer", useDescription: "Removes dfuzer as an administrator" },
+        ],
+    },
 ];
 
-type Condition = "logged-in" | "room-owner";
+type Condition = "logged-in" | "room-owner" | "vip" | "admin";
 
 function ConditionBadge({ condition }: { condition: Condition }) {
-    const color = condition === "logged-in" ? "bg-green-200/40 text-green-700/60" : "bg-red-200/40 text-red-600/60";
-    const badgeStr = condition === "logged-in" ? "logged in" : "room owner";
+    const color =
+        condition === "logged-in"
+            ? "bg-green-200/40 text-green-700/60"
+            : condition === "room-owner"
+              ? "bg-red-200/40 text-red-600/60"
+              : condition === "vip"
+                ? "bg-amber-200/40 text-amber-700/70"
+                : "bg-purple-200/40 text-purple-700/70";
+    const badgeStr =
+        condition === "logged-in"
+            ? "logged in"
+            : condition === "room-owner"
+              ? "room owner"
+              : condition === "vip"
+                ? "vip"
+                : "admin";
     return (
         <div className={`w-[5.4rem] min-w-[5.4rem] rounded-lg py-1 text-center text-xs font-semibold text-nowrap ${color}`}>
             {badgeStr}
@@ -474,7 +693,7 @@ export default function CommandsPage() {
     return (
         <div className="flex flex-col gap-4">
             <h1 className="text-2xl font-bold">Commands</h1>
-            <p className="text-sm text-neutral-500">Updated 16 Sept 2026</p>
+            <p className="text-sm text-neutral-500">Updated 17 Sept 2026</p>
             <p className="text-sm text-neutral-600">You can find all of the commands available on BirdBot below.</p>
             <div className="my-2 space-y-2">
                 <div className="flex items-center gap-4">
@@ -486,6 +705,14 @@ export default function CommandsPage() {
                     <p className="text-sm text-neutral-600">
                         To use this command, you need to be logged in and the owner of the room you are in
                     </p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <ConditionBadge condition="vip" />
+                    <p className="text-sm text-neutral-600">To use this command, you need to be logged in and have VIP</p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <ConditionBadge condition="admin" />
+                    <p className="text-sm text-neutral-600">Only the BirdBot owner can use this command</p>
                 </div>
             </div>
             {items.length ? (

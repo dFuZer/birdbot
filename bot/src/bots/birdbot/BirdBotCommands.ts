@@ -1,5 +1,5 @@
 import { writeFile } from "fs/promises";
-import type { Command } from "../../lib/class/CommandUtils.class";
+import type { Command, CommandHandlerCtx } from "../../lib/class/CommandUtils.class";
 import CommandUtils from "../../lib/class/CommandUtils.class";
 import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
@@ -32,7 +32,7 @@ import BirdBotDefinitions from "./BirdBotDefinitions.class";
 import { API_KEY, API_URL, IS_UNSTABLE_DEV_MODE } from "./BirdBotEnv";
 import { createBirdBotCommandRegistry } from "./commands/BirdBotCommandRegistry";
 import { birdBotAdminCommands } from "./commands/BirdBotAdminCommands";
-import { birdBotParityCommands } from "./commands/BirdBotParityCommands";
+import { birdBotParityCommands, birdBotVipCommands } from "./commands/BirdBotParityCommands";
 import {
     BirdBotGameMode,
     BirdBotLanguage,
@@ -63,6 +63,63 @@ function findTargetGameMode(argumentsList: string[]): BirdBotGameMode | null {
     return BirdBotUtils.findTargetItemInZodEnum(normalizedArguments, modesEnumSchema);
 }
 
+type PlayerProfileResult = {
+    playerId: string;
+    playerAccountName: string;
+    playerUsername: string;
+    foundUsername: string;
+    xp: ExperienceData;
+    language: BirdBotLanguage;
+    mode: BirdBotGameMode;
+    pp: number;
+    ppRank: number;
+    gamesPlayedCount: number;
+    recordsCount: number;
+    records: {
+        record_type: BirdBotRecordType;
+        score: number;
+        rank: number;
+    }[];
+    bestPerformances: {
+        record_type: BirdBotRecordType;
+        score: number;
+        pp: number;
+        weighted_pp: number;
+        mode: BirdBotGameMode;
+    }[];
+};
+
+async function fetchPlayerProfile(
+    ctx: CommandHandlerCtx,
+    username: string,
+    filters: { language?: BirdBotLanguage; mode?: BirdBotGameMode } = {},
+): Promise<PlayerProfileResult | null> {
+    const params = new URLSearchParams({ searchByName: username });
+    if (filters.language) params.set("language", filters.language);
+    if (filters.mode) params.set("mode", filters.mode);
+
+    try {
+        const request = await BirdBotUtils.getJsonFromApi(`/player-profile?${params.toString()}`);
+        if (!request.ok) {
+            ctx.utils.sendChatMessage(
+                t(request.status === 404 ? "error.404.player" : "error.api.inaccessible", {
+                    lng: l(ctx),
+                }),
+            );
+            return null;
+        }
+        return (await request.json()) as PlayerProfileResult;
+    } catch (error) {
+        Logger.error({
+            message: "Error fetching player data",
+            path: "BirdBotCommands.ts",
+            error,
+        });
+        ctx.utils.sendChatMessage(t("error.api.inaccessible", { lng: l(ctx) }));
+        return null;
+    }
+}
+
 const helpCommand = c({
     id: "help",
     aliases: ["help", "h", "?", "helo"], // helo may be a misinput of help
@@ -72,8 +129,12 @@ const helpCommand = c({
     allowedFromWordInput: true,
     handler: async (ctx) => {
         if (ctx.args.length === 0) {
-            const commandFirstAliases = birdbotCommands
-                .filter((command) => !command.adminRequired)
+            const vipCommandIds = new Set(birdBotVipCommands.map((command) => command.id));
+            const visibleCommands = birdbotCommands.filter((command) => !command.adminRequired);
+            const commandFirstAliases = [
+                ...visibleCommands.filter((command) => !vipCommandIds.has(command.id)),
+                ...visibleCommands.filter((command) => vipCommandIds.has(command.id)),
+            ]
                 .map((c) => `/${c.aliases[0]}`)
                 .join(" - ");
             ctx.utils.sendChatMessage(
@@ -530,12 +591,6 @@ const trainCommand = c({
     accessibleInRound: true,
     allowedFromWordInput: true,
     handler: (ctx) => {
-        const creatorAuthId = ctx.room.constantRoomData.roomCreatorAuthId;
-        if (!ctx.gamer.authId || creatorAuthId === null || ctx.gamer.authId !== creatorAuthId) {
-            ctx.utils.sendChatMessage(t("eventHandler.chat.notRoomCreator", { lng: l(ctx) }), "error");
-            return;
-        }
-
         const language = BirdBotUtils.getCurrentRoomLanguage(ctx);
         const listed: readonly ListedRecord[] = listedRecordsPerLanguage[language];
         const semiListed: readonly SemiListedRecord[] = semiListedRecordsPerLanguage[language];
@@ -697,7 +752,7 @@ const trainCommand = c({
             BirdBotGameplayStateService.announceScoreCounting(ctx);
             return;
         }
-        BirdBotTrainingService.set(ctx, { creatorAuthId: ctx.gamer.authId, list: null });
+        BirdBotTrainingService.set(ctx, { creatorAuthId: ctx.gamer.authId!, list: null });
         ctx.utils.sendChatMessage(t("parity.gameplay.trainingEnabled", { lng: l(ctx) }), "success");
         BirdBotGameplayStateService.announceScoreCounting(ctx);
     },
@@ -908,18 +963,32 @@ const searchWordsCommand = c({
         }
         const safeRegexes = regexes;
 
-        const otherRoomPrompts: string[] = [];
+        const activeRoomPrompts: string[] = [];
         const rooms = Object.values(ctx.bot.rooms);
         for (const room of rooms) {
-            if (room === ctx.room.rawRoom) continue;
             const roomSyllable =
                 room.roomState.gameData?.milestone.name === "round" ? room.roomState.gameData.milestone.syllable : null;
             if (roomSyllable) {
-                otherRoomPrompts.push(roomSyllable);
+                activeRoomPrompts.push(roomSyllable);
             }
         }
+        let caseInsensitiveOnlyMatches = 0;
+        const caseInsensitiveOnlySamples: { word: string; prompt: string }[] = [];
         function isWordHidden(word: string) {
-            return otherRoomPrompts.some((prompt) => word.includes(prompt));
+            const exactMatch = activeRoomPrompts.some((prompt) => word.includes(prompt));
+            if (!exactMatch) {
+                const lowercaseWord = word.toLowerCase();
+                const lowercasePrompt = activeRoomPrompts.find((prompt) =>
+                    lowercaseWord.includes(prompt.toLowerCase()),
+                );
+                if (lowercasePrompt) {
+                    caseInsensitiveOnlyMatches++;
+                    if (caseInsensitiveOnlySamples.length < 5) {
+                        caseInsensitiveOnlySamples.push({ word, prompt: lowercasePrompt });
+                    }
+                }
+            }
+            return exactMatch;
         }
 
         const filterFns: ((word: string) => boolean)[] = [];
@@ -1004,6 +1073,18 @@ const searchWordsCommand = c({
         const foundMoreThanLimit = totalResultsCount > RESULT_LIMIT;
         const moreHiddenThanLimit = hiddenWordsCount > RESULT_LIMIT;
 
+        Logger.log({
+            message: "/c hidden-word diagnostics",
+            path: "BirdBotCommands.ts",
+            json: {
+                searchArgs: ctx.args,
+                activeRoomPrompts,
+                hiddenWordsCount,
+                caseInsensitiveOnlyMatches,
+                caseInsensitiveOnlySamples,
+            },
+        });
+
         const targetRecordsString = requestedRecord
             ? `${t(`lib.recordType.${requestedRecord}.recordName`, { lng: l(ctx) })}: `
             : "";
@@ -1034,8 +1115,8 @@ const searchWordsCommand = c({
 const playerProfileCommand = c({
     id: "playerProfile",
     aliases: ["profile", "p", "i"],
-    usageDesc: "/p (username) (-language -mode)",
-    exampleUsage: "/p - /p dfuzer - /p dfuzer -fr - /p dfuzer -fr -regular",
+    usageDesc: "/p (username)",
+    exampleUsage: "/p - /p dfuzer",
     accessibleInRound: true,
     allowedFromWordInput: true,
     handler: async (ctx) => {
@@ -1049,73 +1130,8 @@ const playerProfileCommand = c({
             return;
         }
 
-        const targetLanguage = BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases);
-        const targetMode = BirdBotUtils.findTargetItemInZodEnum(ctx.params, modesEnumSchema);
-
-        type ResultType = {
-            playerId: string;
-            playerAccountName: string;
-            playerUsername: string;
-            foundUsername: string;
-            xp: ExperienceData;
-            language: BirdBotLanguage;
-            mode: BirdBotGameMode;
-            pp: number;
-            ppRank: number;
-            gamesPlayedCount: number;
-            recordsCount: number;
-            records: {
-                record_type: BirdBotRecordType;
-                score: number;
-                rank: number;
-            }[];
-            bestPerformances: {
-                record_type: BirdBotRecordType;
-                score: number;
-                pp: number;
-                weighted_pp: number;
-                mode: BirdBotGameMode;
-            }[];
-        };
-
-        let playerData: ResultType | null = null;
-
-        try {
-            const playerDataRequest = await BirdBotUtils.getJsonFromApi(
-                `/player-profile?searchByName=${encodeURIComponent(targetUsername)}${
-                    targetLanguage ? `&language=${targetLanguage}` : ""
-                }${targetMode ? `&mode=${targetMode}` : ""}`,
-            );
-            if (!playerDataRequest.ok) {
-                if (playerDataRequest.status === 404) {
-                    ctx.utils.sendChatMessage(
-                        t("error.404.player", {
-                            lng: l(ctx),
-                        }),
-                    );
-                } else {
-                    ctx.utils.sendChatMessage(
-                        t("error.api.inaccessible", {
-                            lng: l(ctx),
-                        }),
-                    );
-                }
-                return;
-            }
-            playerData = (await playerDataRequest.json()) as ResultType;
-        } catch (e) {
-            Logger.error({
-                message: "Error fetching player data",
-                path: "BirdBotCommands.ts",
-                error: e,
-            });
-            ctx.utils.sendChatMessage(
-                t("error.api.inaccessible", {
-                    lng: l(ctx),
-                }),
-            );
-            return;
-        }
+        const playerData = await fetchPlayerProfile(ctx, targetUsername);
+        if (!playerData) return;
 
         if (!ctx.room.isHealthy()) {
             Logger.warn({
@@ -1125,69 +1141,103 @@ const playerProfileCommand = c({
             return;
         }
 
-        if (targetMode !== null) {
-            const messageParams = {
-                languageFlag: t(`lib.language.${playerData.language}.flag`, { lng: l(ctx) }),
-                gameMode: t(`lib.mode.${playerData.mode}`, { lng: l(ctx) }),
+        ctx.utils.sendChatMessage(
+            t("command.playerProfile.result", {
+                languageFlag: t(`lib.language.${playerData.language}.flag`),
                 playerUsername: playerData.playerUsername,
+                rank: playerData.ppRank,
+                pp: playerData.pp,
+                currentLevelXp: playerData.xp.currentLevelXp,
+                totalLevelXp: playerData.xp.totalLevelXp,
+                level: playerData.xp.level,
                 profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAccountName)}`,
-                lng: l(ctx),
-            };
-
-            if (playerData.records.length === 0) {
-                ctx.utils.sendChatMessage(t("command.playerProfile.noRecords", messageParams));
-                return;
-            }
-
-            const records = playerData.records
-                .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
-                .map((record) => {
-                    const r = recordsUtils[record.record_type];
-                    return `${t(`lib.recordType.${record.record_type}.recordName`, { lng: l(ctx) })}: ${r.format(record.score)}`;
-                })
-                .join(" — ");
-
-            ctx.utils.sendChatMessage(
-                t("command.playerProfile.resultMode", {
-                    ...messageParams,
-                    records,
-                }),
-            );
-        } else {
-            ctx.utils.sendChatMessage(
-                t("command.playerProfile.result", {
-                    languageFlag: t(`lib.language.${playerData.language}.flag`),
-                    playerUsername: playerData.playerUsername,
-                    rank: playerData.ppRank,
-                    pp: playerData.pp,
-                    currentLevelXp: playerData.xp.currentLevelXp,
-                    totalLevelXp: playerData.xp.totalLevelXp,
-                    level: playerData.xp.level,
-                    profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAccountName)}`,
-                    topPerformances: playerData.bestPerformances
-                        .sort((a, b) => b.pp - a.pp)
-                        .map((performance) => {
-                            return (
-                                (performance.mode !== "regular"
-                                    ? `[${t(`lib.mode.${performance.mode}`, {
-                                          lng: l(ctx),
-                                      })}] `
-                                    : "") +
-                                t(`lib.recordType.${performance.record_type}.score`, {
-                                    context: "specific",
-                                    count: performance.score,
-                                    formattedScore: recordsUtils[performance.record_type].format(performance.score),
+                topPerformances: playerData.bestPerformances
+                    .sort((a, b) => b.pp - a.pp)
+                    .map((performance) => {
+                        return (
+                            (performance.mode !== "regular"
+                                ? `[${t(`lib.mode.${performance.mode}`, {
                                     lng: l(ctx),
-                                }) +
-                                ` (+${performance.pp}pp)`
-                            );
-                        })
-                        .slice(0, 5)
-                        .join(" — "),
-                    lng: l(ctx),
-                }),
-            );
+                                })}] `
+                                : "") +
+                            t(`lib.recordType.${performance.record_type}.score`, {
+                                context: "specific",
+                                count: performance.score,
+                                formattedScore: recordsUtils[performance.record_type].format(performance.score),
+                                lng: l(ctx),
+                            }) +
+                            ` (+${performance.pp}pp)`
+                        );
+                    })
+                    .slice(0, 5)
+                    .join(" — "),
+                lng: l(ctx),
+            }),
+        );
+    },
+}) satisfies Command;
+
+const playerRecordsCommand = c({
+    id: "playerRecords",
+    aliases: ["playerrecords", "personalrecords", "pr"],
+    usageDesc: "/pr (username) (-language -mode)",
+    exampleUsage: "/pr - /pr dfuzer - /pr dfuzer -fr -regular",
+    accessibleInRound: true,
+    allowedFromWordInput: true,
+    handler: async (ctx) => {
+        const targetUsername = ctx.args.length > 0 ? ctx.args.join(" ") : ctx.gamer.authId;
+        if (!targetUsername) {
+            ctx.utils.sendChatMessage(t("command.playerRecords.noUsernameNotConnected", { lng: l(ctx) }));
+            return;
         }
+
+        const currentRoomLanguage =
+            dictionaryIdToBirdbotLanguage[ctx.room.roomState.gameData!.rules.dictionaryId as BirdBotSupportedDictionaryId];
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        const language =
+            BirdBotUtils.findValueInAliasesObject(ctx.params, languageAliases) ??
+            currentRoomLanguage ??
+            defaultLanguage;
+        const requestedMode = findTargetGameMode(ctx.params);
+        const mode = requestedMode ?? (roomMetadata.gameMode === "custom" ? defaultMode : roomMetadata.gameMode);
+        const playerData = await fetchPlayerProfile(ctx, targetUsername, { language, mode });
+        if (!playerData) return;
+
+        if (!ctx.room.isHealthy()) {
+            Logger.warn({
+                message: "Room is not healthy anymore, skipping the rest of command execution",
+                path: "BirdBotCommands.ts",
+            });
+            return;
+        }
+
+        const messageParams = {
+            languageFlag: t(`lib.language.${playerData.language}.flag`, { lng: l(ctx) }),
+            gameMode: t(`lib.mode.${playerData.mode}`, { lng: l(ctx) }),
+            playerUsername: playerData.playerUsername,
+            profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAccountName)}`,
+            lng: l(ctx),
+        };
+
+        if (playerData.records.length === 0) {
+            ctx.utils.sendChatMessage(t("command.playerRecords.noRecords", messageParams));
+            return;
+        }
+
+        const records = playerData.records
+            .sort((a, b) => recordsUtils[a.record_type].order - recordsUtils[b.record_type].order)
+            .map((record) => {
+                const recordUtils = recordsUtils[record.record_type];
+                return `${t(`lib.recordType.${record.record_type}.recordName`, { lng: l(ctx) })}: ${recordUtils.format(record.score)}`;
+            })
+            .join(" — ");
+
+        ctx.utils.sendChatMessage(
+            t("command.playerRecords.result", {
+                ...messageParams,
+                records,
+            }),
+        );
     },
 }) satisfies Command;
 
@@ -1963,10 +2013,9 @@ const createRoomCommand = c({
                 ctx.utils.sendChatMessage(t("parity.room.blacklisted", { lng: l(ctx) }), "error");
                 return;
             }
-            if (economy.vip?.tier === "VIP" || economy.vip?.tier === "VIP_PLUS") {
+            const adminBypass = ctx.utils.userIsAdmin(gamer.authId);
+            if (adminBypass || BirdBotParityApiService.hasVip(economy)) {
                 botName = economy.cosmetics?.bot_name ?? undefined;
-            }
-            if (economy.vip?.tier === "VIP_PLUS") {
                 roomName = economy.cosmetics?.room_name ? `${economy.cosmetics.room_name} 🐤` : roomName;
                 pictureUrl = economy.cosmetics?.picture_url ?? undefined;
             }
@@ -2033,6 +2082,7 @@ export const birdbotCommandRegistry = createBirdBotCommandRegistry([
             helpCommand,
             recordsCommand,
             playerProfileCommand,
+            playerRecordsCommand,
             xpCommand,
             currentGameScoresCommand,
             searchWordsCommand,
@@ -2069,6 +2119,10 @@ export const birdbotCommandRegistry = createBirdBotCommandRegistry([
     {
         name: "account",
         commands: [linkAccountCommand, ...birdBotParityCommands],
+    },
+    {
+        name: "vip",
+        commands: birdBotVipCommands,
     },
     {
         name: "administration",

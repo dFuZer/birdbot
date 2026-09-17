@@ -94,19 +94,22 @@ export default class BirdBot extends Bot {
                     userToken: persisted.userToken,
                     serverUrl: persisted.serverUrl ?? undefined,
                 });
+                if (!this.hasRoom(persisted.roomCode)) {
+                    await this.dropPersistedRoom(persisted.roomCode, "rejoin completed but room is no longer held");
+                }
             } catch (error) {
                 Logger.error({
                     message: `Failed to rejoin persisted room ${persisted.roomCode}; removing from registry`,
                     path: "BirdBot.class.ts",
                     error,
                 });
-                try {
-                    await BirdBotParityApiService.deleteBotRoom(persisted.roomCode);
-                } catch {
-                    // best-effort cleanup
-                }
+                await this.dropPersistedRoom(persisted.roomCode);
             }
         }
+    }
+
+    private hasRoom(roomCode: string): boolean {
+        return Object.values(this.rooms).some((room) => room.constantRoomData.roomCode === roomCode);
     }
 
     private async persistRoom(room: Room): Promise<void> {
@@ -128,11 +131,21 @@ export default class BirdBot extends Bot {
     }
 
     private async unpersistRoom(room: Room): Promise<void> {
+        await this.dropPersistedRoom(room.constantRoomData.roomCode);
+    }
+
+    private async dropPersistedRoom(roomCode: string, reason?: string): Promise<void> {
         try {
-            await BirdBotParityApiService.deleteBotRoom(room.constantRoomData.roomCode);
+            await BirdBotParityApiService.deleteBotRoom(roomCode);
+            if (reason) {
+                Logger.log({
+                    message: `Removed persisted room ${roomCode}: ${reason}`,
+                    path: "BirdBot.class.ts",
+                });
+            }
         } catch (error) {
             Logger.error({
-                message: `Failed to unpersist room ${room.constantRoomData.roomCode}`,
+                message: `Failed to unpersist room ${roomCode}`,
                 path: "BirdBot.class.ts",
                 error,
             });

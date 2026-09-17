@@ -13,6 +13,7 @@ export default class BirdBotGameplayStateService {
         metadata.playstyle ??= "regular";
         metadata.training ??= null;
         metadata.rankedBlockedUntilSeating ??= false;
+        metadata.nextDelayMs ??= 0;
     }
 
     public static resetForLanguageChange(ctx: CommandOrEventCtx): void {
@@ -24,6 +25,7 @@ export default class BirdBotGameplayStateService {
         metadata.playstyle = "regular";
         metadata.training = null;
         metadata.rankedBlockedUntilSeating = false;
+        metadata.nextDelayMs = 0;
     }
 
     public static resetIfLanguageChanged(ctx: CommandOrEventCtx): void {

@@ -156,7 +156,7 @@ export default class Bot {
         try {
             await Utilitary.initializeRoomSockets(this, room);
         } catch (knownUrlError) {
-            if (!hadKnownServerUrl) throw knownUrlError;
+            if (!hadKnownServerUrl || this.rooms[room.id] !== room) throw knownUrlError;
             Logger.log({
                 message: `Known server URL failed for ${room.constantRoomData.roomCode}; rediscovering.`,
                 path: "Bot.class.ts",

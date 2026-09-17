@@ -1,13 +1,15 @@
 import { z } from "zod";
 import { gameSchema } from "./game.zod";
 import { playerSchema } from "./player.zod";
+import { recordsEnumSchema } from "./records.zod";
 
 const submitResultSchema = z.enum(["success", "failsPrompt", "invalidWord", "noText", "alreadyUsed", "bombExploded"]);
 type TSubmitResult = z.infer<typeof submitResultSchema>;
 
 const wordMilestoneSchema = z.object({
     type: z.enum(["SPEED", "ACCURACY"]),
-    milestone: z.string().trim().min(1).max(80),
+    category: recordsEnumSchema,
+    milestone: z.number().int().positive(),
     value: z.number().finite().nonnegative(),
     idempotencyKey: z.string().trim().min(8).max(120),
     metadata: z.record(z.unknown()).optional(),

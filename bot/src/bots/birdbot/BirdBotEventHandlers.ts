@@ -12,7 +12,13 @@ import {
     recordsUtils,
     scoreKeyPerListedRecord,
 } from "./BirdBotConstants";
-import type { BirdBotRoomMetadata, BirdbotRoomTargetConfig, ListedRecordListResource } from "./BirdBotTypes";
+import type {
+    BirdBotRecordType,
+    BirdBotRoomMetadata,
+    BirdBotWordMilestone,
+    BirdbotRoomTargetConfig,
+    ListedRecordListResource,
+} from "./BirdBotTypes";
 import BirdBotUtils from "./BirdBotUtils.class";
 import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
 import BirdBotModerationService from "./services/BirdBotModeration.service";
@@ -60,6 +66,7 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
         BirdBotUtils.initializeScoresForPlayerId(roomMetadata, playerPeerId);
     }
     const playerScores = roomMetadata.scoresByPeerId[playerPeerId]!;
+    const scoresBeforeWord = { ...playerScores };
     const currentDictionaryResource = BirdBotUtils.getCurrentDictionaryResource(ctx);
     const currentRoomLanguage = BirdBotUtils.getCurrentRoomLanguage(ctx);
     const submitIsInDictionary = currentDictionaryResource.resource.includes(word);
@@ -217,6 +224,50 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
         }
     }
 
+    let metaMilestones: BirdBotWordMilestone[] = [];
+    if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
+        const game = BirdBotUtils.getApiGameData(ctx);
+        metaMilestones = BirdBotParityApiService.buildCategoryMilestones({
+            gameId: game.id,
+            turnKey,
+            word,
+            elapsedMs: Math.max(0, Date.now() - ctx.room.roomState.roundStartTimestamp),
+            wordsUsed: playerScores.words,
+            before: scoresBeforeWord,
+            after: playerScores,
+        });
+        const reached = new Map<
+            string,
+            { category: BirdBotRecordType; milestone: number; speed: boolean; accuracy: boolean }
+        >();
+        for (const milestone of metaMilestones) {
+            const key = `${milestone.category}:${milestone.milestone}`;
+            const entry = reached.get(key) ?? {
+                category: milestone.category,
+                milestone: milestone.milestone,
+                speed: false,
+                accuracy: false,
+            };
+            entry.speed ||= milestone.type === "SPEED";
+            entry.accuracy ||= milestone.type === "ACCURACY";
+            reached.set(key, entry);
+        }
+        for (const entry of reached.values()) {
+            const key = entry.speed && entry.accuracy
+                ? "eventHandler.submit.comments.reachedMetaMilestone"
+                : entry.speed
+                  ? "eventHandler.submit.comments.reachedSpeedMilestone"
+                  : "eventHandler.submit.comments.reachedAccuracyMilestone";
+            turnComments.push(
+                t(key, {
+                    category: t(`lib.recordType.${entry.category}.recordName`, { lng: l(ctx) }),
+                    milestone: entry.milestone,
+                    lng: l(ctx),
+                }),
+            );
+        }
+    }
+
     if (turnComments.length > 0 && !isMe) {
         if (showWord) {
             ctx.utils.sendChatMessage(
@@ -272,14 +323,7 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
             player: BirdBotUtils.getApiPlayerData(currentChatter),
             durationMs: previousHandlersCtx.durationMs,
             reactionMs: previousHandlersCtx.reactionMs,
-            milestones: BirdBotParityApiService.buildWordMilestones({
-                gameId: game.id,
-                turnKey,
-                word,
-                durationMs: previousHandlersCtx.durationMs,
-                reactionMs: previousHandlersCtx.reactionMs,
-                accuracyStreak: playerScores.currentWordsWithoutDeath,
-            }),
+            milestones: metaMilestones,
         });
     }
 }
@@ -290,7 +334,7 @@ function handleFlip(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0], previo
     if (playerPeerId === undefined || !turnKey) return;
 
     const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-    if (!BirdBotUtils.markFlipForTurn(ctx, turnKey)) return;
+    if (roomMetadata.flipTurnKeys.has(turnKey)) return;
     if (roomMetadata.scoresByPeerId[playerPeerId] === undefined) {
         BirdBotUtils.initializeScoresForPlayerId(roomMetadata, playerPeerId);
     }
@@ -298,20 +342,49 @@ function handleFlip(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0], previo
     const oldFlips = playerScores.flips;
     playerScores.flips++;
     roomMetadata.globalScores.flips++;
-    const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, playerScores.flips, 4);
-    if (!passedMilestone || ctx.room.roomState.myPeerId === playerPeerId) return;
-
     const chatter = ctx.room.roomState.roomData?.chatters.find((item) => item.peerId === playerPeerId);
-    if (!chatter) return;
-    ctx.utils.sendChatMessage(
-        t("eventHandler.submit.turnCommentWithoutWord", {
-            username: chatter.nickname,
-            comments: t("eventHandler.submit.comments.gainedLives", {
+    const pending = roomMetadata.pendingWordRegistrations.get(turnKey);
+    let reachedMetaMilestone: number | null = null;
+    if (chatter?.authId && pending && BirdBotGameplayStateService.isScoreEligible(ctx)) {
+        const extraMilestones = BirdBotParityApiService.buildCategoryMilestones({
+            gameId: pending.data.game.id,
+            turnKey,
+            word: pending.data.word,
+            elapsedMs: Math.max(0, Date.now() - ctx.room.roomState.roundStartTimestamp),
+            wordsUsed: playerScores.words,
+            before: { ...playerScores, flips: oldFlips },
+            after: playerScores,
+        });
+        pending.data.milestones = [...(pending.data.milestones ?? []), ...extraMilestones];
+        reachedMetaMilestone = extraMilestones[0]?.milestone ?? null;
+    }
+    BirdBotUtils.markFlipForTurn(ctx, turnKey);
+    const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, playerScores.flips, 4);
+    if ((!passedMilestone && !reachedMetaMilestone) || ctx.room.roomState.myPeerId === playerPeerId || !chatter) return;
+    const comments = [];
+    if (passedMilestone) {
+        comments.push(
+            t("eventHandler.submit.comments.gainedLives", {
                 count: playerScores.flips,
                 playerTotal: playerScores.flips,
                 globalTotal: roomMetadata.globalScores.flips,
                 lng: l(ctx),
             }),
+        );
+    }
+    if (reachedMetaMilestone) {
+        comments.push(
+            t("eventHandler.submit.comments.reachedMetaMilestone", {
+                category: t("lib.recordType.flips.recordName", { lng: l(ctx) }),
+                milestone: reachedMetaMilestone,
+                lng: l(ctx),
+            }),
+        );
+    }
+    ctx.utils.sendChatMessage(
+        t("eventHandler.submit.turnCommentWithoutWord", {
+            username: chatter.nickname,
+            comments: comments.join(" - "),
             lng: l(ctx),
         })
     );
@@ -361,7 +434,11 @@ const birdbotEventHandlers: BotEventHandlers = {
                         try {
                             const player = await BirdBotParityApiService.resolvePlayer(chatter.authId, true);
                             const economy = await BirdBotParityApiService.getEconomy(player.playerId);
-                            if (economy.vip && economy.vip.tier !== "NONE" && economy.cosmetics?.welcome_message) {
+                            if (
+                                economy.cosmetics?.welcome_message &&
+                                (ctx.utils.userIsAdmin(chatter.authId) ||
+                                    (economy.vip && economy.vip.tier !== "NONE"))
+                            ) {
                                 ctx.utils.sendChatMessage(
                                     economy.cosmetics.welcome_message.replace(/µ\{n\}/gi, chatter.nickname),
                                     "important",
