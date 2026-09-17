@@ -17,7 +17,11 @@ import type {
     EventCtx,
 } from "../types/libEventTypes";
 import type Bot from "./Bot.class";
-import CommandUtils, { type Command, type CommandDispatchResult } from "./CommandUtils.class";
+import CommandUtils, {
+    type Command,
+    type CommandDispatchResult,
+    type CommandSource,
+} from "./CommandUtils.class";
 import Logger from "./Logger.class";
 import type Room from "./Room.class";
 
@@ -496,13 +500,14 @@ export default class Utilitary {
         rawMessage: string,
         chatter: Chatter,
         commands: readonly Command[],
-        options?: { isScoreEligible?: boolean },
+        options?: { isScoreEligible?: boolean; source?: CommandSource },
     ): CommandDispatchResult {
         return CommandUtils.dispatch({
             ctx,
             rawMessage,
             chatter,
             registry: CommandUtils.getRegistry(commands),
+            source: options?.source,
             isScoreEligible: options?.isScoreEligible,
         });
     }

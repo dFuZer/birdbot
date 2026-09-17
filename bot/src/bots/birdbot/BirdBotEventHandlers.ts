@@ -635,6 +635,7 @@ const birdbotEventHandlers: BotEventHandlers = {
 
                 if (!isMe) {
                     const handleCommandResult = Utilitary.handleCommandIfExists(ctx, rawWord, currentChatter, birdbotCommands, {
+                        source: "word-input",
                         isScoreEligible: BirdBotGameplayStateService.isScoreEligible(ctx),
                     });
                     reportCommandDispatchResult(ctx, handleCommandResult, rawWord);

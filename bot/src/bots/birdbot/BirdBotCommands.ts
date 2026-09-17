@@ -451,8 +451,9 @@ const startGameCommand = c({
 const setGameModeCommand = c({
     id: "setGameMode",
     aliases: ["mode", "m"],
-    usageDesc: "/mode [gameMode]",
-    exampleUsage: "/mode easy",
+    usageDesc:
+        "/mode [regular|easy|blitz|sub500|sub50|freeplay] — /mode custom [difficulty] [turn] [age] [starting lives] [max lives]",
+    exampleUsage: "/mode easy — /mode custom -50 5 16 2 3",
     roomCreatorRequired: true,
     accessibleInRound: false,
     handler: (ctx) => {
