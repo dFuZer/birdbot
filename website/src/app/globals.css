@@ -101,6 +101,52 @@
     @apply px-3 sm:px-5 md:px-10 lg:px-15;
 }
 
+.ambient-background {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(circle 36.4rem at 8% 22rem, rgb(4 200 180 / 14%), transparent 72%),
+        radial-gradient(circle 39rem at 92% 34rem, rgb(255 150 16 / 11%), transparent 72%);
+}
+
+.ambient-background--landing {
+    background:
+        radial-gradient(circle 41.6rem at 8% 16%, rgb(4 200 180 / 16%), transparent 72%),
+        radial-gradient(circle 39rem at 92% 31%, rgb(255 150 16 / 12%), transparent 72%),
+        radial-gradient(circle 36.4rem at 10% 52%, rgb(255 150 16 / 9%), transparent 72%),
+        radial-gradient(circle 44.2rem at 90% 70%, rgb(4 200 180 / 12%), transparent 72%),
+        radial-gradient(circle 36.4rem at 15% 90%, rgb(4 200 180 / 9%), transparent 72%);
+}
+
+.landing-bird-glow,
+.landing-mobile-glow {
+    position: absolute;
+    pointer-events: none;
+    background: radial-gradient(circle at center, rgb(4 200 180 / 30%), transparent 70%);
+}
+
+.landing-bird-glow {
+    top: 50%;
+    left: calc(50% + 4.3rem);
+    width: 50rem;
+    height: 50rem;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgb(4 200 180 / 24%), transparent 40%);
+    z-index: -1;
+}
+
+.landing-mobile-glow {
+    top: 50%;
+    left: 50%;
+    width: 36.4rem;
+    height: 36.4rem;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+}
+
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);

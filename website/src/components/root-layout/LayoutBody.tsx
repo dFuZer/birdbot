@@ -13,7 +13,7 @@ export default function LayoutBody({
 
     return (
         <body
-            className={`relative flex min-h-screen flex-col bg-neutral-50 ${interFont.className} ${mobileHamburgerMenu ? "overflow-hidden" : "overflow-y-auto"}`}
+            className={`relative isolate flex min-h-screen flex-col bg-neutral-50 ${interFont.className} ${mobileHamburgerMenu ? "overflow-hidden" : "overflow-y-auto"}`}
         >
             {children}
         </body>

@@ -1,55 +1,9 @@
 "use client";
 
-import { isChromiumAtom } from "@/lib/atoms";
-import { useAtom } from "jotai";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 
 export default function Blobs() {
     const pathname = usePathname();
 
-    const [isChromium, setIsChromium] = useAtom(isChromiumAtom);
-
-    useEffect(() => {
-        if (isChromium === null && typeof window !== "undefined") {
-            const userAgent = navigator.userAgent.toLowerCase();
-            const isChromiumBased = userAgent.includes("chrome");
-            console.log({ isChromiumBased });
-            setIsChromium(isChromiumBased);
-        } else if (isChromium === null) {
-            setIsChromium(false);
-        }
-    }, [isChromium, setIsChromium]);
-
-    if (isChromium === null || !isChromium) {
-        console.log({ isChromium });
-        return <></>;
-    }
-
-    if (pathname !== "/")
-        return (
-            <div className="absolute top-0 right-0 left-0 -z-10 hidden h-full overflow-hidden sm:block">
-                <div className="mt-[20rem] flex w-full justify-between px-[6rem]">
-                    <div className="bg-primary-500 mt-32 h-40 w-[20vw] blur-[160px]"></div>
-                    <div className="bg-highlight-500 h-40 w-[20vw] blur-[160px]"></div>
-                </div>
-            </div>
-        );
-
-    return (
-        <div className="absolute top-0 right-0 left-0 -z-10 hidden h-full overflow-hidden sm:block">
-            <div className="mt-[50rem] flex w-full justify-between px-[6rem]">
-                <div className="bg-primary-500 mt-32 h-40 w-[20vw] blur-[160px]"></div>
-                <div className="bg-highlight-500 h-40 w-[20vw] blur-[160px]"></div>
-            </div>
-            <div className="mt-[25rem] flex w-full justify-between px-[6rem]">
-                <div className="bg-highlight-500/60 h-40 w-[20vw] blur-[160px]"></div>
-                <div className="bg-primary-500/30 mt-32 h-40 w-[20vw] blur-[160px]"></div>
-            </div>
-            <div className="mt-[20rem] flex w-full justify-between px-[6rem]">
-                <div className="bg-primary-500 h-40 w-[20vw] blur-[160px]"></div>
-                <div className="bg-highlight-500 mt-30 h-40 w-[20vw] blur-[160px]"></div>
-            </div>
-        </div>
-    );
+    return <div aria-hidden className={`ambient-background ${pathname === "/" ? "ambient-background--landing" : ""}`} />;
 }
