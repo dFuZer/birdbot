@@ -972,6 +972,8 @@ const searchWordsCommand = c({
         const activeRoomPrompts: string[] = [];
         const rooms = Object.values(ctx.bot.rooms);
         for (const room of rooms) {
+            const roomMetadata = room.roomState.metadata as Partial<BirdBotRoomMetadata>;
+            if (roomMetadata.training) continue;
             const roomSyllable =
                 room.roomState.gameData?.milestone.name === "round" ? room.roomState.gameData.milestone.syllable : null;
             if (roomSyllable) {
