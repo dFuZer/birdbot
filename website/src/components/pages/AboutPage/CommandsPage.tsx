@@ -412,6 +412,7 @@ const commands: Command[] = [
             "Queues one or more words for dictionary QA. This command is available only to BirdBot administrators and trusted dictionary reviewers.",
         id: "testword",
         shorthand: "/test",
+        condition: "trusted",
         uses: ["/testword [word]", "/testword [word1] [word2]", "/test [words...]"],
         exampleUses: [
             { use: "/testword example", useDescription: "Queues “example” for dictionary review" },
@@ -424,6 +425,7 @@ const commands: Command[] = [
             "Adds words to or removes words from a listed-record word list. This command is available only to BirdBot administrators and trusted list reviewers.",
         id: "changelist",
         shorthand: "/cl",
+        condition: "trusted",
         uses: ["/cl [language] [list] [add|remove] [words...]"],
         exampleUses: [
             { use: "/cl en plant add sunflower", useDescription: "Adds “sunflower” to the English plant list" },
@@ -628,7 +630,7 @@ const commands: Command[] = [
     },
 ];
 
-type Condition = "logged-in" | "room-owner" | "vip" | "admin";
+type Condition = "logged-in" | "room-owner" | "vip" | "trusted" | "admin";
 
 function ConditionBadge({ condition }: { condition: Condition }) {
     const color =
@@ -638,7 +640,9 @@ function ConditionBadge({ condition }: { condition: Condition }) {
               ? "bg-red-200/40 text-red-600/60"
               : condition === "vip"
                 ? "bg-amber-200/40 text-amber-700/70"
-                : "bg-purple-200/40 text-purple-700/70";
+                : condition === "trusted"
+                  ? "bg-sky-200/40 text-sky-700/70"
+                  : "bg-purple-200/40 text-purple-700/70";
     const badgeStr =
         condition === "logged-in"
             ? "logged in"
@@ -646,7 +650,9 @@ function ConditionBadge({ condition }: { condition: Condition }) {
               ? "room owner"
               : condition === "vip"
                 ? "vip"
-                : "admin";
+                : condition === "trusted"
+                  ? "trusted"
+                  : "admin";
     return (
         <div className={`w-[5.4rem] min-w-[5.4rem] rounded-lg py-1 text-center text-xs font-semibold text-nowrap ${color}`}>
             {badgeStr}
@@ -722,6 +728,12 @@ export default function CommandsPage() {
                 <div className="flex items-center gap-4">
                     <ConditionBadge condition="vip" />
                     <p className="text-sm text-neutral-600">To use this command, you need to be logged in and have VIP</p>
+                </div>
+                <div className="flex items-center gap-4">
+                    <ConditionBadge condition="trusted" />
+                    <p className="text-sm text-neutral-600">
+                        Only BirdBot administrators and trusted reviewers can use this command
+                    </p>
                 </div>
                 <div className="flex items-center gap-4">
                     <ConditionBadge condition="admin" />
