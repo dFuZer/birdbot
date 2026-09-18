@@ -142,4 +142,36 @@ export default class BirdBotApiWriteQueue {
     public static makeRecapKey(gameId: string, accountName: string): string {
         return BirdBotParityApiService.makeIdempotencyKey(gameId, accountName, "game-recap");
     }
+
+    public static pendingCount(): number {
+        return this.items.length;
+    }
+
+    public static resetForTests(): void {
+        this.items.length = 0;
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = undefined;
+        }
+        this.pumping = false;
+    }
+
+    public static async drain(timeoutMs: number): Promise<number> {
+        const deadline = Date.now() + timeoutMs;
+        for (const item of this.items) {
+            item.nextAttemptAt = 0;
+        }
+        this.ensurePump();
+        while (this.items.length > 0 && Date.now() < deadline) {
+            await this.pump();
+            if (this.items.length > 0) {
+                await new Promise((resolve) => setTimeout(resolve, 25));
+            }
+        }
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = undefined;
+        }
+        return this.items.length;
+    }
 }

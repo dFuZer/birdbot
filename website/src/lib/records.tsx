@@ -97,6 +97,15 @@ export const LANGUAGES_DATA: { [key in LanguageEnum]: ILanguageData } = {
     it: { displayName: "Italian", shortDisplayName: "IT" },
 };
 
+export const LANGUAGE_DOT_COLORS: Record<LanguageEnum, string> = {
+    fr: "#2563eb",
+    en: "#dc2626",
+    de: "#ca8a04",
+    es: "#ea580c",
+    brpt: "#16a34a",
+    it: "#7c3aed",
+};
+
 export function getTimeDisplayFromMilliseconds(milliseconds: number) {
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);

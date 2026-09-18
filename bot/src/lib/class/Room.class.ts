@@ -38,6 +38,9 @@ export default class Room {
     public hasEverConnected: boolean;
     public connectionGeneration: number;
     public reconnectPromise: Promise<void> | null;
+    public isRecoveryJoin: boolean;
+    public recoveredMyPeerId: number | null;
+    public checkpointMilestoneName: "round" | "seating" | null;
 
     constructor({
         roomCode,
@@ -60,6 +63,9 @@ export default class Room {
         this.hasEverConnected = false;
         this.connectionGeneration = 0;
         this.reconnectPromise = null;
+        this.isRecoveryJoin = false;
+        this.recoveredMyPeerId = null;
+        this.checkpointMilestoneName = null;
         this.constantRoomData = {
             roomCode,
             targetConfig,

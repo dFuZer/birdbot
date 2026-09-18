@@ -8,17 +8,29 @@ import type { ECElementEvent, ECharts, EChartsCoreOption } from "echarts/core";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import type { OpenMonitoringPlayer } from "@/app/open-monitoring/page";
+import { LANGUAGE_DOT_COLORS, LANGUAGES_DATA, type LanguageEnum } from "@/lib/records";
 
 echarts.use([ScatterChart, GridComponent, TooltipComponent, DataZoomComponent, CanvasRenderer]);
+
+const MAX_WORDS_FOR_SIZE = 10_000;
+const MIN_SIZE_SCALE = 0.5;
+const MAX_SIZE_SCALE = 1.5;
 
 type ScatterDatum = {
     value: [number, number];
     accountName: string;
     username: string;
+    language: LanguageEnum;
     wordsPlaced: number;
     distinctWords: number;
     exclusiveWords: number;
     highlighted: boolean;
+    symbolSize: number;
+    itemStyle: {
+        color: string;
+        borderColor: string;
+        borderWidth: number;
+    };
 };
 
 function formatRatio(value: number) {
@@ -29,29 +41,55 @@ function escapeHtml(value: string) {
     return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function hexToRgba(hex: string, alpha: number) {
+    const n = hex.replace("#", "");
+    const r = parseInt(n.slice(0, 2), 16);
+    const g = parseInt(n.slice(2, 4), 16);
+    const b = parseInt(n.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function symbolSizeForWords(baseSize: number, wordsPlaced: number) {
+    const t = Math.min(Math.max(wordsPlaced / MAX_WORDS_FOR_SIZE, 0), 1);
+    const scale = MIN_SIZE_SCALE + t * (MAX_SIZE_SCALE - MIN_SIZE_SCALE);
+    return baseSize * scale;
+}
+
 export default function VarietyUnicityChart({ players, searchQuery }: { players: OpenMonitoringPlayer[]; searchQuery: string }) {
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<ECharts | null>(null);
     const router = useRouter();
 
     const data = useMemo<ScatterDatum[]>(() => {
-        return players.map((player) => {
+        const hasSearch = searchQuery.length > 0;
+        const points = players.map((player) => {
             const haystack = `${player.username} ${player.accountName}`.toLowerCase();
+            const highlighted = hasSearch && haystack.includes(searchQuery);
+            const color = LANGUAGE_DOT_COLORS[player.language];
+            const baseSize = highlighted ? 14 : hasSearch ? 6 : 8;
+
             return {
-                value: [player.variety, player.unicity],
+                value: [player.variety, player.unicity] as [number, number],
                 accountName: player.accountName,
                 username: player.username,
+                language: player.language,
                 wordsPlaced: player.wordsPlaced,
                 distinctWords: player.distinctWords,
                 exclusiveWords: player.exclusiveWords,
-                highlighted: searchQuery.length > 0 && haystack.includes(searchQuery),
+                highlighted,
+                symbolSize: symbolSizeForWords(baseSize, player.wordsPlaced),
+                itemStyle: {
+                    color: highlighted ? color : hexToRgba(color, hasSearch ? 0.28 : 0.78),
+                    borderColor: highlighted ? "#171717" : "transparent",
+                    borderWidth: highlighted ? 1 : 0,
+                },
             };
         });
+
+        return points.sort((a, b) => Number(a.highlighted) - Number(b.highlighted));
     }, [players, searchQuery]);
 
     const option = useMemo<EChartsCoreOption>(() => {
-        const hasSearch = searchQuery.length > 0;
-
         return {
             animation: false,
             grid: {
@@ -106,6 +144,7 @@ export default function VarietyUnicityChart({ players, searchQuery }: { players:
                     const datum = (params as { data: ScatterDatum }).data;
                     return [
                         `<strong>${escapeHtml(datum.username)}</strong>`,
+                        `Language: ${escapeHtml(LANGUAGES_DATA[datum.language].displayName)}`,
                         `Variety: ${formatRatio(datum.value[0])}`,
                         `Unicity: ${formatRatio(datum.value[1])}`,
                         `Words placed: ${datum.wordsPlaced.toLocaleString()}`,
@@ -123,32 +162,17 @@ export default function VarietyUnicityChart({ players, searchQuery }: { players:
                     type: "scatter",
                     cursor: "pointer",
                     data,
-                    symbolSize: (_value: number[], params: { data: ScatterDatum }) => {
-                        if (params.data.highlighted) {
-                            return 14;
-                        }
-                        return hasSearch ? 6 : 8;
-                    },
-                    itemStyle: {
-                        color: (params: { data: ScatterDatum }) => {
-                            if (params.data.highlighted) {
-                                return "#058078";
-                            }
-                            return hasSearch ? "rgba(163, 163, 163, 0.35)" : "rgba(4, 200, 180, 0.7)";
-                        },
-                    },
                     emphasis: {
                         scale: 1.4,
                         itemStyle: {
-                            color: "#058078",
-                            borderColor: "#003333",
+                            borderColor: "#171717",
                             borderWidth: 1,
                         },
                     },
                 },
             ],
         };
-    }, [data, searchQuery]);
+    }, [data]);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -164,7 +188,7 @@ export default function VarietyUnicityChart({ players, searchQuery }: { players:
             if (!datum?.accountName) {
                 return;
             }
-            router.push(`/p/${encodeURIComponent(datum.accountName)}`);
+            router.push(`/p/${encodeURIComponent(datum.accountName)}?l=${datum.language}`);
         };
 
         chart.on("click", onClick);

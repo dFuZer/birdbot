@@ -49,7 +49,9 @@ export default class Logger {
         const { type, log: logData } = log;
         const color = type === "log" ? Logger.LOG_COLOR : type === "error" ? Logger.ERROR_COLOR : Logger.WARN_COLOR;
         const text = type === "log" ? Logger.LOG_TEXT : type === "error" ? Logger.ERROR_TEXT : Logger.WARN_TEXT;
-        console.info(`${color}${text} (${logData.path}) ${logData.message}\x1b[0m`);
+        const write = type === "error" ? console.error : type === "warn" ? console.warn : console.info;
+
+        write(`${color}${text} (${logData.path}) ${logData.message}\x1b[0m`);
 
         if (type === "error" && "error" in logData) {
             if (logData.errorType === "zod") {
@@ -62,7 +64,7 @@ export default class Logger {
         }
 
         if (logData.json) {
-            console.log(JSON.stringify(logData.json, null, 2));
+            write(JSON.stringify(logData.json, null, 2));
         }
     }
 }

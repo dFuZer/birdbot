@@ -44,9 +44,12 @@ export default class Bot {
         app: Server;
         port: number;
     };
+    public acceptingTraffic = false;
+    public shuttingDown = false;
     /** Optional hook for persisting rooms (BirdBot wires API upsert/delete). */
     public onRoomConnected: ((room: Room) => void | Promise<void>) | null = null;
     public onRoomDestroyed: ((room: Room) => void | Promise<void>) | null = null;
+    public restoreRoomCheckpoint: ((room: Room) => void) | null = null;
 
     constructor({
         handlers,
@@ -76,6 +79,17 @@ export default class Bot {
                 });
             });
         }
+    }
+
+    public stopServer(): Promise<void> {
+        return new Promise((resolve) => {
+            const server = this.server;
+            if (!server?.app.listening) {
+                resolve();
+                return;
+            }
+            server.app.close(() => resolve());
+        });
     }
 
     public startPeriodicTasks() {
@@ -112,12 +126,14 @@ export default class Bot {
         roomCreatorAuthId,
         userToken,
         serverUrl,
+        recovery = false,
     }: {
         roomCode: string;
         targetConfig: RoomTargetConfig;
         roomCreatorAuthId: string | null;
         userToken?: string;
         serverUrl?: string;
+        recovery?: boolean;
     }) {
         Logger.log({
             message: `Joining room ${roomCode}`,
@@ -133,14 +149,22 @@ export default class Bot {
             userToken: token,
             serverUrl: serverUrl ?? null,
         });
+        room.isRecoveryJoin = recovery;
 
         this.rooms[randomUUID] = room;
         try {
+            if (recovery) {
+                this.restoreRoomCheckpoint?.(room);
+            }
             await this.connectRoom(room);
             await this.onRoomConnected?.(room);
             return room;
         } catch (error) {
-            Utilitary.destroyRoom(this, room);
+            if (recovery) {
+                Utilitary.forgetRoom(this, room);
+            } else {
+                Utilitary.destroyRoom(this, room);
+            }
             Logger.error({
                 message: `Error joining room ${roomCode}:`,
                 path: "Bot.class.ts",

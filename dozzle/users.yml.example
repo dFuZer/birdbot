@@ -8,7 +8,6 @@
 #     --name 'Admin'
 #
 # Then set `roles: none` so the account can view logs without container actions.
-# Full steps: docs/DOZZLE.md
 users:
   admin:
     email: you@example.com

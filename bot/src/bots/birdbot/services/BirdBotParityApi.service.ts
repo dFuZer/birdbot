@@ -251,7 +251,14 @@ export default class BirdBotParityApiService {
     }
 
     public static async getStaff(): Promise<BirdBotStaffList> {
-        return this.request("/staff", staffSchema);
+        try {
+            return await this.request("/staff", staffSchema);
+        } catch (error) {
+            if (error instanceof BirdBotApiError && error.status === 404) {
+                return { admins: [], automods: [] };
+            }
+            throw error;
+        }
     }
 
     public static async putStaff(accountName: string, role: "ADMIN" | "AUTOMOD", updatedBy: string): Promise<BirdBotStaffList> {

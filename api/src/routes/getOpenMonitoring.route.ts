@@ -1,4 +1,5 @@
 import { RouteHandlerMethod } from "fastify";
+import { databaseEnumToLanguageEnumMap, PrismaLanguage } from "../helpers/maps";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
 
@@ -7,6 +8,7 @@ const LOG_PATH = "getOpenMonitoring.route.ts";
 type PlayerWordMetricsRow = {
     account_name: string;
     username: string | null;
+    language: PrismaLanguage;
     words_placed: number;
     distinct_words: number;
     exclusive_words: number;
@@ -22,6 +24,7 @@ export const getOpenMonitoringRouteHandler: RouteHandlerMethod = async function 
             SELECT
                 p.account_name,
                 p.metadata->>'latest_username' AS username,
+                pwm.language,
                 CAST(pwm.words_placed AS int) AS words_placed,
                 CAST(pwm.distinct_words AS int) AS distinct_words,
                 CAST(pwm.exclusive_words AS int) AS exclusive_words,
@@ -35,6 +38,7 @@ export const getOpenMonitoringRouteHandler: RouteHandlerMethod = async function 
             players: rows.map((row) => ({
                 accountName: row.account_name,
                 username: row.username ?? row.account_name,
+                language: databaseEnumToLanguageEnumMap[row.language],
                 wordsPlaced: row.words_placed,
                 distinctWords: row.distinct_words,
                 exclusiveWords: row.exclusive_words,

@@ -1,6 +1,6 @@
 import path from "path";
 
-const pwd = process.env.PWD as string;
+const pwd = process.env.PWD || process.cwd();
 
 const distPath = path.join(pwd, "dist");
 const resourcesPath = path.join(pwd, "resources");

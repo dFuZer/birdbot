@@ -28,18 +28,26 @@ export default class BirdBotStaffSync {
 
     public static async refresh(bot: Bot): Promise<void> {
         if (!bot.botData) return;
-        const remote = await BirdBotParityApiService.getStaff();
-        const nextFingerprint = fingerprint(remote.admins, remote.automods);
-        if (nextFingerprint === bot.botData.staff.fingerprint) return;
-        bot.botData.staff = {
-            admins: new Set(remote.admins),
-            automods: new Set(remote.automods),
-            fingerprint: nextFingerprint,
-        };
-        Logger.log({
-            message: `Staff synced: ${remote.admins.length} admin(s), ${remote.automods.length} automod(s)`,
-            path: "BirdBotStaffSync.ts",
-        });
+        try {
+            const remote = await BirdBotParityApiService.getStaff();
+            const nextFingerprint = fingerprint(remote.admins, remote.automods);
+            if (nextFingerprint === bot.botData.staff.fingerprint) return;
+            bot.botData.staff = {
+                admins: new Set(remote.admins),
+                automods: new Set(remote.automods),
+                fingerprint: nextFingerprint,
+            };
+            Logger.log({
+                message: `Staff synced: ${remote.admins.length} admin(s), ${remote.automods.length} automod(s)`,
+                path: "BirdBotStaffSync.ts",
+            });
+        } catch (error) {
+            Logger.error({
+                message: "Staff sync failed; keeping previously loaded staff",
+                path: "BirdBotStaffSync.ts",
+                error,
+            });
+        }
     }
 
     public static start(bot: Bot): void {

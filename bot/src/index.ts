@@ -7,13 +7,14 @@ import { birdbotPeriodicTasks } from "./bots/birdbot/BirdbotPeriodicTasks";
 import { loadDictionaryResource } from "./bots/birdbot/BirdBotPowerHouse";
 import getBirdBotHttpServer from "./bots/birdbot/BirdBotServer";
 import { BirdBotLanguage, DictionaryResource, ListedRecordListResource } from "./bots/birdbot/BirdBotTypes";
+import BirdBotLifecycle from "./bots/birdbot/services/BirdBotLifecycle.service";
 import { birdbotTextResource } from "./bots/birdbot/texts/BirdBotTextUtils";
 import Logger from "./lib/class/Logger.class";
 import Utilitary from "./lib/class/Utilitary.class";
 import { resourcesPath } from "./lib/paths";
 
 async function start() {
-    const permanentRoomLanguages: BirdBotLanguage[] = ["fr", "en", "brpt", "es"];
+    const permanentRoomLanguages: BirdBotLanguage[] = ["fr"];
     const allowedLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt", "de", "it"];
     const bot = new BirdBot({
         periodicTasks: birdbotPeriodicTasks,
@@ -108,9 +109,17 @@ async function start() {
         path: "index.ts",
     });
 
+    const lifecycle = new BirdBotLifecycle(bot);
+    const shutdown = (signal: string) => {
+        void lifecycle.shutdown(signal);
+    };
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
+
+    bot.startServer();
     await bot.rejoinPersistedRooms();
     await bot.startPeriodicTasks();
-    bot.startServer();
+    lifecycle.markReady();
 }
 
 start();

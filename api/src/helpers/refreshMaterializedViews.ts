@@ -19,8 +19,8 @@ export async function ensureLeaderboardUniqueIndexes() {
     `);
     try {
         await prisma.$executeRawUnsafe(`
-            CREATE UNIQUE INDEX IF NOT EXISTS player_word_metrics_player_id_uidx
-            ON player_word_metrics (player_id)
+            CREATE UNIQUE INDEX IF NOT EXISTS player_word_metrics_player_id_language_uidx
+            ON player_word_metrics (player_id, language)
         `);
     } catch (error) {
         if (!getErrorMessage(error).toLowerCase().includes("does not exist")) {

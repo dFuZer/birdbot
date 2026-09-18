@@ -3,11 +3,14 @@ import Logger from "../../lib/class/Logger.class";
 import type Room from "../../lib/class/Room.class";
 import birdbotEventHandlers from "./BirdBotEventHandlers";
 import { type BirdBotLanguage, type BirdbotRoomTargetConfig, getBirdBotRoomKind } from "./BirdBotTypes";
-import BirdBotParityApiService from "./services/BirdBotParityApi.service";
+import BirdBotParityApiService, { type BirdBotPersistedRoom } from "./services/BirdBotParityApi.service";
+import BirdBotRoomCheckpointService from "./services/BirdBotRoomCheckpoint.service";
+import { mapWithConcurrency, retryWithBackoff } from "./services/BirdBotRecovery.service";
 import BirdBotStaffSync from "./services/BirdBotStaffSync.service";
 
 export default class BirdBot extends Bot {
     public static readonly MAX_EPHEMERAL_ROOMS = 15;
+    public static recoveryRetryDelaysMs = [1000, 2000, 4000];
 
     public creatingRoomQueue: string[];
     public mainRoomLanguages: BirdBotLanguage[];
@@ -27,6 +30,15 @@ export default class BirdBot extends Bot {
         this.roomPersistenceQueues = new Map();
         this.onRoomConnected = (room) => this.persistRoom(room);
         this.onRoomDestroyed = (room) => this.unpersistRoom(room);
+        this.restoreRoomCheckpoint = (room) => {
+            const checkpoint = BirdBotRoomCheckpointService.applyIfPresent(room);
+            if (checkpoint) {
+                Logger.log({
+                    message: `Restored checkpoint for room ${room.constantRoomData.roomCode}`,
+                    path: "BirdBot.class.ts",
+                });
+            }
+        };
     }
 
     public async createRoom({
@@ -98,9 +110,9 @@ export default class BirdBot extends Bot {
     }
 
     public async rejoinPersistedRooms(): Promise<void> {
-        let rooms: Awaited<ReturnType<typeof BirdBotParityApiService.listBotRooms>> = [];
+        let rooms: BirdBotPersistedRoom[] = [];
         try {
-            rooms = await BirdBotParityApiService.listBotRooms();
+            rooms = await retryWithBackoff(() => BirdBotParityApiService.listBotRooms(), BirdBot.recoveryRetryDelaysMs);
         } catch (error) {
             Logger.error({
                 message: "Failed to list persisted rooms for rejoin",
@@ -110,30 +122,63 @@ export default class BirdBot extends Bot {
             return;
         }
 
-        for (const persisted of rooms) {
-            const alreadyJoined = Object.values(this.rooms).some((room) => room.constantRoomData.roomCode === persisted.roomCode);
-            if (alreadyJoined) continue;
-            try {
-                const targetConfig = persisted.targetConfig as BirdbotRoomTargetConfig;
-                targetConfig.roomKind = getBirdBotRoomKind(targetConfig, persisted.creatorAuthId);
-                await this.joinRoom({
-                    roomCode: persisted.roomCode,
-                    targetConfig,
-                    roomCreatorAuthId: persisted.creatorAuthId,
-                    userToken: persisted.userToken,
-                    serverUrl: persisted.serverUrl ?? undefined,
-                });
-                if (!this.hasRoom(persisted.roomCode)) {
-                    await this.dropPersistedRoom(persisted.roomCode, "rejoin completed but room is no longer held");
-                }
-            } catch (error) {
+        if (rooms.length === 0) return;
+
+        const first = rooms[0]!;
+        const remaining = rooms.slice(1);
+        const firstRecovered = await this.recoverPersistedRoom(first);
+        if (!firstRecovered) {
+            Logger.warn({
+                message: `Failed to recover first room ${first.roomCode}; flushing ${remaining.length} remaining recoveries permanently`,
+                path: "BirdBot.class.ts",
+            });
+            await this.dropPersistedRooms(
+                rooms.map((room) => room.roomCode),
+                "first recovery failed; flushing recovery queue",
+            );
+            return;
+        }
+
+        await mapWithConcurrency(remaining, 4, async (persisted) => {
+            const recovered = await this.recoverPersistedRoom(persisted);
+            if (!recovered) {
                 Logger.error({
-                    message: `Failed to rejoin persisted room ${persisted.roomCode}; removing from registry`,
+                    message: `Failed to rejoin persisted room ${persisted.roomCode}; leaving it in the registry for a later retry`,
                     path: "BirdBot.class.ts",
-                    error,
                 });
-                await this.dropPersistedRoom(persisted.roomCode);
             }
+        });
+    }
+
+    private async recoverPersistedRoom(persisted: BirdBotPersistedRoom): Promise<boolean> {
+        if (this.hasRoom(persisted.roomCode)) return true;
+        try {
+            const targetConfig = persisted.targetConfig as BirdbotRoomTargetConfig;
+            targetConfig.roomKind = getBirdBotRoomKind(targetConfig, persisted.creatorAuthId);
+            await retryWithBackoff(
+                async () => {
+                    await this.joinRoom({
+                        roomCode: persisted.roomCode,
+                        targetConfig,
+                        roomCreatorAuthId: persisted.creatorAuthId,
+                        userToken: persisted.userToken,
+                        serverUrl: persisted.serverUrl ?? undefined,
+                        recovery: true,
+                    });
+                    if (!this.hasRoom(persisted.roomCode)) {
+                        throw new Error("rejoin completed but room is no longer held");
+                    }
+                },
+                BirdBot.recoveryRetryDelaysMs,
+            );
+            return true;
+        } catch (error) {
+            Logger.error({
+                message: `Failed to rejoin persisted room ${persisted.roomCode}`,
+                path: "BirdBot.class.ts",
+                error,
+            });
+            return false;
         }
     }
 
@@ -176,9 +221,14 @@ export default class BirdBot extends Bot {
         await this.dropPersistedRoom(room.constantRoomData.roomCode);
     }
 
+    private async dropPersistedRooms(roomCodes: string[], reason: string): Promise<void> {
+        await Promise.all(roomCodes.map((roomCode) => this.dropPersistedRoom(roomCode, reason)));
+    }
+
     private async dropPersistedRoom(roomCode: string, reason?: string): Promise<void> {
         try {
             await BirdBotParityApiService.deleteBotRoom(roomCode);
+            await BirdBotRoomCheckpointService.remove(roomCode);
             if (reason) {
                 Logger.log({
                     message: `Removed persisted room ${roomCode}: ${reason}`,

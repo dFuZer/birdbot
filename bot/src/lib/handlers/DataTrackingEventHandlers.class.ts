@@ -15,6 +15,20 @@ import {
 } from "../types/gameTypes";
 import type { BotEventHandlerFn } from "../types/libEventTypes";
 
+export function resolveRoundStartTimestamp(
+    rawStartTimestamp: unknown,
+    checkpointTimestamp: number,
+    fallbackNow: number,
+): number {
+    if (typeof rawStartTimestamp === "number" && Number.isFinite(rawStartTimestamp)) {
+        return rawStartTimestamp;
+    }
+    if (checkpointTimestamp > 0) {
+        return checkpointTimestamp;
+    }
+    return fallbackNow;
+}
+
 function normalizePlayerState(peerId: number | string, raw: any): PlayerState {
     const rawWord = String(raw.wordRaw ?? raw.rawWord ?? raw.word ?? "");
     const bonusLetters = bonusAlphabetToLetters(raw.bonusLetters ?? raw.usedLetters).toLowerCase();
@@ -66,9 +80,11 @@ function normalizeMilestone(raw: any, previous?: Milestone | null): Milestone {
                   ? previous.dictionaryManifest
                   : undefined,
             startTimestamp:
-                previous?.name === "round" && previous.startTimestamp
-                    ? previous.startTimestamp
-                    : Date.now(),
+                typeof raw.startTimestamp === "number" && Number.isFinite(raw.startTimestamp)
+                    ? raw.startTimestamp
+                    : previous?.name === "round" && previous.startTimestamp
+                      ? previous.startTimestamp
+                      : Date.now(),
         };
     }
     return {
@@ -155,7 +171,13 @@ export default class CommonPlayerDataTrackingEventHandlers {
         ctx.room.rawRoom.hasEverConnected = true;
 
         if (milestone.name === "round") {
-            ctx.room.roomState.roundStartTimestamp = milestone.startTimestamp;
+            const resolvedStart = resolveRoundStartTimestamp(
+                data.milestone?.startTimestamp,
+                ctx.room.roomState.roundStartTimestamp,
+                milestone.startTimestamp,
+            );
+            milestone.startTimestamp = resolvedStart;
+            ctx.room.roomState.roundStartTimestamp = resolvedStart;
             const currentState = milestone.playerStatesByPeerId[String(milestone.currentPlayerPeerId)];
             if (currentState && currentState.startTurn === null) {
                 currentState.startTurn = Date.now();

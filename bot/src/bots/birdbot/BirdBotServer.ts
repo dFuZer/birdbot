@@ -72,6 +72,28 @@ async function createEphemeralRoom(req: IncomingMessage, res: ServerResponse, bo
 }
 
 async function birdBotServerHandler(req: IncomingMessage, res: ServerResponse, bot: BirdBot) {
+    const pathName = req.url ? new URL(req.url, "http://localhost").pathname : undefined;
+    if (pathName === undefined) return sendJson(res, 404, { message: "Not Found" });
+
+    if (req.method === "GET" && pathName === "/health") {
+        if (bot.shuttingDown) {
+            res.writeHead(503, { "Content-Type": "text/plain" });
+            res.write("draining");
+            res.end();
+            return;
+        }
+        if (!bot.acceptingTraffic) {
+            res.writeHead(503, { "Content-Type": "text/plain" });
+            res.write("starting");
+            res.end();
+            return;
+        }
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.write("OK");
+        res.end();
+        return;
+    }
+
     const authorizationHeader = req.headers["authorization"];
 
     if (!authorizationHeader) {
@@ -83,9 +105,6 @@ async function birdBotServerHandler(req: IncomingMessage, res: ServerResponse, b
     if (authToken !== API_KEY) {
         return sendJson(res, 401, { message: "Unauthorized" });
     }
-
-    const pathName = req.url ? new URL(req.url, "http://localhost").pathname : undefined;
-    if (pathName === undefined) return sendJson(res, 404, { message: "Not Found" });
 
     if (req.method === "GET" && pathName === "/room-list") {
         type IRoom = {
@@ -135,11 +154,10 @@ async function birdBotServerHandler(req: IncomingMessage, res: ServerResponse, b
         res.write(JSON.stringify(roomList));
         res.end();
     } else if (req.method === "POST" && pathName === "/rooms/ephemeral") {
+        if (bot.shuttingDown || !bot.acceptingTraffic) {
+            return sendJson(res, 503, { message: "Bot is not ready" });
+        }
         await createEphemeralRoom(req, res, bot);
-    } else if (req.method === "GET" && pathName === "/health") {
-        res.writeHead(200, { "Content-Type": "text/plain" });
-        res.write("OK");
-        res.end();
     } else {
         return sendJson(res, 404, { message: "Not Found" });
     }

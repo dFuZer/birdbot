@@ -37,12 +37,6 @@
    ./prod.sh
    ```
 
-### Production log viewer (Dozzle)
-
-Self-hosted Docker log UI. Authenticated, log-only, independent of app health checks. Traffic is HTTP: restrict the published port to your IP.
-
-Operator-run setup (credentials, firewall, start, verify, rotate, rollback): [`docs/DOZZLE.md`](docs/DOZZLE.md)
-
 ## Tech Stack
 
 | Component | Technology |
@@ -125,6 +119,14 @@ npm run u
 ```
 
 Note that, contrary to the API and website modules, you must fully restart the script everytime you make a change to the code.
+
+To rebuild only the bot container in Docker without touching the API or website:
+
+```bash
+./scripts/deploy-bot.sh
+```
+
+The bot drains in-flight API writes, writes a room-state checkpoint, then rejoins the same jklm rooms. A short socket disconnect is expected; if it is already the bot's turn after reconnect, it plays immediately.
 
 ### Bot configuration
 

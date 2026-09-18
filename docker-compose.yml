@@ -24,7 +24,15 @@ services:
                 condition: service_healthy
         volumes:
             - ./bot/resources:/app/resources
+            - bot_state:/app/.data
         restart: unless-stopped
+        stop_grace_period: 30s
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+            interval: 5s
+            timeout: 3s
+            retries: 12
+            start_period: 90s
         environment:
             API_URL: ${API_URL}
             API_KEY: ${API_KEY}
@@ -33,6 +41,7 @@ services:
             JKLM_NICKNAME: ${JKLM_NICKNAME:-BirdBot}
             JKLM_LANGUAGE: ${JKLM_LANGUAGE:-en-US}
             NAMESPACE_UUID: ${NAMESPACE_UUID}
+            BOT_STATE_DIR: /app/.data/room-checkpoints
     api:
         build:
             context: ./api
@@ -98,6 +107,7 @@ services:
 volumes:
     db_data:
     dozzle_data:
+    bot_state:
 
 secrets:
     dozzle_users:

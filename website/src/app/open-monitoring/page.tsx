@@ -1,6 +1,7 @@
 import OpenMonitoringPage from "@/components/pages/OpenMonitoringPage/OpenMonitoringPage";
 import { getFromApi } from "@/lib/fetching";
 import { TSearchParams } from "@/lib/params";
+import type { LanguageEnum } from "@/lib/records";
 import { isValidOpenMonitoringTabParam, openMonitoringTabEnumSchema } from "@/lib/validation";
 import { Metadata } from "next";
 
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 export type OpenMonitoringPlayer = {
     accountName: string;
     username: string;
+    language: LanguageEnum;
     wordsPlaced: number;
     distinctWords: number;
     exclusiveWords: number;

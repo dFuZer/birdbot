@@ -149,10 +149,20 @@ export default class Utilitary {
         room.gameSocket = null;
     }
 
-    public static destroyRoom(bot: Bot, room: Room) {
+    public static forgetRoom(bot: Bot, room: Room) {
         Utilitary.teardownRoomSockets(room);
         delete bot.rooms[room.id];
+    }
+
+    public static destroyRoom(bot: Bot, room: Room) {
+        Utilitary.forgetRoom(bot, room);
         void bot.onRoomDestroyed?.(room);
+    }
+
+    public static disconnectRoomsForRestart(bot: Bot) {
+        for (const room of Object.values(bot.rooms)) {
+            Utilitary.teardownRoomSockets(room);
+        }
     }
 
     private static buildEventCtx(bot: Bot, room: Room, event: string, args: any[]): EventCtx {

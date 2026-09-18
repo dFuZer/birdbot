@@ -5,6 +5,7 @@
     "scripts": {
         "build": "tsc",
         "start": "node dist/index.js",
+        "test": "tsc && node --test $(find dist -name '*.test.js')",
         "u": "tsc && BIRDBOT_DEBUG=1 node dist/index.unstable.js"
     },
     "peerDependencies": {

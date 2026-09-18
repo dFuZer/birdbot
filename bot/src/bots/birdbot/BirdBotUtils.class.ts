@@ -384,9 +384,23 @@ export default class BirdBotUtils {
     };
 
     public static flushAllWordRegistrations = (ctx: EventCtx) => {
-        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-        for (const turnKey of [...roomMetadata.pendingWordRegistrations.keys()]) {
+        for (const turnKey of [...(ctx.room.roomState.metadata as BirdBotRoomMetadata).pendingWordRegistrations.keys()]) {
             this.flushWordRegistration(ctx, turnKey);
+        }
+    };
+
+    public static flushPendingRegistrationsOnRoom = (room: { roomState: { metadata: Record<string, any> } }) => {
+        const roomMetadata = room.roomState.metadata as Partial<BirdBotRoomMetadata>;
+        if (!roomMetadata.pendingWordRegistrations) return;
+        for (const [turnKey, pending] of [...roomMetadata.pendingWordRegistrations.entries()]) {
+            roomMetadata.pendingWordRegistrations.delete(turnKey);
+            void this.registerWord(
+                {
+                    ...pending.data,
+                    flip: roomMetadata.flipTurnKeys?.has(turnKey) ?? false,
+                },
+                turnKey,
+            );
         }
     };
 

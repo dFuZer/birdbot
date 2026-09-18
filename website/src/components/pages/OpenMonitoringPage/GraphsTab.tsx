@@ -1,8 +1,10 @@
 "use client";
 
 import type { OpenMonitoringPlayer } from "@/app/open-monitoring/page";
+import Flag from "@/components/pages/common/Flag";
 import { Button } from "@/components/ui/button";
 import { downloadJson } from "@/lib/downloadJson";
+import { LANGUAGE_DOT_COLORS, LANGUAGES_DATA, languageEnumSchema } from "@/lib/records";
 import { ArrowDownTrayIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
@@ -22,15 +24,24 @@ export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[]
         return players.filter((player) => player.wordsPlaced >= minWords);
     }, [minWords, players]);
 
+    const uniqueFilteredPlayers = useMemo(() => {
+        return new Set(filteredPlayers.map((player) => player.accountName)).size;
+    }, [filteredPlayers]);
+
+    const uniquePlayers = useMemo(() => {
+        return new Set(players.map((player) => player.accountName)).size;
+    }, [players]);
+
     const normalizedQuery = query.trim().toLowerCase();
 
     return (
         <div>
             <p className="max-w-3xl text-sm text-neutral-600">
-                Each point is a player. <strong className="font-semibold text-neutral-800">Variety</strong> is unique words they
-                placed divided by words they placed. <strong className="font-semibold text-neutral-800">Unicity</strong> is words
-                only they have placed in the whole playerbase, divided by words they placed. Click a point to open that
-                player&apos;s profile.
+                Each point is a player in one language — a player who plays several languages appears as several points.{" "}
+                <strong className="font-semibold text-neutral-800">Variety</strong> is unique words they placed divided by words
+                they placed. <strong className="font-semibold text-neutral-800">Unicity</strong> is words only they have placed in
+                that language, divided by words they placed. Point size grows with words placed in that language (up to 10,000).
+                Click a point to open that player&apos;s profile.
             </p>
             <div
                 className="mt-3 flex max-w-3xl gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-950"
@@ -42,6 +53,20 @@ export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[]
                     cheating and using random word selection algorithms.
                 </p>
             </div>
+
+            <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
+                {languageEnumSchema.options.map((language) => (
+                    <li key={language} className="flex items-center gap-2 text-sm text-neutral-700">
+                        <span
+                            className="size-2.5 rounded-full"
+                            style={{ backgroundColor: LANGUAGE_DOT_COLORS[language] }}
+                            aria-hidden
+                        />
+                        <Flag language={language} className="size-4" />
+                        {LANGUAGES_DATA[language].shortDisplayName}
+                    </li>
+                ))}
+            </ul>
 
             <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm text-neutral-600">
@@ -85,7 +110,8 @@ export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[]
             </div>
 
             <p className="mt-2 text-xs text-neutral-500">
-                Showing {filteredPlayers.length.toLocaleString()} of {players.length.toLocaleString()} players
+                Showing {filteredPlayers.length.toLocaleString()} of {players.length.toLocaleString()} points (
+                {uniqueFilteredPlayers.toLocaleString()} of {uniquePlayers.toLocaleString()} players)
             </p>
 
             {filteredPlayers.length === 0 ? (

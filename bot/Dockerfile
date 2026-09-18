@@ -20,5 +20,5 @@ RUN cargo build --release --manifest-path src/bots/birdbot/powerhouse/Cargo.toml
 # Production stage
 FROM base AS production
 
-EXPOSE 4000
+EXPOSE 3001
 CMD ["npm", "run", "start"]

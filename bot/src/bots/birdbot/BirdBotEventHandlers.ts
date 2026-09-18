@@ -24,6 +24,12 @@ import BirdBotUtils from "./BirdBotUtils.class";
 import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
 import BirdBotModerationService from "./services/BirdBotModeration.service";
 import BirdBotParityApiService from "./services/BirdBotParityApi.service";
+import {
+    decideRecoverySetup,
+    isBotSeated,
+    remapPeerKeyedState,
+    shouldResetRoundState,
+} from "./services/BirdBotRecovery.service";
 import BirdBotTrainingService from "./services/BirdBotTraining.service";
 import { l, t } from "./texts/BirdBotTextUtils";
 
@@ -475,18 +481,35 @@ const birdbotEventHandlers: BotEventHandlers = {
                 const selfPeerId = previousHandlersCtx.selfPeerId as number;
                 const leaderPeerId = previousHandlersCtx.leaderPeerId as number;
                 const isFirstSetup = previousHandlersCtx.isFirstSetup as boolean;
+                const room = ctx.room.rawRoom;
+                const gameData = ctx.room.roomState.gameData!;
+                const milestoneName = gameData.milestone.name === "round" || gameData.milestone.name === "seating"
+                    ? gameData.milestone.name
+                    : null;
 
                 const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+                if (
+                    room.recoveredMyPeerId !== null &&
+                    Number.isFinite(selfPeerId) &&
+                    room.recoveredMyPeerId !== selfPeerId
+                ) {
+                    remapPeerKeyedState(roomMetadata, room.recoveredMyPeerId, selfPeerId);
+                }
+                if (shouldResetRoundState(room.checkpointMilestoneName, milestoneName)) {
+                    if (roomMetadata.wasInitialized) {
+                        BirdBotUtils.resetRoomMetadata(ctx);
+                    }
+                }
                 if (!roomMetadata.wasInitialized) {
                     BirdBotUtils.setupRoomMetadata(ctx);
                 }
                 const targetConfig = ctx.room.constantRoomData.targetConfig as BirdbotRoomTargetConfig;
-                if (ctx.room.roomState.gameData?.milestone.name === "round") {
-                    (ctx.bot.rawBot as BirdBot).setEphemeralIdleSince(ctx.room.rawRoom, null);
+                if (gameData.milestone.name === "round") {
+                    (ctx.bot.rawBot as BirdBot).setEphemeralIdleSince(room, null);
                 } else if (targetConfig.roomKind === "ephemeral" && typeof targetConfig.ephemeralIdleSince !== "number") {
                     // The bot may have restarted while a round was active. Begin a fresh idle
                     // window if that round ended while the bot was disconnected.
-                    (ctx.bot.rawBot as BirdBot).setEphemeralIdleSince(ctx.room.rawRoom, Date.now());
+                    (ctx.bot.rawBot as BirdBot).setEphemeralIdleSince(room, Date.now());
                 }
 
                 if (selfPeerId !== leaderPeerId) {
@@ -494,36 +517,66 @@ const birdbotEventHandlers: BotEventHandlers = {
                         message: "Bot is not the room leader. Destroying room.",
                         path: "BirdBotEventHandlers.ts",
                     });
-                    Utilitary.destroyRoom(ctx.bot.rawBot, ctx.room.rawRoom);
+                    Utilitary.destroyRoom(ctx.bot.rawBot, room);
                     return;
                 }
 
-                if (isFirstSetup && ctx.room.constantRoomData.targetConfig) {
+                const isSeated =
+                    gameData.milestone.name === "round"
+                        ? isBotSeated({
+                              milestoneName: "round",
+                              myPeerId: selfPeerId,
+                              playerPeerIds: Object.keys(gameData.milestone.playerStatesByPeerId),
+                          })
+                        : false;
+                const isOwnTurn =
+                    gameData.milestone.name === "round" && gameData.milestone.currentPlayerPeerId === selfPeerId;
+                const decision = decideRecoverySetup({
+                    isFirstSetup,
+                    isRecoveryJoin: room.isRecoveryJoin,
+                    wasInitialized: true,
+                    isLeader: true,
+                    milestoneName,
+                    isSeated,
+                    isOwnTurn,
+                });
+                if (decision.destroy) {
+                    Utilitary.destroyRoom(ctx.bot.rawBot, room);
+                    return;
+                }
+
+                if (decision.applyTargetRules && ctx.room.constantRoomData.targetConfig) {
                     const birdbotTargetConfig = ctx.room.constantRoomData.targetConfig as BirdbotRoomTargetConfig;
                     const targetGameMode = BirdBotUtils.isMainRoom(ctx) ? "regular" : birdbotTargetConfig.birdbotGameMode;
                     BirdBotUtils.setRoomGameMode(ctx, birdbotModeRules[targetGameMode]);
                     BirdBotUtils.setRoomDictionary(ctx, birdbotTargetConfig.dictionaryId);
-                    ctx.utils.joinRound();
                 } else {
                     BirdBotUtils.detectRoomGameMode(ctx);
-                    if (ctx.room.roomState.gameData!.milestone.name === "seating") {
-                        ctx.utils.joinRound();
-                    } else if (ctx.room.roomState.gameData!.milestone.name === "round") {
-                        const milestone = ctx.room.roomState.gameData!.milestone;
-                        for (const [peerIdStr, state] of Object.entries(milestone.playerStatesByPeerId)) {
-                            if (!state.wasWordValidated || !state.word) continue;
-                            const turnKey = `${peerIdStr}:${state.startTurn ?? "unknown"}`;
-                            if (roomMetadata.scoredWordTurnKeys.has(turnKey)) continue;
-                            handleSuccessfulWord(ctx, {
-                                playerPeerId: Number(peerIdStr),
-                                word: state.word,
-                                turnKey,
-                                durationMs: undefined,
-                                reactionMs: undefined,
-                            });
-                        }
-                        BirdBotUtils.handleMyTurn(ctx, {});
+                }
+
+                if (decision.backfillCurrentWords && gameData.milestone.name === "round") {
+                    const milestone = gameData.milestone;
+                    for (const [peerIdStr, state] of Object.entries(milestone.playerStatesByPeerId)) {
+                        if (!state.wasWordValidated || !state.word) continue;
+                        const turnKey = `${peerIdStr}:${state.startTurn ?? "unknown"}`;
+                        if (roomMetadata.scoredWordTurnKeys.has(turnKey)) continue;
+                        handleSuccessfulWord(ctx, {
+                            playerPeerId: Number(peerIdStr),
+                            word: state.word,
+                            turnKey,
+                            durationMs: undefined,
+                            reactionMs: undefined,
+                        });
                     }
+                }
+                if (decision.clearNextDelayMs) {
+                    roomMetadata.nextDelayMs = 0;
+                }
+                if (decision.joinRound) {
+                    ctx.utils.joinRound();
+                }
+                if (decision.playTurn) {
+                    BirdBotUtils.handleMyTurn(ctx, {});
                 }
             },
         ],

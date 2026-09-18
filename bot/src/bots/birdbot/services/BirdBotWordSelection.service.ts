@@ -1,4 +1,3 @@
-import Logger from "../../../lib/class/Logger.class";
 import type { EventCtx } from "../../../lib/types/libEventTypes";
 import {
     dictionaryIdToBirdbotLanguage,
@@ -38,13 +37,11 @@ export default class BirdBotWordSelectionService {
         const remainingBonusLetters = input.bonusLetters;
 
         let selectedWord: string | null = null;
-        let selectionSource = "none";
 
         if (effectiveStyle !== "flips") {
             const testWord = dictionary.metadata.testWords.find((item) => valid(item.word));
             if (testWord) {
                 selectedWord = testWord.word;
-                selectionSource = "testWord";
             }
         }
 
@@ -53,7 +50,6 @@ export default class BirdBotWordSelectionService {
             switch (effectiveStyle) {
                 case "regular":
                     selectedWord = regular();
-                    selectionSource = "regular";
                     break;
                 case "flips":
                     selectedWord =
@@ -64,14 +60,12 @@ export default class BirdBotWordSelectionService {
                                 remainingBonusLetters,
                             ),
                         ) ?? regular();
-                    selectionSource = "flips";
                     break;
                 case "alpha": {
                     const letter = String.fromCharCode(97 + (input.scores.alpha % 26));
                     selectedWord =
                         this.random(dictionary.resource, (word) => valid(word) && word.startsWith(letter)) ??
                         regular();
-                    selectionSource = "alpha";
                     break;
                 }
                 case "previous_syllable":
@@ -81,54 +75,32 @@ export default class BirdBotWordSelectionService {
                               (word) => valid(word) && word.includes(input.scores.previousSyllable!),
                           ) ?? regular()
                         : regular();
-                    selectionSource = "previous_syllable";
                     break;
                 case "depleted_syllables":
                     selectedWord =
                         this.best(dictionary.resource, valid, (word) =>
                             this.depletionValue(word, metadata.remainingSyllables),
                         ) ?? regular();
-                    selectionSource = "depleted_syllables";
                     break;
                 case "multi_syllable":
                     selectedWord =
                         this.best(dictionary.resource, valid, (word) =>
                             this.countOccurrences(word, input.prompt),
                         ) ?? regular();
-                    selectionSource = "multi_syllable";
                     break;
                 case "hyphen":
                     selectedWord =
                         this.random(dictionary.resource, (word) => valid(word) && word.includes("-")) ?? regular();
-                    selectionSource = "hyphen";
                     break;
                 case "more_than_20_letters":
                     selectedWord =
                         this.random(dictionary.resource, (word) => valid(word) && word.length >= 20) ?? regular();
-                    selectionSource = "more_than_20_letters";
                     break;
                 default:
                     selectedWord = this.selectListed(input.ctx, language, effectiveStyle, valid) ?? regular();
-                    selectionSource = `listed:${effectiveStyle}`;
                     break;
             }
         }
-
-        Logger.log({
-            message: `Word selection: word=${selectedWord ?? "(none)"}, playstyle=${effectiveStyle} (configured=${metadata.playstyle}), remainingBonusLetters=${remainingBonusLetters || "(none)"}`,
-            path: "BirdBotWordSelection.service.ts",
-            json: {
-                selectedWord,
-                selectionSource,
-                configuredPlaystyle: metadata.playstyle,
-                effectivePlaystyle: effectiveStyle,
-                lives: input.lives,
-                maxLives: input.maxLives,
-                prompt: input.prompt,
-                requiredLetters: input.requiredLetters,
-                remainingBonusLetters,
-            },
-        });
 
         return selectedWord;
     }
