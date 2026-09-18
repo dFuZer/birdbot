@@ -14,7 +14,7 @@ import Utilitary from "./lib/class/Utilitary.class";
 import { resourcesPath } from "./lib/paths";
 
 async function start() {
-    const permanentRoomLanguages: BirdBotLanguage[] = ["fr"];
+    const permanentRoomLanguages: BirdBotLanguage[] = ["fr", "en", "brpt", "es"];
     const allowedLanguages: BirdBotLanguage[] = ["fr", "en", "es", "brpt", "de", "it"];
     const bot = new BirdBot({
         periodicTasks: birdbotPeriodicTasks,
