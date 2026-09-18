@@ -37,6 +37,12 @@
    ./prod.sh
    ```
 
+### Production log viewer (Dozzle)
+
+Self-hosted Docker log UI. Authenticated, log-only, independent of app health checks. Traffic is HTTP: restrict the published port to your IP.
+
+Operator-run setup (credentials, firewall, start, verify, rotate, rollback): [`docs/DOZZLE.md`](docs/DOZZLE.md)
+
 ## Tech Stack
 
 | Component | Technology |

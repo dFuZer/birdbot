@@ -66,6 +66,39 @@ services:
             POSTGRES_USER: ${POSTGRES_USER}
             POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
             POSTGRES_DB: ${POSTGRES_DB}
+    dozzle:
+        image: amir20/dozzle:v10.9.0
+        restart: unless-stopped
+        ports:
+            - "${DOZZLE_PORT:-8080}:8080"
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - dozzle_data:/data
+        secrets:
+            - source: dozzle_users
+              target: /data/users.yml
+        environment:
+            DOZZLE_AUTH_PROVIDER: simple
+            DOZZLE_NO_ANALYTICS: "true"
+            DOZZLE_ENABLE_ACTIONS: "false"
+            DOZZLE_ENABLE_SHELL: "false"
+            DOZZLE_HOSTNAME: birdbot
+        healthcheck:
+            test: ["CMD", "/dozzle", "healthcheck"]
+            interval: 3s
+            timeout: 30s
+            retries: 5
+            start_period: 30s
+        logging:
+            driver: json-file
+            options:
+                max-size: "10m"
+                max-file: "5"
 
 volumes:
     db_data:
+    dozzle_data:
+
+secrets:
+    dozzle_users:
+        file: ./dozzle/users.yml

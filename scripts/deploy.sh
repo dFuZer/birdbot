@@ -11,7 +11,7 @@ git pull origin main
 
 docker compose build website api bot
 
-docker compose up -d --build website api bot
+docker compose up -d --build website api bot dozzle
 
 crontab -l | grep -v 'deploy.sh' | crontab -
 
