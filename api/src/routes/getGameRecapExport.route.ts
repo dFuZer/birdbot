@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { RouteHandlerMethod } from "fastify";
 import { z } from "zod";
+import { authenticatedPlayerSql } from "../helpers/authenticatedPlayer";
 import { GameRecapListRow, gameRecapSelectSql, mapGameRecapRow } from "../helpers/mapGameRecap";
 import { mapWordRow, WordRow } from "../helpers/mapWord";
 import Logger from "../lib/logger";
@@ -18,7 +19,7 @@ const wordSelectSql = Prisma.raw(`
     w.duration_ms,
     w.reaction_ms,
     w.player_id,
-    p.account_name,
+    p.auth_id,
     p.metadata->>'latest_username' AS username
 `);
 
@@ -37,6 +38,7 @@ export const getGameRecapExportRouteHandler: RouteHandlerMethod = async function
             INNER JOIN game g ON g.id = gr.game_id
             INNER JOIN player p ON p.id = gr.player_id
             WHERE gr.id = ${recapId}::uuid
+            AND ${authenticatedPlayerSql}
             LIMIT 1
         `;
 
@@ -46,15 +48,16 @@ export const getGameRecapExportRouteHandler: RouteHandlerMethod = async function
         }
 
         const [siblings, words] = await Promise.all([
-            prisma.$queryRaw<{ id: string; account_name: string; username: string | null; words_count: number }[]>`
+            prisma.$queryRaw<{ id: string; auth_id: string; username: string | null; words_count: number }[]>`
                 SELECT
                     gr.id,
-                    p.account_name,
+                    p.auth_id,
                     p.metadata->>'latest_username' AS username,
                     gr.words_count
                 FROM game_recap gr
                 INNER JOIN player p ON p.id = gr.player_id
                 WHERE gr.game_id = ${recap.game_id}::uuid
+                AND ${authenticatedPlayerSql}
                 ORDER BY gr.words_count DESC, gr.id ASC
             `,
             prisma.$queryRaw<WordRow[]>`
@@ -62,6 +65,7 @@ export const getGameRecapExportRouteHandler: RouteHandlerMethod = async function
                 FROM word w
                 INNER JOIN player p ON p.id = w.player_id
                 WHERE w.game_id = ${recap.game_id}::uuid
+                AND ${authenticatedPlayerSql}
                 ORDER BY w.created_at ASC, w.id ASC
             `,
         ]);
@@ -71,8 +75,8 @@ export const getGameRecapExportRouteHandler: RouteHandlerMethod = async function
             recap: mapGameRecapRow(recap),
             playersInGame: siblings.map((player) => ({
                 recapId: player.id,
-                accountName: player.account_name,
-                username: player.username ?? player.account_name,
+                authId: player.auth_id,
+                username: player.username ?? player.auth_id,
                 wordsCount: player.words_count,
             })),
             words: words.map(mapWordRow),

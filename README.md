@@ -6,7 +6,6 @@
 [![Rust](https://img.shields.io/badge/Rust-1.86-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-
 > BirdBot is an automated player for BombParty on [jklm.fun](https://jklm.fun), designed to help players improve their skills through practice and analysis.
 
 ## ✨ Features
@@ -21,47 +20,52 @@
 ### Production Setup
 
 1. **Clone the repository**
-   ```bash
-   git clone <repository_url> birdbot
-   cd birdbot
-   ```
+
+    ```bash
+    git clone <repository_url> birdbot
+    cd birdbot
+    ```
 
 2. **Configure Environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+
+    ```bash
+    cp .env.example .env
+    # Edit .env with your configuration
+    ```
 
 3. **Launch with Docker**
-   ```bash
-   ./prod.sh
-   ```
+    ```bash
+    ./prod.sh
+    ```
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Database | PostgreSQL |
-| API | Fastify (TypeScript) + Prisma |
-| Website | Next.js (TypeScript) |
-| Bot | TypeScript + Socket.IO + Rust |
-| Runtime | Docker + Node.js 23.7 (Alpine) |
+| Component | Technology                     |
+| --------- | ------------------------------ |
+| Database  | PostgreSQL                     |
+| API       | Fastify (TypeScript) + Prisma  |
+| Website   | Next.js (TypeScript)           |
+| Bot       | TypeScript + Socket.IO + Rust  |
+| Runtime   | Docker + Node.js 23.7 (Alpine) |
 
 ## Development Guide
 
 ### Prerequisites
 
 For development:
+
 - Docker
 - Node.js v23.7+
 - Rust 1.86+
 
 For production:
+
 - Docker
 
 ### Development Setup
 
 1. **Start Development Database (Required)**
+
 ```bash
 ./launch-open-db.sh
 ```
@@ -69,6 +73,7 @@ For production:
 2. **Run Individual Modules**
 
 **To run the API module:**
+
 ```bash
 # Go to the API directory
 cd api
@@ -84,6 +89,7 @@ npm run dev
 ```
 
 **To run the Website module:**
+
 ```bash
 # Go to the website directory
 cd website
@@ -99,6 +105,7 @@ npm run dev
 ```
 
 **To run the Bot module:**
+
 ```bash
 
 # Go to the bot directory
@@ -136,7 +143,7 @@ The bot drains in-flight API writes, writes a room-state checkpoint, then rejoin
 - Optional moderation toggles and definitions socket overrides are documented in `bot/.env.example`
 - Parity contract and intentional divergences: [`bot/BBV7_PARITY.md`](bot/BBV7_PARITY.md)
 
-The older Croco.games bot archive lives under `archive/BBV7` for historical reference only.
+The older bot archive lives under `archive/BBV7` for historical reference only.
 
 #### Safe admin commands (DB staff)
 

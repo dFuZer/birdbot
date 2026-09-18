@@ -66,7 +66,7 @@ const columns = [
         header: "Player",
         cell: (info) => (
             <Link
-                href={`/p/${encodeURIComponent(info.row.original.accountName)}`}
+                href={`/p/${encodeURIComponent(info.row.original.authId)}`}
                 className="truncate font-medium hover:underline"
             >
                 {info.getValue()}

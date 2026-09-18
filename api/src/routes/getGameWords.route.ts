@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { RouteHandlerMethod } from "fastify";
 import { z } from "zod";
+import { authenticatedPlayerSql } from "../helpers/authenticatedPlayer";
 import { decodeCursor, encodeCursor } from "../helpers/cursors";
 import { mapWordRow, WordRow } from "../helpers/mapWord";
 import Logger from "../lib/logger";
@@ -19,7 +20,7 @@ const wordSelectSql = Prisma.raw(`
     w.duration_ms,
     w.reaction_ms,
     w.player_id,
-    p.account_name,
+    p.auth_id,
     p.metadata->>'latest_username' AS username
 `);
 
@@ -64,6 +65,7 @@ export const getGameWordsRouteHandler: RouteHandlerMethod = async function (req,
                 FROM word w
                 INNER JOIN player p ON p.id = w.player_id
                 WHERE w.game_id = ${gameId}::uuid
+                AND ${authenticatedPlayerSql}
                 ${playerClause}
                 ${successClause}
                 ${cursorClause}
@@ -73,7 +75,9 @@ export const getGameWordsRouteHandler: RouteHandlerMethod = async function (req,
             prisma.$queryRaw<{ count: number }[]>`
                 SELECT CAST(COUNT(*) AS int) AS count
                 FROM word w
+                INNER JOIN player p ON p.id = w.player_id
                 WHERE w.game_id = ${gameId}::uuid
+                AND ${authenticatedPlayerSql}
                 ${playerClause}
                 ${successClause}
             `,

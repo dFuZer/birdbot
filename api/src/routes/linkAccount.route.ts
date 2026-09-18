@@ -8,7 +8,7 @@ export let linkAccountRouteHandler: RouteHandlerMethod = async function (req, re
     const parsedData = z
         .object({
             token: z.string(),
-            accountName: z.string(),
+            authId: z.string(),
             currentNickname: z.string(),
         })
         .safeParse(req.body);
@@ -18,7 +18,7 @@ export let linkAccountRouteHandler: RouteHandlerMethod = async function (req, re
     }
 
     const player = await addPlayerIfNotExist({
-        accountName: parsedData.data.accountName,
+        authId: parsedData.data.authId,
         nickname: parsedData.data.currentNickname,
     });
 

@@ -4,7 +4,7 @@ export type GameRecapSummary = {
     id: string;
     gameId: string;
     playerId: string;
-    accountName: string;
+    authId: string;
     username: string;
     language: LanguageEnum;
     mode: ModesEnum;
@@ -40,7 +40,7 @@ export type GameRecapDetail = {
     gameWordCount: number;
     playersInGame: {
         recapId: string;
-        accountName: string;
+        authId: string;
         username: string;
         wordsCount: number;
     }[];
@@ -65,7 +65,7 @@ export type GameWordRow = {
     durationMs: number | null;
     reactionMs: number | null;
     playerId: string;
-    accountName: string;
+    authId: string;
     username: string;
 };
 
@@ -74,3 +74,8 @@ export type GameWordsPage = {
     totalCount: number;
     nextCursor: string | null;
 };
+
+export function isAuthenticatedAuthId(authId: string | null | undefined): boolean {
+    const value = authId?.trim() ?? "";
+    return value.length > 0 && value.toLowerCase() !== "birdbot";
+}

@@ -60,7 +60,7 @@ export default function GameRecapPage({ detail, initialWords }: { detail: GameRe
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-neutral-700">
                     <Link
-                        href={`/p/${encodeURIComponent(recap.accountName)}`}
+                        href={`/p/${encodeURIComponent(recap.authId)}`}
                         className="font-bold text-neutral-950 hover:underline"
                     >
                         {recap.username}

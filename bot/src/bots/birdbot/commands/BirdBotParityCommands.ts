@@ -46,7 +46,7 @@ function profileNameFromMilestone(record: BirdBotMilestone): string {
         metadata && typeof metadata === "object" && typeof metadata.profile_name === "string"
             ? metadata.profile_name
             : null;
-    return profileName || record.player?.account_name || "unknown";
+    return profileName || record.player?.auth_id || "unknown";
 }
 
 const globalMetaCategories = [
@@ -279,7 +279,7 @@ const economyCommand = c({
             const targetText = ctx.normalizedTextAfterCommand;
             const player = await resolveTarget(ctx, targetText);
             const economy = await BirdBotParityApiService.getEconomy(player.playerId);
-            const label = player.playerUsername || player.playerAccountName;
+            const label = player.playerUsername || player.playerAuthId;
             ctx.utils.sendChatMessage(
                 t("command.parity.economy", {
                     player: label,
@@ -557,7 +557,7 @@ function moderationCommand(kind: "trust" | "blacklist"): Command {
                     const state = await BirdBotParityApiService.getModeration(player.playerId);
                     ctx.utils.sendChatMessage(
                         t("command.parity.moderationState", {
-                            player: player.playerUsername || player.playerAccountName,
+                            player: player.playerUsername || player.playerAuthId,
                             trust: state.trust_score,
                             blacklist: state.blacklisted
                                 ? t("command.parity.yesWithReason", {
@@ -587,7 +587,7 @@ function moderationCommand(kind: "trust" | "blacklist"): Command {
                           });
                 ctx.utils.sendChatMessage(
                     t("command.parity.moderationState", {
-                        player: player.playerUsername || player.playerAccountName,
+                        player: player.playerUsername || player.playerAuthId,
                         trust: state.trust_score,
                         blacklist: t(state.blacklisted ? "command.parity.yes" : "command.parity.no", {
                             lng: l(ctx),

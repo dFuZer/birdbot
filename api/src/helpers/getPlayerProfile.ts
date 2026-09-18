@@ -24,7 +24,7 @@ export default async function getPlayerProfile({
 }) {
     const playerQuery: {
         id: string;
-        account_name: string;
+        auth_id: string;
         xp: number;
         username: string;
         discord_user_id: string | null;
@@ -32,7 +32,7 @@ export default async function getPlayerProfile({
     }[] = await prisma.$queryRaw`
         SELECT
             p.id,
-            p.account_name,
+            p.auth_id,
             COALESCE(p.metadata->>'profile_name', p.metadata->>'latest_username') AS username,
             p.xp,
             wu.oauth_identifier AS discord_user_id,
@@ -108,7 +108,7 @@ export default async function getPlayerProfile({
     const res = {
         avatarUrl: getDiscordAvatarUrl(player.discord_user_id, player.discord_avatar_hash),
         playerId: player.id,
-        playerAccountName: player.account_name,
+        playerAuthId: player.auth_id,
         playerUsername: player.username,
         xp: getLevelDataFromXp(player.xp),
         language,

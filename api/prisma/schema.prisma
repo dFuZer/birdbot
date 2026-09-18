@@ -79,8 +79,8 @@ model Player {
     id         String   @id @default(uuid()) @db.Uuid
     created_at DateTime @default(now())
 
-    account_name String
-    xp           Int    @default(0)
+    auth_id    String
+    xp         Int    @default(0)
 
     metadata Json @default("{}")
 
@@ -364,13 +364,13 @@ model WebsiteUserToPlayerToken {
 }
 
 model BotStaff {
-    account_name String       @db.VarChar(120)
-    role         BotStaffRole
-    updated_by   String       @db.VarChar(80)
-    updated_at   DateTime     @updatedAt
-    created_at   DateTime     @default(now())
+    auth_id     String       @db.VarChar(120)
+    role        BotStaffRole
+    updated_by  String       @db.VarChar(80)
+    updated_at  DateTime     @updatedAt
+    created_at  DateTime     @default(now())
 
-    @@id([account_name, role])
+    @@id([auth_id, role])
     @@map("bot_staff")
 }
 

@@ -1,4 +1,5 @@
 import { RouteHandlerMethod } from "fastify";
+import { authenticatedPlayerSql } from "../helpers/authenticatedPlayer";
 import { databaseEnumToLanguageEnumMap, PrismaLanguage } from "../helpers/maps";
 import Logger from "../lib/logger";
 import prisma from "../prisma";
@@ -6,7 +7,7 @@ import prisma from "../prisma";
 const LOG_PATH = "getOpenMonitoring.route.ts";
 
 type PlayerWordMetricsRow = {
-    account_name: string;
+    auth_id: string;
     username: string | null;
     language: PrismaLanguage;
     words_placed: number;
@@ -22,7 +23,7 @@ export const getOpenMonitoringRouteHandler: RouteHandlerMethod = async function 
     try {
         const rows: PlayerWordMetricsRow[] = await prisma.$queryRaw`
             SELECT
-                p.account_name,
+                p.auth_id,
                 p.metadata->>'latest_username' AS username,
                 pwm.language,
                 CAST(pwm.words_placed AS int) AS words_placed,
@@ -32,12 +33,13 @@ export const getOpenMonitoringRouteHandler: RouteHandlerMethod = async function 
                 CAST(pwm.unicity AS double precision) AS unicity
             FROM player_word_metrics pwm
             INNER JOIN player p ON p.id = pwm.player_id
+            WHERE ${authenticatedPlayerSql}
         `;
 
         return res.status(200).send({
             players: rows.map((row) => ({
-                accountName: row.account_name,
-                username: row.username ?? row.account_name,
+                authId: row.auth_id,
+                username: row.username ?? row.auth_id,
                 language: databaseEnumToLanguageEnumMap[row.language],
                 wordsPlaced: row.words_placed,
                 distinctWords: row.distinct_words,

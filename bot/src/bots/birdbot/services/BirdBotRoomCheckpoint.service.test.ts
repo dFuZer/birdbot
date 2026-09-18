@@ -28,7 +28,7 @@ function makeRoom(): Room {
             submitResult: "success",
             prompt: "he",
             game: { id: "game-1", lang: "en", mode: "regular" },
-            player: { accountName: "player", nickname: "Player" },
+            player: { authId: "player", nickname: "Player" },
         },
     };
     room.roomState.myPeerId = 12;

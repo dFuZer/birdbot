@@ -83,7 +83,7 @@ const playerIdCommand = c({
             const player = await BirdBotParityApiService.resolvePlayer(query);
             ctx.utils.sendChatMessage(
                 t("command.admin.playerId", {
-                    account: player.playerAccountName,
+                    authId: player.playerAuthId,
                     playerId: player.playerId,
                     username: player.playerUsername ?? "-",
                     lng: l(ctx),
@@ -122,7 +122,7 @@ const suppressCommand = c({
             });
             ctx.utils.sendChatMessage(
                 t("command.admin.suppressResult", {
-                    player: player.playerUsername || player.playerAccountName,
+                    player: player.playerUsername || player.playerAuthId,
                     suppressed: state.suppressed
                         ? t("command.parity.yesWithReason", {
                               reason: state.suppress_reason || reason,
@@ -166,7 +166,7 @@ const giveFeathersCommand = c({
             ctx.utils.sendChatMessage(
                 t("command.admin.giveFeathersResult", {
                     amount,
-                    player: player.playerUsername || player.playerAccountName,
+                    player: player.playerUsername || player.playerAuthId,
                     balance: entry.balance_after,
                     lng: l(ctx),
                 }),
@@ -206,7 +206,7 @@ const giveXpCommand = c({
             ctx.utils.sendChatMessage(
                 t("command.admin.giveXpResult", {
                     amount,
-                    player: player.playerUsername || player.playerAccountName,
+                    player: player.playerUsername || player.playerAuthId,
                     xp: entry.xp_after,
                     lng: l(ctx),
                 }),
@@ -245,7 +245,7 @@ const setXpCommand = c({
             });
             ctx.utils.sendChatMessage(
                 t("command.admin.setXpResult", {
-                    player: player.playerUsername || player.playerAccountName,
+                    player: player.playerUsername || player.playerAuthId,
                     xp: entry.xp_after,
                     lng: l(ctx),
                 }),
@@ -415,12 +415,12 @@ const staffCommand = c({
         const role = roleRaw === "admin" ? "ADMIN" : "AUTOMOD";
         try {
             const player = await BirdBotParityApiService.resolvePlayer(query);
-            const accountName = player.playerAccountName;
+            const authId = player.playerAuthId;
             const updatedBy = ctx.gamer.authId!;
             if (action === "add") {
-                await BirdBotParityApiService.putStaff(accountName, role, updatedBy);
+                await BirdBotParityApiService.putStaff(authId, role, updatedBy);
             } else {
-                await BirdBotParityApiService.deleteStaff(accountName, role, updatedBy);
+                await BirdBotParityApiService.deleteStaff(authId, role, updatedBy);
             }
             const BirdBotStaffSync = (await import("../services/BirdBotStaffSync.service")).default;
             await BirdBotStaffSync.refresh(ctx.bot.rawBot);

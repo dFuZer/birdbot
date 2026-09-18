@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 let playerSchema = z.object({
-    accountName: z.string().max(50),
+    authId: z.string().trim().min(1).max(50),
     nickname: z.string().max(50),
 });
 

@@ -34,13 +34,13 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             discord_user_id: string | null;
             discord_avatar_hash: string | null;
             username: string;
-            account_name: string;
+            auth_id: string;
             xp: number;
         }[] = await prisma.$queryRaw`
             SELECT
                 ppl.player_id,
                 ppl.pp_sum,
-                p.account_name,
+                p.auth_id,
                 p.metadata->>'latest_username' as username,
                 wu.oauth_identifier AS discord_user_id,
                 wu.oauth_avatar AS discord_avatar_hash,
@@ -84,7 +84,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 pp: row.pp_sum,
                 rank: row.rank,
                 name: row.username,
-                accountName: row.account_name,
+                authId: row.auth_id,
                 avatarUrl: getDiscordAvatarUrl(row.discord_user_id, row.discord_avatar_hash),
                 xp: getLevelDataFromXp(row.xp),
                 language: databaseEnumToLanguageEnumMap[row.language],
@@ -96,14 +96,14 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             xp: number;
             rank: number;
             username: string;
-            account_name: string;
+            auth_id: string;
             discord_user_id: string | null;
             discord_avatar_hash: string | null;
         }[] = await prisma.$queryRaw`
             SELECT
                 p.id AS player_id,
                 p.xp,
-                p.account_name,
+                p.auth_id,
                 p.metadata->>'latest_username' as username,
                 wu.oauth_identifier AS discord_user_id,
                 wu.oauth_avatar AS discord_avatar_hash,
@@ -139,7 +139,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 id: row.player_id,
                 xp: getLevelDataFromXp(row.xp),
                 rank: row.rank,
-                accountName: row.account_name,
+                authId: row.auth_id,
                 name: row.username,
                 avatarUrl: getDiscordAvatarUrl(row.discord_user_id, row.discord_avatar_hash),
             })),
@@ -149,7 +149,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
             player_id: string;
             records_count: number;
             xp: number;
-            account_name: string;
+            auth_id: string;
             username: string;
             discord_user_id: string | null;
             discord_avatar_hash: string | null;
@@ -162,7 +162,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 records_count)
             l.player_id,
                 p.xp,
-                p.account_name,
+                p.auth_id,
                 p.metadata->>'latest_username' as username,
                 wu.oauth_identifier AS discord_user_id,
                 wu.oauth_avatar AS discord_avatar_hash,
@@ -201,7 +201,7 @@ export let getLeaderboardRouteHandler: RouteHandlerMethod = async function (req,
                 id: row.player_id,
                 recordsCount: row.records_count,
                 xp: getLevelDataFromXp(row.xp),
-                accountName: row.account_name,
+                authId: row.auth_id,
                 name: row.username,
                 rank: row.rank,
                 avatarUrl: getDiscordAvatarUrl(row.discord_user_id, row.discord_avatar_hash),

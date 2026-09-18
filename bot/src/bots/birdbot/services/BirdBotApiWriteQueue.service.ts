@@ -139,8 +139,8 @@ export default class BirdBotApiWriteQueue {
         return BirdBotParityApiService.makeIdempotencyKey(gameId, turnKey, submitResult, "word");
     }
 
-    public static makeRecapKey(gameId: string, accountName: string): string {
-        return BirdBotParityApiService.makeIdempotencyKey(gameId, accountName, "game-recap");
+    public static makeRecapKey(gameId: string, authId: string): string {
+        return BirdBotParityApiService.makeIdempotencyKey(gameId, authId, "game-recap");
     }
 
     public static pendingCount(): number {

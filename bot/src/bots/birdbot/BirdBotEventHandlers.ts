@@ -227,7 +227,8 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
     }
 
     let metaMilestones: BirdBotWordMilestone[] = [];
-    if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
+    const persistStats = BirdBotUtils.shouldPersistPlayerStats(ctx, currentChatter);
+    if (persistStats && BirdBotGameplayStateService.isScoreEligible(ctx)) {
         const game = BirdBotUtils.getApiGameData(ctx);
         metaMilestones = BirdBotParityApiService.buildCategoryMilestones({
             gameId: game.id,
@@ -307,7 +308,7 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
         }
     }
 
-    if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
+    if (persistStats && BirdBotGameplayStateService.isScoreEligible(ctx)) {
         const game = BirdBotUtils.getApiGameData(ctx);
         BirdBotUtils.queueSuccessfulWordRegistration(ctx, turnKey, {
             word,
@@ -339,7 +340,11 @@ function handleFlip(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0], previo
     const chatter = ctx.room.roomState.roomData?.chatters.find((item) => item.peerId === playerPeerId);
     const pending = roomMetadata.pendingWordRegistrations.get(turnKey);
     let reachedMetaMilestone: number | null = null;
-    if (chatter?.authId && pending && BirdBotGameplayStateService.isScoreEligible(ctx)) {
+    if (
+        BirdBotUtils.shouldPersistPlayerStats(ctx, chatter) &&
+        pending &&
+        BirdBotGameplayStateService.isScoreEligible(ctx)
+    ) {
         const extraMilestones = BirdBotParityApiService.buildCategoryMilestones({
             gameId: pending.data.game.id,
             turnKey,
@@ -713,7 +718,10 @@ const birdbotEventHandlers: BotEventHandlers = {
                     }
                 }
 
-                if (currentChatter.authId && BirdBotGameplayStateService.isScoreEligible(ctx)) {
+                if (
+                    BirdBotUtils.shouldPersistPlayerStats(ctx, currentChatter) &&
+                    BirdBotGameplayStateService.isScoreEligible(ctx)
+                ) {
                     const failTurnKey = `${playerPeerId}:${state.startTurn ?? "unknown"}`;
                     BirdBotUtils.registerWord(
                         {

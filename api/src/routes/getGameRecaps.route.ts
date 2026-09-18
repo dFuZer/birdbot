@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import type { RouteHandlerMethod } from "fastify";
 import { z } from "zod";
+import { authenticatedPlayerSql } from "../helpers/authenticatedPlayer";
 import { decodeCursor, encodeCursor, sanitizeSearch } from "../helpers/cursors";
 import { GameRecapListRow, gameRecapSelectSql, mapGameRecapRow } from "../helpers/mapGameRecap";
 import { languageEnumToDatabaseEnumMap, modeEnumToDatabaseEnumMap } from "../helpers/maps";
@@ -93,7 +94,7 @@ export const getGameRecapsRouteHandler: RouteHandlerMethod = async function (req
 
     const searchClause = search
         ? Prisma.sql`AND (
-                p.account_name ILIKE ${`%${search}%`}
+                p.auth_id ILIKE ${`%${search}%`}
                 OR COALESCE(p.metadata->>'latest_username', '') ILIKE ${`%${search}%`}
             )`
         : Prisma.empty;
@@ -118,7 +119,7 @@ export const getGameRecapsRouteHandler: RouteHandlerMethod = async function (req
             FROM game_recap gr
             INNER JOIN game g ON g.id = gr.game_id
             INNER JOIN player p ON p.id = gr.player_id
-            WHERE TRUE
+            WHERE ${authenticatedPlayerSql}
             ${searchClause}
             ${languageClause}
             ${modeClause}

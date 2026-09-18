@@ -23,7 +23,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             player_username: string;
             score: number;
             record_type: GameRecapRecordField;
-            account_name: string;
+            auth_id: string;
             xp: number;
         }[];
 
@@ -33,7 +33,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
                 l.record_type,
                 p.xp,
                 p.metadata->>'latest_username' as player_username,
-                p.account_name
+                p.auth_id
             FROM leaderboard l
             INNER JOIN player p
             ON l.player_id = p.id
@@ -46,7 +46,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             bestScores: bestScores.map((score) => ({
                 id: score.player_id,
                 name: score.player_username,
-                accountName: score.account_name,
+                authId: score.auth_id,
                 score: score.score,
                 recordType: databaseFieldToRecordEnumMap[score.record_type],
                 xp: getLevelDataFromXp(score.xp),
@@ -65,7 +65,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             xp: number;
             discord_user_id: string | null;
             discord_avatar_hash: string | null;
-            account_name: string;
+            auth_id: string;
             game_recap_id: string | null;
         }[];
 
@@ -78,7 +78,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
                 wu.oauth_identifier AS discord_user_id,
                 wu.oauth_avatar AS discord_avatar_hash,
                 p.metadata->>'latest_username' as player_username,
-                p.account_name
+                p.auth_id
             FROM leaderboard l
             INNER JOIN player p
             ON l.player_id = p.id
@@ -112,7 +112,7 @@ export default async function getBestScoresForCategory(params: z.infer<typeof ge
             bestScores: bestScores.map((score) => ({
                 id: score.player_id,
                 name: score.player_username,
-                accountName: score.account_name,
+                authId: score.auth_id,
                 score: score.score,
                 rank: score.rank,
                 xp: getLevelDataFromXp(score.xp),

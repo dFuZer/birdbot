@@ -18,7 +18,7 @@ const MAX_SIZE_SCALE = 1.5;
 
 type ScatterDatum = {
     value: [number, number];
-    accountName: string;
+    authId: string;
     username: string;
     language: LanguageEnum;
     wordsPlaced: number;
@@ -63,14 +63,14 @@ export default function VarietyUnicityChart({ players, searchQuery }: { players:
     const data = useMemo<ScatterDatum[]>(() => {
         const hasSearch = searchQuery.length > 0;
         const points = players.map((player) => {
-            const haystack = `${player.username} ${player.accountName}`.toLowerCase();
+            const haystack = `${player.username} ${player.authId}`.toLowerCase();
             const highlighted = hasSearch && haystack.includes(searchQuery);
             const color = LANGUAGE_DOT_COLORS[player.language];
             const baseSize = highlighted ? 14 : hasSearch ? 6 : 8;
 
             return {
                 value: [player.variety, player.unicity] as [number, number],
-                accountName: player.accountName,
+                authId: player.authId,
                 username: player.username,
                 language: player.language,
                 wordsPlaced: player.wordsPlaced,
@@ -185,10 +185,10 @@ export default function VarietyUnicityChart({ players, searchQuery }: { players:
 
         const onClick = (params: ECElementEvent) => {
             const datum = params.data as ScatterDatum | undefined;
-            if (!datum?.accountName) {
+            if (!datum?.authId) {
                 return;
             }
-            router.push(`/p/${encodeURIComponent(datum.accountName)}?l=${datum.language}`);
+            router.push(`/p/${encodeURIComponent(datum.authId)}?l=${datum.language}`);
         };
 
         chart.on("click", onClick);

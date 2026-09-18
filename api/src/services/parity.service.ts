@@ -282,7 +282,7 @@ async function listMilestones(input: {
         take: input.limit ?? 20,
         include: {
             player: {
-                select: { account_name: true, metadata: true },
+                select: { auth_id: true, metadata: true },
             },
         },
     });

@@ -20,7 +20,7 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
         })
         .or(
             base.extend({
-                accountName: z.string(),
+                authId: z.string(),
             })
         )
         .or(
@@ -40,11 +40,11 @@ export let getPlayerProfileRouteHandler: RouteHandlerMethod = async function (re
 
     if ("playerId" in parsedData.data) {
         searchPlayerId = parsedData.data.playerId;
-    } else if ("accountName" in parsedData.data) {
+    } else if ("authId" in parsedData.data) {
         const player: { id: string }[] = await prisma.$queryRaw`
             SELECT id 
             FROM player
-            WHERE account_name = ${parsedData.data.accountName}
+            WHERE auth_id = ${parsedData.data.authId}
             LIMIT 1;
         `;
 

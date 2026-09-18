@@ -65,7 +65,7 @@ function findTargetGameMode(argumentsList: string[]): BirdBotGameMode | null {
 
 type PlayerProfileResult = {
     playerId: string;
-    playerAccountName: string;
+    playerAuthId: string;
     playerUsername: string;
     foundUsername: string;
     xp: ExperienceData;
@@ -1156,7 +1156,7 @@ const playerProfileCommand = c({
                 currentLevelXp: playerData.xp.currentLevelXp,
                 totalLevelXp: playerData.xp.totalLevelXp,
                 level: playerData.xp.level,
-                profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAccountName)}`,
+                profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAuthId)}`,
                 topPerformances: playerData.bestPerformances
                     .sort((a, b) => b.pp - a.pp)
                     .map((performance) => {
@@ -1219,7 +1219,7 @@ const playerRecordsCommand = c({
             languageFlag: t(`lib.language.${playerData.language}.flag`, { lng: l(ctx) }),
             gameMode: t(`lib.mode.${playerData.mode}`, { lng: l(ctx) }),
             playerUsername: playerData.playerUsername,
-            profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAccountName)}`,
+            profileLink: `${WEBSITE_LINK}/p/${encodeURIComponent(playerData.playerAuthId)}`,
             lng: l(ctx),
         };
 
@@ -1267,7 +1267,7 @@ const xpCommand = c({
 
         type XpProfileResult = {
             playerUsername: string;
-            playerAccountName: string;
+            playerAuthId: string;
             xp: ExperienceData;
         };
 
@@ -1755,7 +1755,7 @@ const linkAccountCommand = c({
                     Authorization: `Bearer ${API_KEY}`,
                 },
                 body: JSON.stringify({
-                    accountName: ctx.gamer.authId,
+                    authId: ctx.gamer.authId,
                     token,
                     currentNickname: ctx.gamer.nickname,
                 }),

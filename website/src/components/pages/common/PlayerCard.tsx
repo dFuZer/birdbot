@@ -16,7 +16,7 @@ export default function PlayerCard<T extends IPlayerScoreCommonProps>({
 }) {
     return (
         <Link
-            href={`/p/${encodeURIComponent(playerData.accountName)}`}
+            href={`/p/${encodeURIComponent(playerData.authId)}`}
             className={cn(
                 "rounded-xl border border-neutral-200 bg-white p-4 text-nowrap",
                 playerData.rank === 1 && "col-span-1 sm:col-span-2 md:col-span-1",

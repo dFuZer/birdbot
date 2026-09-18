@@ -315,7 +315,10 @@ async function seed() {
             SELECT w.player_id, w.word, g.language, COUNT(*)::bigint AS times_used
             FROM word w
             INNER JOIN game g ON g.id = w.game_id
+            INNER JOIN player p ON p.id = w.player_id
             WHERE w.submit_result = 'SUCCESS'
+              AND btrim(p.auth_id) <> ''
+              AND lower(p.auth_id) <> 'birdbot'
             GROUP BY w.player_id, w.word, g.language
         ),
         word_player_count AS (

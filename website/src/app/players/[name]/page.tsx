@@ -7,7 +7,7 @@ import { isValidGameModeParam, isValidLanguageParam } from "@/lib/validation";
 export interface IPlayerProfileData {
     foundUsername: string;
     playerId: string;
-    playerAccountName: string;
+    playerAuthId: string;
     playerUsername: string;
     xp: ExperienceData;
     language: LanguageEnum;

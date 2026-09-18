@@ -4,10 +4,10 @@ import prisma from "../prisma";
 import { staffMutationSchema, staffRoleSchema } from "../schemas/safety.zod";
 
 async function staffPayload() {
-    const rows = await prisma.botStaff.findMany({ orderBy: [{ role: "asc" }, { account_name: "asc" }] });
+    const rows = await prisma.botStaff.findMany({ orderBy: [{ role: "asc" }, { auth_id: "asc" }] });
     return {
-        admins: rows.filter((row) => row.role === BotStaffRole.ADMIN).map((row) => row.account_name),
-        automods: rows.filter((row) => row.role === BotStaffRole.AUTOMOD).map((row) => row.account_name),
+        admins: rows.filter((row) => row.role === BotStaffRole.ADMIN).map((row) => row.auth_id),
+        automods: rows.filter((row) => row.role === BotStaffRole.AUTOMOD).map((row) => row.auth_id),
     };
 }
 
@@ -21,10 +21,10 @@ const putStaffRouteHandler: RouteHandlerMethod = async (req, res) => {
     const role = body.data.role === "ADMIN" ? BotStaffRole.ADMIN : BotStaffRole.AUTOMOD;
     await prisma.botStaff.upsert({
         where: {
-            account_name_role: { account_name: body.data.accountName, role },
+            auth_id_role: { auth_id: body.data.authId, role },
         },
         create: {
-            account_name: body.data.accountName,
+            auth_id: body.data.authId,
             role,
             updated_by: body.data.updatedBy,
         },
@@ -40,7 +40,7 @@ const deleteStaffRouteHandler: RouteHandlerMethod = async (req, res) => {
     if (!roleParse.success) return res.status(400).send({ message: "Invalid role" });
     const role = roleParse.data === "ADMIN" ? BotStaffRole.ADMIN : BotStaffRole.AUTOMOD;
     await prisma.botStaff.deleteMany({
-        where: { account_name: body.data.accountName, role },
+        where: { auth_id: body.data.authId, role },
     });
     return res.send(await staffPayload());
 };

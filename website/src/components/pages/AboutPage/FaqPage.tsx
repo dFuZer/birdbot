@@ -13,12 +13,12 @@ interface Question {
 const questions: Question[] = [
     {
         trigger: "How do I log in to BirdBot ?",
-        answer: `You cannot really log in to BirdBot. To use certain BirdBot commands, you must be connected to the Croco.games platform. To connect to Croco.games, go to the home page and click "Log in" if you have an account or "New account" if you don't.`,
+        answer: `You cannot really log in to BirdBot. To use certain BirdBot commands, you must be logged in on jklm.fun. To log in, go to https://jklm.fun and click "Log in" if you have an account or "New account" if you don't.`,
         id: "log-in",
     },
     {
         trigger: "How do I create a room with BirdBot ?",
-        answer: "Use /b in a room where BirdBot is present to create a room with BirdBot. If you want to create your room in a specific mode or language, just give the parameters to the command. Example: /b english blitz - You must be connected to the Croco.games platform to use this command.",
+        answer: "Use /b in a room where BirdBot is present to create a room with BirdBot. If you want to create your room in a specific mode or language, just give the parameters to the command. Example: /b english blitz - You must be logged in on jklm.fun to use this command.",
         id: "create-room",
     },
     {

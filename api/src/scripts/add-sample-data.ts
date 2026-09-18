@@ -114,7 +114,7 @@ function getRandomName() {
     }`;
 }
 
-function getRandomAccountName() {
+function getRandomAuthId() {
     return `${firstNames[Math.floor(Math.random() * firstNames.length)]}${
         lastNames[Math.floor(Math.random() * lastNames.length)]
     }`.toLowerCase();
@@ -165,7 +165,7 @@ let modeArray = Object.values(GameMode);
     let players = await prisma.player.createManyAndReturn({
         data: Array.from({ length: 200 }, (_, index) => {
             return {
-                account_name: getRandomAccountName() + index,
+                auth_id: getRandomAuthId() + index,
             };
         }),
     });

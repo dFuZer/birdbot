@@ -63,7 +63,7 @@ export let getUserProfileRouteHandler: RouteHandlerMethod = async function (req,
         const playerId = userToPlayer[0].player_id;
 
         const playerQuery: PlayerData[] = await prisma.$queryRaw`
-            SELECT p.id, p.account_name, p.xp,
+            SELECT p.id, p.auth_id, p.xp,
                    COALESCE(p.metadata->>'profile_name', p.metadata->>'latest_username') as username
             FROM player p
             WHERE p.id = ${playerId}::UUID

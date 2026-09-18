@@ -157,7 +157,7 @@ export type BirdBotGameData = {
 };
 
 export type BirdBotPlayerData = {
-    accountName: string;
+    authId: string;
     nickname: string;
 };
 

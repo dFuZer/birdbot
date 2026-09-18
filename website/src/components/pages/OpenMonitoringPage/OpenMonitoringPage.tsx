@@ -1,5 +1,6 @@
 import type { OpenMonitoringPlayer } from "@/app/open-monitoring/page";
 import { katibehFont } from "@/app/fonts";
+import { isAuthenticatedAuthId } from "@/lib/gameRecaps";
 import { openMonitoringTabEnumSchema, type OpenMonitoringTabEnum } from "@/lib/validation";
 import GameRecapsTab from "./GameRecapsTab";
 import GraphsTab from "./GraphsTab";
@@ -12,6 +13,8 @@ export default function OpenMonitoringPage({
     players: OpenMonitoringPlayer[];
     tab: OpenMonitoringTabEnum;
 }) {
+    const authenticatedPlayers = players.filter((player) => isAuthenticatedAuthId(player.authId));
+
     return (
         <div className="flex min-h-screen justify-center px-4 py-6 sm:py-10">
             <div className="flex w-full flex-1 flex-col pb-6 sm:max-w-7xl sm:rounded-xl sm:bg-white/70 sm:p-6 sm:shadow-xl">
@@ -20,7 +23,11 @@ export default function OpenMonitoringPage({
                     <OpenMonitoringPageSwitchTabButtons tab={tab} />
                 </div>
                 <div className="mt-6">
-                    {tab === openMonitoringTabEnumSchema.Values.recaps ? <GameRecapsTab /> : <GraphsTab players={players} />}
+                    {tab === openMonitoringTabEnumSchema.Values.recaps ? (
+                        <GameRecapsTab />
+                    ) : (
+                        <GraphsTab players={authenticatedPlayers} />
+                    )}
                 </div>
             </div>
         </div>

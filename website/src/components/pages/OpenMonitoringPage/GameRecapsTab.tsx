@@ -165,7 +165,7 @@ export default function GameRecapsTab() {
                                 type="search"
                                 value={input}
                                 onChange={(event) => setInput(event.target.value)}
-                                placeholder="Username or account name"
+                                placeholder="Username or auth id"
                                 className="focus-visible:ring-primary-500/40 h-9 rounded-md border border-neutral-200 bg-white px-3 text-neutral-950 outline-none focus-visible:ring-2"
                             />
                         </label>
@@ -266,7 +266,7 @@ function RecapRow({ recap }: { recap: GameRecapSummary }) {
         >
             <div className="min-w-0">
                 <p className="truncate font-bold text-neutral-950">{recap.username}</p>
-                <p className="truncate text-xs text-neutral-500">{recap.accountName}</p>
+                <p className="truncate text-xs text-neutral-500">{recap.authId}</p>
             </div>
             <div className="flex items-center gap-2 text-sm text-neutral-700">
                 <Flag language={recap.language} className="h-4 w-4" />

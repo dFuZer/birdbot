@@ -19,7 +19,7 @@ export type WordRow = {
     duration_ms: number | null;
     reaction_ms: number | null;
     player_id: string;
-    account_name: string;
+    auth_id: string;
     username: string | null;
 };
 
@@ -34,7 +34,7 @@ export function mapWordRow(row: WordRow) {
         durationMs: row.duration_ms,
         reactionMs: row.reaction_ms,
         playerId: row.player_id,
-        accountName: row.account_name,
-        username: row.username ?? row.account_name,
+        authId: row.auth_id,
+        username: row.username ?? row.auth_id,
     };
 }

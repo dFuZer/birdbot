@@ -35,7 +35,7 @@ export type ApiResponseAllRecords = {
     bestScores: {
         id: string;
         name: string;
-        accountName: string;
+        authId: string;
         score: number;
         recordType: BirdBotRecordType;
         xp: ExperienceData;
@@ -150,13 +150,21 @@ export default class BirdBotUtils {
 
     public static getApiPlayerData = (player: Chatter) => {
         return {
-            accountName: player.authId ?? "",
+            authId: player.authId ?? "",
             nickname: player.nickname,
         } as BirdBotPlayerData;
     };
 
+    public static hasAuthId = (chatter: Chatter | null | undefined): chatter is Chatter & { authId: string } => {
+        return Boolean(chatter?.authId);
+    };
+
+    public static shouldPersistPlayerStats = (ctx: EventCtx, chatter: Chatter | null | undefined): boolean => {
+        if (!this.hasAuthId(chatter)) return false;
+        return chatter.peerId !== ctx.room.roomState.myPeerId;
+    };
+
     public static handlePlayerDeath = async (ctx: EventCtx, peerId: number) => {
-        const gameRecap = BirdBotUtils.getApiGameRecap(ctx, peerId);
         const gamer = ctx.room.roomState.roomData!.chatters.find((c) => c.peerId === peerId);
 
         if (!gamer) {
@@ -168,16 +176,20 @@ export default class BirdBotUtils {
                 `Chatter ${peerId} not found in room ${ctx.room.constantRoomData.roomCode}. This should never happen.`,
             );
         }
-        const timeSurvived = gameRecap.diedAt - ctx.room.roomState.roundStartTimestamp;
 
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-        // Snapshot before any async work: round end resets scoresByPeerId while the recap API is in-flight.
-        const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByPeerId[peerId], l(ctx));
         const training = BirdBotGameplayStateService.metadata(ctx).training;
         if (training?.list && gamer.authId === training.creatorAuthId) {
             training.list.successes = 0;
             training.list.attempts = 0;
         }
+
+        if (peerId === ctx.room.roomState.myPeerId) return;
+
+        const gameRecap = BirdBotUtils.getApiGameRecap(ctx, peerId);
+        const timeSurvived = gameRecap.diedAt - ctx.room.roomState.roundStartTimestamp;
+        // Snapshot before any async work: round end resets scoresByPeerId while the recap API is in-flight.
+        const scores = BirdBotUtils.getFormattedPlayerScores(roomMetadata.scoresByPeerId[peerId], l(ctx));
 
         if (!BirdBotGameplayStateService.isScoreEligible(ctx)) {
             ctx.utils.sendChatMessage(
@@ -191,7 +203,7 @@ export default class BirdBotUtils {
             return;
         }
 
-        if (!gamer.authId) {
+        if (!BirdBotUtils.shouldPersistPlayerStats(ctx, gamer)) {
             ctx.utils.sendChatMessage(
                 t("parity.gameplay.scoresNotSaved", {
                     username: gamer.nickname,
@@ -331,7 +343,8 @@ export default class BirdBotUtils {
     };
 
     public static registerGameRecap = async (gameRecap: BirdBotGameRecap) => {
-        const idempotencyKey = BirdBotApiWriteQueue.makeRecapKey(gameRecap.game.id, gameRecap.player.accountName);
+        if (!gameRecap.player.authId.trim()) return null;
+        const idempotencyKey = BirdBotApiWriteQueue.makeRecapKey(gameRecap.game.id, gameRecap.player.authId);
         const res = (await BirdBotApiWriteQueue.enqueueGameRecap(
             gameRecap as unknown as Record<string, unknown>,
             idempotencyKey,
@@ -343,8 +356,8 @@ export default class BirdBotUtils {
     };
 
     public static registerWord = async (wordData: BirdBotWordData, turnKey = "unknown") => {
-        if (!wordData.player.accountName) return null;
-        if (await BirdBotModerationService.isBlacklisted(wordData.player.accountName)) return null;
+        if (!wordData.player.authId.trim()) return null;
+        if (await BirdBotModerationService.isBlacklisted(wordData.player.authId)) return null;
         const idempotencyKey = BirdBotApiWriteQueue.makeWordKey(wordData.game.id, turnKey, wordData.submitResult);
         BirdBotApiWriteQueue.enqueueWord({ ...wordData, idempotencyKey });
         return null;
@@ -352,7 +365,7 @@ export default class BirdBotUtils {
 
     public static queueSuccessfulWordRegistration = (ctx: EventCtx, turnKey: string, data: Omit<BirdBotWordData, "flip">) => {
         if (!BirdBotGameplayStateService.isScoreEligible(ctx)) return;
-        if (!data.player.accountName) return;
+        if (!data.player.authId.trim()) return;
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         if (roomMetadata.pendingWordRegistrations.has(turnKey)) return;
         roomMetadata.pendingWordRegistrations.set(turnKey, { turnKey, data });

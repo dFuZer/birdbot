@@ -5,26 +5,26 @@ export default async function findPlayerByUsername(username: string): Promise<{ 
 
     const playersQuery: {
         player_id: string;
-        account_name: string;
+        auth_id: string;
         profile_name: string | null;
         latest_username: string | null;
     }[] = await prisma.$queryRaw`
-        SELECT p.id as player_id, p.account_name, p.metadata->>'profile_name' as profile_name,
+        SELECT p.id as player_id, p.auth_id, p.metadata->>'profile_name' as profile_name,
                p.metadata->>'latest_username' as latest_username
         FROM player p
-        WHERE p.account_name ILIKE ${username}
+        WHERE p.auth_id ILIKE ${username}
            OR p.metadata->>'profile_name' ILIKE '%' || ${username} || '%'
            OR p.metadata->>'latest_username' ILIKE '%' || ${username} || '%'
     `;
     const usernamesQuery: { player_id: string; username: string }[] =
         await prisma.$queryRaw`SELECT pu.player_id, pu.username FROM player_username pu WHERE pu.username ILIKE '%' || ${username} || '%';`;
 
-    const exactAccountNameMatchPlayer = playersQuery.find((player) => player.account_name.toLowerCase() === usernameLower);
+    const exactAuthIdMatchPlayer = playersQuery.find((player) => player.auth_id.toLowerCase() === usernameLower);
 
-    if (exactAccountNameMatchPlayer) {
+    if (exactAuthIdMatchPlayer) {
         return {
-            id: exactAccountNameMatchPlayer.player_id,
-            username: exactAccountNameMatchPlayer.account_name,
+            id: exactAuthIdMatchPlayer.player_id,
+            username: exactAuthIdMatchPlayer.auth_id,
         };
     }
 

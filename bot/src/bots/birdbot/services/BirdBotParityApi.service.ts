@@ -6,7 +6,7 @@ import type { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotWordMi
 
 const profileSchema = z.object({
     playerId: z.string().uuid(),
-    playerAccountName: z.string(),
+    playerAuthId: z.string(),
     playerUsername: z.string().nullable().optional(),
 });
 
@@ -51,7 +51,7 @@ const milestoneSchema = z.object({
     metadata: z.record(z.unknown()),
     player: z
         .object({
-            account_name: z.string(),
+            auth_id: z.string(),
             metadata: z.record(z.unknown()).nullable().optional(),
         })
         .optional(),
@@ -124,8 +124,8 @@ export class BirdBotApiError extends Error {
 }
 
 export default class BirdBotParityApiService {
-    public static async resolvePlayer(query: string, exactAccountName = false): Promise<BirdBotPlayerProfile> {
-        const key = exactAccountName ? "accountName" : "searchByName";
+    public static async resolvePlayer(query: string, exactAuthId = false): Promise<BirdBotPlayerProfile> {
+        const key = exactAuthId ? "authId" : "searchByName";
         return this.request(`/player-profile?${key}=${encodeURIComponent(query)}`, profileSchema);
     }
 
@@ -261,16 +261,16 @@ export default class BirdBotParityApiService {
         }
     }
 
-    public static async putStaff(accountName: string, role: "ADMIN" | "AUTOMOD", updatedBy: string): Promise<BirdBotStaffList> {
-        return this.request("/staff", staffSchema, "PUT", { accountName, role, updatedBy });
+    public static async putStaff(authId: string, role: "ADMIN" | "AUTOMOD", updatedBy: string): Promise<BirdBotStaffList> {
+        return this.request("/staff", staffSchema, "PUT", { authId, role, updatedBy });
     }
 
     public static async deleteStaff(
-        accountName: string,
+        authId: string,
         role: "ADMIN" | "AUTOMOD",
         updatedBy: string,
     ): Promise<BirdBotStaffList> {
-        return this.request("/staff", staffSchema, "DELETE", { accountName, role, updatedBy });
+        return this.request("/staff", staffSchema, "DELETE", { authId, role, updatedBy });
     }
 
     public static async listBotRooms(): Promise<BirdBotPersistedRoom[]> {

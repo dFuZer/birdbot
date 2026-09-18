@@ -7,7 +7,7 @@ import { isValidGameModeParam, isValidLanguageParam } from "@/lib/validation";
 export interface IPlayerProfileData {
     foundUsername: string;
     playerId: string;
-    playerAccountName: string;
+    playerAuthId: string;
     playerUsername: string;
     xp: ExperienceData;
     language: LanguageEnum;
@@ -37,18 +37,18 @@ export default async function Page({
     params,
     searchParams,
 }: {
-    params: Promise<{ accountName: string }>;
+    params: Promise<{ authId: string }>;
     searchParams: TSearchParams;
 }) {
     const [paramsAwaited, searchParamsAwaited] = await Promise.all([params, searchParams]);
-    const { accountName: playerName } = paramsAwaited;
+    const { authId: playerName } = paramsAwaited;
     const { m: mode, l: language } = searchParamsAwaited;
 
     const selectedLanguage = isValidLanguageParam(language) ? language : null;
     const selectedMode = isValidGameModeParam(mode) ? mode : null;
 
     const playerDataResponse = await getFromApi(
-        `/player-profile?accountName=${playerName}${selectedLanguage ? `&language=${selectedLanguage}` : ""}${selectedMode ? `&mode=${selectedMode}` : ""}`,
+        `/player-profile?authId=${playerName}${selectedLanguage ? `&language=${selectedLanguage}` : ""}${selectedMode ? `&mode=${selectedMode}` : ""}`,
     );
     const playerData: IPlayerProfileData = await playerDataResponse.json();
 

@@ -97,10 +97,10 @@ export default class BirdBotModerationService {
     private static readonly spamHardWarned = new Set<string>();
     private static readonly moderationCache = new Map<string, { blacklisted: boolean; expiresAt: number }>();
 
-    public static async isTrusted(accountName: string | null): Promise<boolean> {
-        if (!accountName) return false;
+    public static async isTrusted(authId: string | null): Promise<boolean> {
+        if (!authId) return false;
         try {
-            const player = await BirdBotParityApiService.resolvePlayer(accountName, true);
+            const player = await BirdBotParityApiService.resolvePlayer(authId, true);
             const moderation = await BirdBotParityApiService.getModeration(player.playerId);
             return moderation.trust_score > 0 && !moderation.blacklisted;
         } catch {
@@ -108,14 +108,14 @@ export default class BirdBotModerationService {
         }
     }
 
-    public static async isBlacklisted(accountName: string | null): Promise<boolean> {
-        if (!accountName) return false;
-        const cached = this.moderationCache.get(accountName);
+    public static async isBlacklisted(authId: string | null): Promise<boolean> {
+        if (!authId) return false;
+        const cached = this.moderationCache.get(authId);
         if (cached && cached.expiresAt > Date.now()) return cached.blacklisted;
         try {
-            const player = await BirdBotParityApiService.resolvePlayer(accountName, true);
+            const player = await BirdBotParityApiService.resolvePlayer(authId, true);
             const moderation = await BirdBotParityApiService.getModeration(player.playerId);
-            this.moderationCache.set(accountName, {
+            this.moderationCache.set(authId, {
                 blacklisted: moderation.blacklisted,
                 expiresAt: Date.now() + 60_000,
             });

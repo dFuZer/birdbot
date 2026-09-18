@@ -26,7 +26,7 @@ export type GameRecapListRow = {
     mode: PrismaGameMode;
     started_at: Date;
     ended_at: Date | null;
-    account_name: string;
+    auth_id: string;
     username: string | null;
     duration_ms: number | bigint;
 };
@@ -36,8 +36,8 @@ export function mapGameRecapRow(row: GameRecapListRow) {
         id: row.id,
         gameId: row.game_id,
         playerId: row.player_id,
-        accountName: row.account_name,
-        username: row.username ?? row.account_name,
+        authId: row.auth_id,
+        username: row.username ?? row.auth_id,
         language: databaseEnumToLanguageEnumMap[row.language],
         mode: databaseEnumToModeEnumMap[row.mode],
         startedAt: row.started_at.toISOString(),
@@ -88,7 +88,7 @@ export const gameRecapSelectSql = Prisma.raw(`
     g.mode,
     g.started_at,
     g.ended_at,
-    p.account_name,
+    p.auth_id,
     p.metadata->>'latest_username' AS username,
     CAST(EXTRACT(EPOCH FROM (gr.died_at - g.started_at)) * 1000 AS bigint) AS duration_ms
 `);

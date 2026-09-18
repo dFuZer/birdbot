@@ -496,12 +496,12 @@ const commands: Command[] = [
     },
     {
         trigger: "/playerid",
-        explanation: "Resolves a player and shows their account name, profile name, and internal player ID.",
+        explanation: "Resolves a player and shows their JKLM auth id, profile name, and internal player ID.",
         id: "playerid",
         shorthand: "/getid",
         condition: "admin",
         uses: ["/playerid [player]", "/getid [player]"],
-        exampleUses: [{ use: "/playerid dfuzer", useDescription: "Shows dfuzer's account and internal player IDs" }],
+        exampleUses: [{ use: "/playerid dfuzer", useDescription: "Shows dfuzer's auth id and internal player ID" }],
     },
     {
         trigger: "/suppress",
@@ -717,7 +717,7 @@ export default function CommandsPage() {
             <div className="my-2 space-y-2">
                 <div className="flex items-center gap-4">
                     <ConditionBadge condition="logged-in" />
-                    <p className="text-sm text-neutral-600">To use this command, you need to be logged in to Croco.games</p>
+                    <p className="text-sm text-neutral-600">To use this command, you need to be logged in on jklm.fun</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <ConditionBadge condition="room-owner" />

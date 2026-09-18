@@ -25,11 +25,11 @@ export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[]
     }, [minWords, players]);
 
     const uniqueFilteredPlayers = useMemo(() => {
-        return new Set(filteredPlayers.map((player) => player.accountName)).size;
+        return new Set(filteredPlayers.map((player) => player.authId)).size;
     }, [filteredPlayers]);
 
     const uniquePlayers = useMemo(() => {
-        return new Set(players.map((player) => player.accountName)).size;
+        return new Set(players.map((player) => player.authId)).size;
     }, [players]);
 
     const normalizedQuery = query.trim().toLowerCase();
@@ -75,7 +75,7 @@ export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[]
                         type="search"
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
-                        placeholder="Username or account name"
+                        placeholder="Username or auth id"
                         className="focus-visible:ring-primary-500/40 h-9 rounded-md border border-neutral-200 bg-white px-3 text-neutral-950 outline-none focus-visible:ring-2"
                     />
                 </label>

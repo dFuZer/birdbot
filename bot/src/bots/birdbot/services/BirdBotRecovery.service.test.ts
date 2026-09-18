@@ -149,7 +149,7 @@ test("remapPeerKeyedState moves the bot's scores and turn keys", () => {
                         submitResult: "success" as const,
                         prompt: "ha",
                         game: { id: "g", lang: "en" as const, mode: "regular" as const },
-                        player: { accountName: "bot", nickname: "BirdBot" },
+                        player: { authId: "bot", nickname: "BirdBot" },
                     },
                 },
             ],

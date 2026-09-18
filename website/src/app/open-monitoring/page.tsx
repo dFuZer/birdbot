@@ -1,5 +1,6 @@
 import OpenMonitoringPage from "@/components/pages/OpenMonitoringPage/OpenMonitoringPage";
 import { getFromApi } from "@/lib/fetching";
+import { isAuthenticatedAuthId } from "@/lib/gameRecaps";
 import { TSearchParams } from "@/lib/params";
 import type { LanguageEnum } from "@/lib/records";
 import { isValidOpenMonitoringTabParam, openMonitoringTabEnumSchema } from "@/lib/validation";
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export type OpenMonitoringPlayer = {
-    accountName: string;
+    authId: string;
     username: string;
     language: LanguageEnum;
     wordsPlaced: number;
@@ -36,7 +37,7 @@ export default async function Page({ searchParams: searchParamsPromise }: { sear
             const response = await getFromApi("/open-monitoring");
             if (response.ok) {
                 const json: OpenMonitoringApiResponse = await response.json();
-                players = json.players ?? [];
+                players = (json.players ?? []).filter((player) => isAuthenticatedAuthId(player.authId));
             }
         } catch {
             players = [];
