@@ -37,7 +37,7 @@ export default function GraphsTab({ players }: { players: OpenMonitoringPlayer[]
     return (
         <div>
             <p className="max-w-3xl text-sm text-neutral-600">
-                Each point is a player in one language — a player who plays several languages appears as several points.{" "}
+                Each point is a player in one language, a player who plays several languages appears as several points.{" "}
                 <strong className="font-semibold text-neutral-800">Variety</strong> is unique words they placed divided by words
                 they placed. <strong className="font-semibold text-neutral-800">Unicity</strong> is words only they have placed in
                 that language, divided by words they placed. Point size grows with words placed in that language (up to 10,000).
