@@ -1,0 +1,42 @@
+---
+description: BirdBot monorepo goal, architecture, and service map
+alwaysApply: true
+---
+
+# BirdBot Project
+
+**Goal:** Automated BombParty player for [jklm.fun](https://jklm.fun). Players practice against a strong bot, track records/milestones, browse game recaps, and use word-research tools. Modern rewrite of legacy BBV7 with Postgres instead of flat files.
+
+## Services (docker-compose.yml)
+
+| Service | Port | Stack | Role |
+|---------|------|-------|------|
+| `db` | 5432 | PostgreSQL 13 | All persistent state |
+| `api` | 4000 | Fastify + Prisma + Zod | REST backend; Bearer `API_KEY` auth |
+| `bot` | 3001 | TS + Socket.IO + Rust powerhouse | Plays BombParty on jklm; writes to API |
+| `website` | 3000 | Next.js 15 App Router | Public UI; Discord OAuth; proxies API |
+| `dozzle` | 8080 | Log viewer | Container logs on VPS |
+
+**Data flow:** Website → API ← Bot. Bot ↔ jklm.fun (sockets). Website → Bot HTTP for ephemeral rooms only.
+
+## Monorepo layout
+
+- `api/` — routes, Prisma schema/migrations, seed scripts
+- `bot/` — BirdBot gameplay, dictionaries in `resources/`, Rust `powerhouse/` for `.bbdm` cache
+- `website/` — pages, server actions, API proxy routes under `src/app/api/`
+- `scripts/` — deploy, DB launch (`launch-*-database.sh`, `deploy-bot.sh`)
+
+## Domain concepts
+
+- **Languages:** FR, EN, DE, ES, BRPT, IT
+- **Modes:** REGULAR, EASY, BLITZ, SUB500, SUB50, FREEPLAY
+- **Room kinds:** `main` (permanent per language), `ephemeral` (website-created, capped at 15)
+- **Economy:** feathers/credits, XP, VIP tiers, cosmetics — all in Postgres via API
+- **Staff:** admins/automods in `bot_staff` table; synced to bot at runtime
+
+## Dev quick ref
+
+- Root `.env` for Docker; each module has `.env.example`
+- API/website: hot reload (`npm run dev`). Bot: full restart (`npm run u` via `index.unstable.ts`)
+- Bot needs `./build_birdbot_powerhouse.sh` once before first run
+- Prod: `./scripts/deploy.sh`; bot-only rebuild: `./scripts/deploy-bot.sh`

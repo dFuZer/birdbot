@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createRef, useEffect } from "react";
 import AuthButton from "./AuthButton";
+import CotwButton from "./CotwButton";
 
 export const mobileHeaderOpenAtom = atom(false);
 
@@ -66,7 +67,8 @@ export default function MobileHeader() {
                     </div>
                 ))}
             </div>
-            <div className="flex min-w-[6rem] flex-1 justify-end">
+            <div className="flex min-w-[6rem] flex-1 items-center justify-end gap-3">
+                <CotwButton onClick={() => setOpen(false)} />
                 <AuthButton />
             </div>
         </div>

@@ -1,0 +1,55 @@
+---
+description: BirdBot most important files and coding conventions
+alwaysApply: true
+---
+
+# Key Files & Conventions
+
+## Entry points
+
+- `api/src/app.ts` — all route registration; `api/src/index.ts` — server start
+- `api/prisma/schema.prisma` — source of truth for DB models
+- `bot/src/index.ts` — loads dictionaries, starts BirdBot + HTTP :3001
+- `website/src/app/` — App Router pages; `website/src/lib/fetching.ts` — server API calls
+
+## Bot (most complex)
+
+| File | Purpose |
+|------|---------|
+| `bot/src/lib/class/Bot.class.ts` | Base bot: rooms, session, jklm connection |
+| `bot/src/bots/birdbot/BirdBot.class.ts` | Room lifecycle, persistence hooks, recovery |
+| `bot/src/bots/birdbot/BirdBotEventHandlers.ts` | Game events, chat commands, turn flow |
+| `bot/src/bots/birdbot/BirdBotUtils.class.ts` | Word submission, scoring, chat helpers |
+| `bot/src/bots/birdbot/BirdBotConstants.ts` | Modes, records, dictionary IDs |
+| `bot/src/bots/birdbot/services/BirdBotParityApi.service.ts` | **All bot→API writes** (profiles, economy, records, rooms) |
+| `bot/src/bots/birdbot/services/BirdBotWordSelection.service.ts` | Word-picking logic |
+| `bot/src/bots/birdbot/services/BirdBotApiWriteQueue.service.ts` | Batched/async API writes |
+| `bot/src/bots/birdbot/BirdBotServer.ts` | Bot HTTP API (health, ephemeral rooms, room list) |
+| `bot/src/bots/birdbot/BirdBotPowerHouse.ts` | Spawns Rust binary for dictionary metadata |
+
+## API patterns
+
+- One route per file: `api/src/routes/*.route.ts`
+- Zod validation: `api/src/schemas/`; mapping/helpers: `api/src/helpers/`
+- Auth: `api/src/middleware/auth.middleware.ts` (Bearer token === `API_KEY`)
+- Public routes: `/health`, `/leaderboard` only
+
+## Website patterns
+
+- Server API proxies hide secrets: `website/src/app/api/*`
+- Auth via Discord: `website/src/lib/auth.ts` + cookie `session`
+- Page components: `website/src/components/pages/<PageName>/`
+- UI primitives (shadcn): `website/src/components/ui/`
+
+## When changing data models
+
+1. Edit `api/prisma/schema.prisma`
+2. Add migration in `api/prisma/migrations/`
+3. Update Zod schemas + route handlers
+4. Update `BirdBotParityApi.service.ts` if bot writes the field
+5. Update website types/fetchers if exposed to UI
+
+## Testing
+
+- Bot tests: `bot/npm test` (compiles then `node --test` on `dist/**/*.test.js`)
+- Prefer extending existing services over duplicating API call logic in handlers

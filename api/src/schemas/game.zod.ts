@@ -22,6 +22,10 @@ let gameRecap = z.object({
     wordsWithoutDeathCount: z.number(),
     previousSyllablesCount: z.number(),
     multiSyllablesCount: z.number(),
+    shiritoriCount: z.number().default(0),
+    highestSnCount: z.number().default(0),
+    comebacksCount: z.number().default(0),
+    promptMemoryCount: z.number().default(0),
 
     // Semi-listed records
     hyphenWordsCount: z.number(),

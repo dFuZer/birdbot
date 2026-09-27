@@ -3,6 +3,7 @@ import { HEADER_LINK_GROUPS } from "@/lib/links";
 import Link from "next/link";
 import BirdBotLogo from "~/public/icon.svg";
 import AuthButton from "./AuthButton";
+import CotwButton from "./CotwButton";
 
 export default async function DesktopHeader() {
     return (
@@ -28,6 +29,8 @@ export default async function DesktopHeader() {
                         ))}
                     </div>
                 ))}
+                <div className="mx-2 h-5 w-px bg-neutral-300" aria-hidden="true" />
+                <CotwButton />
             </div>
             <div className="flex min-w-[6rem] items-center justify-end gap-4 font-medium">
                 <AuthButton />

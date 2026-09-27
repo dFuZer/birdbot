@@ -27,6 +27,7 @@ import {
 import BirdBotGameplayStateService from "./services/BirdBotGameplayState.service";
 import BirdBotApiWriteQueue from "./services/BirdBotApiWriteQueue.service";
 import BirdBotModerationService from "./services/BirdBotModeration.service";
+import BirdBotWeeklyChallengeService from "./services/BirdBotWeeklyChallenge.service";
 import BirdBotWordSelectionService from "./services/BirdBotWordSelection.service";
 import { l, t } from "./texts/BirdBotTextUtils";
 
@@ -89,7 +90,7 @@ export default class BirdBotUtils {
                 setWord: ctx.utils.setWord,
             });
         };
-        const delay = roomMetadata.nextDelayMs ?? 0;
+        const delay = Math.max(roomMetadata.nextDelayMs ?? 0, BirdBotWeeklyChallengeService.consumeCelebration(ctx));
         roomMetadata.nextDelayMs = 0;
         if (delay > 0) {
             setTimeout(submit, delay);
@@ -318,6 +319,10 @@ export default class BirdBotUtils {
             alphaCount: playerScores.alpha,
             wordsWithoutDeathCount: playerScores.maxWordsWithoutDeath,
             previousSyllablesCount: playerScores.previousSyllableScore,
+            shiritoriCount: playerScores.shiritori,
+            highestSnCount: playerScores.highestSn,
+            comebacksCount: playerScores.comebacks,
+            promptMemoryCount: playerScores.promptMemory,
             multiSyllablesCount: playerScores.multiSyllables,
             hyphenWordsCount: playerScores.hyphenWords,
             moreThan20LettersWordsCount: playerScores.moreThan20LettersWords,
@@ -540,6 +545,8 @@ export default class BirdBotUtils {
         const expectedAlphabet = this.getDefaultBonusAlphabet(gameData.rules.dictionaryId);
         const alphabetMatches = this.bonusAlphabetsEqual(gameData.rules.customBonusAlphabet, expectedAlphabet);
 
+        const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
+        const previousGameMode = roomMetadata.gameMode;
         let foundCorrespondingGameMode = false;
         for (const gameModeKey in birdbotModeRules) {
             const gameMode = birdbotModeRules[gameModeKey as BirdBotGameMode];
@@ -559,19 +566,7 @@ export default class BirdBotUtils {
                     message: `Game mode ${gameModeKey} is matching.`,
                     path: "BirdBotEventHandlers.ts",
                 });
-                const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
-                const isGameModeAlreadySet = roomMetadata.gameMode === (gameModeKey as BirdBotGameMode);
-                if (!isGameModeAlreadySet) {
-                    roomMetadata.gameMode = gameModeKey as BirdBotGameMode;
-                    ctx.utils.sendChatMessage(
-                        t("general.roomState.gameModeSet", {
-                            gameMode: t(`lib.mode.${gameModeKey}`, {
-                                lng: l(ctx),
-                            }),
-                            lng: l(ctx),
-                        }),
-                    );
-                }
+                roomMetadata.gameMode = gameModeKey as BirdBotGameMode;
                 foundCorrespondingGameMode = true;
                 break;
             }
@@ -581,8 +576,26 @@ export default class BirdBotUtils {
                 message: "No corresponding game mode found. Setting game mode to custom.",
                 path: "BirdBotEventHandlers.ts",
             });
-            const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
             roomMetadata.gameMode = "custom";
+        }
+
+        const modeChanged = previousGameMode !== roomMetadata.gameMode;
+        const challenge = BirdBotWeeklyChallengeService.syncRoomMatch(ctx.room);
+        const announceMode = () =>
+            t("general.roomState.gameModeSet", {
+                gameMode:
+                    roomMetadata.gameMode === "custom"
+                        ? t("lib.customMode", { lng: l(ctx) })
+                        : t(`lib.mode.${roomMetadata.gameMode}`, { lng: l(ctx) }),
+                lng: l(ctx),
+            });
+        if (challenge.matched && (modeChanged || challenge.changed)) {
+            ctx.utils.sendChatMessage(
+                `[CHALLENGE] ${announceMode()} ${t("weeklyChallenge.countsNow", { lng: l(ctx) })}`,
+                "success",
+            );
+        } else if (challenge.changed || (modeChanged && roomMetadata.gameMode !== "custom")) {
+            ctx.utils.sendChatMessage(announceMode());
         }
     };
 
@@ -770,6 +783,13 @@ export default class BirdBotUtils {
             depletedSyllables: 0,
             previousSyllableScore: 0,
             previousSyllable: null,
+            shiritori: 0,
+            previousAcceptedWord: null,
+            highestSn: 0,
+            comebacks: 0,
+            comebackAscending: false,
+            promptMemory: 0,
+            promptHistory: [],
             multiSyllables: 0,
             currentWordsWithoutDeath: 0,
             maxWordsWithoutDeath: 0,
@@ -998,11 +1018,13 @@ export default class BirdBotUtils {
         const roomMetadata = ctx.room.roomState.metadata as BirdBotRoomMetadata;
         BirdBotGameplayStateService.initialize(roomMetadata);
         BirdBotGameplayStateService.resetIfLanguageChanged(ctx);
+        BirdBotWeeklyChallengeService.resetRound(ctx.room);
         this.detectRoomGameMode(ctx);
         roomMetadata.scoresByPeerId = {};
         roomMetadata.globalScores = {
             flips: 0,
             previousSyllables: 0,
+            shiritori: 0,
             hyphenWords: 0,
             moreThan20LettersWords: 0,
             multiSyllables: 0,
@@ -1049,6 +1071,10 @@ export default class BirdBotUtils {
             ["no_death", playerStats.maxWordsWithoutDeath],
             ["multi_syllable", playerStats.multiSyllables],
             ["previous_syllable", playerStats.previousSyllableScore],
+            ["shiritori", playerStats.shiritori],
+            ["highest_sn", playerStats.highestSn],
+            ["comebacks", playerStats.comebacks],
+            ["prompt_memory", playerStats.promptMemory],
             ["hyphen", playerStats.hyphenWords],
             ["more_than_20_letters", playerStats.moreThan20LettersWords],
             ["slur", playerStats.slurs],
@@ -1081,6 +1107,7 @@ export default class BirdBotUtils {
         roomMetadata.globalScores = {
             flips: 0,
             previousSyllables: 0,
+            shiritori: 0,
             hyphenWords: 0,
             moreThan20LettersWords: 0,
             multiSyllables: 0,
@@ -1097,6 +1124,7 @@ export default class BirdBotUtils {
         roomMetadata.flipTurnKeys.clear();
         roomMetadata.scoredWordTurnKeys.clear();
         roomMetadata.nextDelayMs = 0;
+        BirdBotWeeklyChallengeService.resetRound(ctx.room);
         for (const player of ctx.room.roomState.gameData!.players) {
             this.initializeScoresForPlayerId(roomMetadata, player.profile.peerId);
         }

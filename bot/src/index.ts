@@ -104,6 +104,9 @@ async function start() {
     const { default: BirdBotStaffSync } = await import("./bots/birdbot/services/BirdBotStaffSync.service");
     await BirdBotStaffSync.refresh(bot);
     BirdBotStaffSync.start(bot);
+    const { default: BirdBotWeeklyChallengeService } = await import("./bots/birdbot/services/BirdBotWeeklyChallenge.service");
+    await BirdBotWeeklyChallengeService.refresh();
+    BirdBotWeeklyChallengeService.start(bot);
     Logger.log({
         message: `Staff loaded: admins=[${[...(bot.botData?.staff.admins ?? [])].join(", ")}] automods=[${[...(bot.botData?.staff.automods ?? [])].join(", ")}]`,
         path: "index.ts",

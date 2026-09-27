@@ -61,6 +61,7 @@ export const spanishTexts = {
         },
     },
     command: {
+        weeklyChallenge: { description: "Explica el desafío semanal y, en tu propia sala, aplica sus reglas." },
         help: {
             description: "Muestra la lista de comandos. Si indicas un comando, muestra su descripción.",
             list: "{{commandList}} — Para más info sobre un comando, usa /help [comando]",
@@ -346,6 +347,10 @@ export const spanishTexts = {
                 placedPreviousSyllable: "ha colocado una sílaba anterior: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
                 gainedMultiSyllables: "ha ganado {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
                 depletedSyllables: "ha agotado {{count}} sílaba(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                placedShiritori: "ha colocado un shiritori ({{playerTotal}}/{{globalTotal}})",
+                newHighestSn: "nuevo SN más alto: {{count}}",
+                placedPromptMemory: "ha colocado {{count}} sílabas anteriores seguidas: {{prompts}} (mejor {{best}})",
+                madeComeback: "ha remontado de 1 a 3 vidas ({{playerTotal}})",
                 listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
             },
             listedRecordCommentIntroductions: {
@@ -402,7 +407,55 @@ export const spanishTexts = {
             verificationUnavailable: "No se pudo verificar el acceso a salas privadas. Inténtalo más tarde.",
         },
     },
+    weeklyChallenge: {
+        explain: "🏆 Desafío de la semana: {{name}} — {{objective}} Clasificación: {{url}}",
+        howToPlay: "Para jugar, crea tu sala con /b y luego escribe /challenge.",
+        countsNow: "Las partidas ahora cuentan para la clasificación del desafío semanal.",
+        forbidden: "No tienes permiso para cambiar las reglas de esta sala. Crea tu propia sala con /b y luego escribe /challenge para jugar el desafío semanal.",
+        inRound: "Las reglas no pueden cambiar durante una ronda. Vuelve a usar /challenge cuando termine la ronda.",
+        alreadyMatching: "Las reglas de la sala ya coinciden con el desafío semanal: las partidas cuentan para la clasificación.",
+        applying: "Aplicando las reglas del desafío semanal...",
+        unavailable: "El desafío semanal no está disponible en este momento. Inténtalo más tarde.",
+        ended: "El desafío de esta semana ha terminado: las partidas ya no cuentan para él.",
+        completedRanked: "🏆 {{username}} completó el desafío semanal: {{score}} — {{personalBest}} — Puesto #{{rank}} de {{total}}. {{url}}",
+        personalBest: "¡nuevo récord personal!",
+        previousBest: "récord personal: {{best}}",
+        completedGuest: "🏆 {{username}} completó el desafío semanal: {{score}}. ¡Inicia sesión en tu cuenta de JKLM para aparecer en la clasificación!",
+        notRanked: "🏆 {{username}} completó el desafío semanal: {{score}}, pero no fue clasificado ({{reason}}).",
+        celebration: "¡Desafío completado!",
+        kinds: {
+            THIRTY_OF_A_LETTER: {
+                name: "Treinta de una letra",
+                objective: "Completa un alfabeto bonus de 30 × {{letter}} lo más rápido posible, empezando con 3 vidas.",
+            },
+            PROMPT_MEMORY_SPRINT: {
+                name: "Sprint de Memoria",
+                objective: "Con turnos de 3 segundos, coloca una palabra que contenga tus {{target}} sílabas anteriores (Memoria {{target}}) lo más rápido posible.",
+            },
+            ALPHA_SPRINT: {
+                name: "Sprint Alfa",
+                objective: "Alcanza un alfa de {{target}} lo más rápido posible, con cada letra ×2 en el alfabeto bonus.",
+            },
+            FIVEFOLD_ALPHABET: {
+                name: "Eficiencia Quíntuple",
+                objective: "Completa un alfabeto bonus con cada letra ×5 usando la menor cantidad de palabras posible.",
+            },
+            BLITZ_SURVIVAL: {
+                name: "Supervivencia Blitz",
+                objective: "Coloca tantas palabras como puedas antes de morir en modo Blitz. ¡Los récords de Blitz también cuentan!",
+            },
+            SUB50_SURVIVAL: {
+                name: "Supervivencia Sub-50",
+                objective: "Coloca tantas palabras como puedas antes de morir en modo Sub-50. ¡Los récords de Sub-50 también cuentan!",
+            },
+            SUB500_LIFE_GAIN: {
+                name: "Vidas Sub-500",
+                objective: "Completa tantos alfabetos bonus como puedas antes de morir en modo Sub-500. ¡Los récords de Sub-500 también cuentan!",
+            },
+        },
+    },
     lib: {
+        customMode: "Personalizado",
         mode: {
             easy: "Fácil",
             blitz: "Blitz",
@@ -532,6 +585,34 @@ export const spanishTexts = {
                 score_other: "{{count}} insultos",
                 score_specific_one: "{{count}} insulto",
                 score_specific_other: "{{count}} insultos",
+            },
+            shiritori: {
+                recordName: "Shiritori",
+                score_one: "{{count}} palabra",
+                score_other: "{{count}} palabras",
+                score_specific_one: "{{count}} shiritori",
+                score_specific_other: "{{count}} shiritori",
+            },
+            highest_sn: {
+                recordName: "SN más alto",
+                score_one: "{{count}} palabras",
+                score_other: "{{count}} palabras",
+                score_specific_one: "SN más alto de {{count}}",
+                score_specific_other: "SN más alto de {{count}}",
+            },
+            comebacks: {
+                recordName: "Remontadas",
+                score_one: "{{count}} remontada",
+                score_other: "{{count}} remontadas",
+                score_specific_one: "{{count}} remontada",
+                score_specific_other: "{{count}} remontadas",
+            },
+            prompt_memory: {
+                recordName: "Memoria de sílabas",
+                score_one: "{{count}} sílaba",
+                score_other: "{{count}} sílabas",
+                score_specific_one: "memoria de {{count}} sílaba",
+                score_specific_other: "memoria de {{count}} sílabas",
             },
         },
     },

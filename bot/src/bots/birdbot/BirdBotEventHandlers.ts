@@ -13,6 +13,13 @@ import {
     recordsUtils,
     scoreKeyPerListedRecord,
 } from "./BirdBotConstants";
+import {
+    getHighestSnCandidate,
+    getPromptMemoryChain,
+    isShiritoriWord,
+    nextComebackState,
+    rememberPrompt,
+} from "./BirdBotRecordScoring";
 import type {
     BirdBotRecordType,
     BirdBotRoomMetadata,
@@ -31,6 +38,7 @@ import {
     shouldResetRoundState,
 } from "./services/BirdBotRecovery.service";
 import BirdBotTrainingService from "./services/BirdBotTraining.service";
+import BirdBotWeeklyChallengeService from "./services/BirdBotWeeklyChallenge.service";
 import { l, t } from "./texts/BirdBotTextUtils";
 
 function reportCommandDispatchResult(
@@ -158,6 +166,37 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
         }
     }
 
+    if (isShiritoriWord(playerScores.previousAcceptedWord, word)) {
+        playerScores.shiritori++;
+        roomMetadata.globalScores.shiritori++;
+        turnComments.push(
+            t("eventHandler.submit.comments.placedShiritori", {
+                playerTotal: playerScores.shiritori,
+                globalTotal: roomMetadata.globalScores.shiritori,
+                lng: l(ctx),
+            }),
+        );
+        showWord = true;
+    }
+    playerScores.previousAcceptedWord = word;
+
+    const promptMemoryChain = getPromptMemoryChain(word, playerScores.promptHistory, currentPrompt);
+    if (promptMemoryChain.length > playerScores.promptMemory) {
+        playerScores.promptMemory = promptMemoryChain.length;
+    }
+    if (promptMemoryChain.length >= 2) {
+        turnComments.push(
+            t("eventHandler.submit.comments.placedPromptMemory", {
+                count: promptMemoryChain.length,
+                prompts: promptMemoryChain.join(", ").toUpperCase(),
+                best: playerScores.promptMemory,
+                lng: l(ctx),
+            }),
+        );
+        showWord = true;
+    }
+    BirdBotWeeklyChallengeService.handleWord(ctx, currentChatter, playerScores, promptMemoryChain.length);
+
     const multiSyllableGainedPoints = word.split(currentPrompt).length - 2;
     if (multiSyllableGainedPoints > 0) {
         playerScores.multiSyllables += multiSyllableGainedPoints;
@@ -201,6 +240,16 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
                 lng: l(ctx),
             }),
         );
+        const highestSnCandidate = getHighestSnCandidate(depletedSyllables, currentDictionaryResource.resource);
+        if (highestSnCandidate > playerScores.highestSn) {
+            playerScores.highestSn = highestSnCandidate;
+            turnComments.push(
+                t("eventHandler.submit.comments.newHighestSn", {
+                    count: highestSnCandidate,
+                    lng: l(ctx),
+                }),
+            );
+        }
     }
 
     {
@@ -337,7 +386,15 @@ function handleFlip(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0], previo
     const oldFlips = playerScores.flips;
     playerScores.flips++;
     roomMetadata.globalScores.flips++;
+    const comebackState = nextComebackState(
+        playerScores.comebackAscending,
+        previousHandlersCtx.previousLives as number,
+        previousHandlersCtx.newLives as number,
+    );
+    playerScores.comebackAscending = comebackState.ascending;
+    if (comebackState.scored) playerScores.comebacks++;
     const chatter = ctx.room.roomState.roomData?.chatters.find((item) => item.peerId === playerPeerId);
+    if (chatter) BirdBotWeeklyChallengeService.handleFlip(ctx, chatter, playerScores);
     const pending = roomMetadata.pendingWordRegistrations.get(turnKey);
     let reachedMetaMilestone: number | null = null;
     if (
@@ -359,8 +416,22 @@ function handleFlip(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[0], previo
     }
     BirdBotUtils.markFlipForTurn(ctx, turnKey);
     const passedMilestone = BirdBotUtils.passedMilestone(oldFlips, playerScores.flips, 4);
-    if ((!passedMilestone && !reachedMetaMilestone) || ctx.room.roomState.myPeerId === playerPeerId || !chatter) return;
+    if (
+        (!passedMilestone && !reachedMetaMilestone && !comebackState.scored) ||
+        ctx.room.roomState.myPeerId === playerPeerId ||
+        !chatter
+    ) {
+        return;
+    }
     const comments = [];
+    if (comebackState.scored) {
+        comments.push(
+            t("eventHandler.submit.comments.madeComeback", {
+                playerTotal: playerScores.comebacks,
+                lng: l(ctx),
+            }),
+        );
+    }
     if (passedMilestone) {
         comments.push(
             t("eventHandler.submit.comments.gainedLives", {
@@ -448,6 +519,8 @@ const birdbotEventHandlers: BotEventHandlers = {
                         }
                     }
                     ctx.utils.sendChatMessage(t("general.greet", { lng: l(ctx) }), "info");
+                    const challengeAddon = BirdBotWeeklyChallengeService.greetingAddon(l(ctx));
+                    if (challengeAddon) ctx.utils.sendChatMessage(challengeAddon, "info");
                 }
             },
         ],
@@ -643,6 +716,7 @@ const birdbotEventHandlers: BotEventHandlers = {
                 const previousPlayerScores = roomMetadata.scoresByPeerId[previousPeerId];
                 if (previousPlayerScores) {
                     previousPlayerScores.previousSyllable = previousPrompt;
+                    previousPlayerScores.promptHistory = rememberPrompt(previousPlayerScores.promptHistory, previousPrompt);
                 }
             },
         ],
@@ -656,9 +730,17 @@ const birdbotEventHandlers: BotEventHandlers = {
                     const playerScores = roomMetadata.scoresByPeerId[lostLifePeerId];
                     if (playerScores) {
                         playerScores.currentWordsWithoutDeath = 0;
+                        playerScores.comebackAscending = nextComebackState(
+                            playerScores.comebackAscending,
+                            previousHandlersCtx.previousLives as number,
+                            previousHandlersCtx.newLives as number,
+                        ).ascending;
                     }
                 }
                 if (deadPeerId !== undefined) {
+                    const deadChatter = ctx.room.roomState.roomData?.chatters.find((item) => item.peerId === deadPeerId);
+                    const deadScores = roomMetadata.scoresByPeerId[deadPeerId];
+                    if (deadChatter && deadScores) BirdBotWeeklyChallengeService.handleDeath(ctx, deadChatter, deadScores);
                     BirdBotUtils.handlePlayerDeath(ctx, deadPeerId);
                 }
             },

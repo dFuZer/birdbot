@@ -47,6 +47,10 @@ export default async function hasLeaderboardPersonalBest({
         ["plants_count", recap.plantsCount],
         ["foods_count", recap.foodsCount],
         ["adverbs_count", recap.adverbsCount],
+        ["shiritori_count", recap.shiritoriCount],
+        ["highest_sn_count", recap.highestSnCount],
+        ["comebacks_count", recap.comebacksCount],
+        ["prompt_memory_count", recap.promptMemoryCount],
         ["time", recap.diedAt - gameStartedAt.getTime()],
     ];
 

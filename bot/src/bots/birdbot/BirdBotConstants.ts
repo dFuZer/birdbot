@@ -117,6 +117,10 @@ export const recordsEnumSchema = z.enum([
     "plant",
     "food",
     "adverb",
+    "shiritori",
+    "highest_sn",
+    "comebacks",
+    "prompt_memory",
 ]);
 
 export const defaultLanguage = "en" satisfies BirdBotLanguage;
@@ -191,6 +195,10 @@ export const recordAliases = {
     plant: ["plant", "plants", "p", "pl", "planta", "plantas", "planta", "plantas"],
     food: ["food", "foods", "f", "fo", "alimento", "alimentos", "nourriture", "aliment"],
     adverb: ["adverb", "adverbs", "ad", "adv", "adverbe"],
+    shiritori: ["shiritori", "shiri", "shi", "chain"],
+    highest_sn: ["highest-sn", "highestsn", "hsn", "best-sn", "max-sn"],
+    comebacks: ["comebacks", "comeback", "cb", "remontada", "remontee"],
+    prompt_memory: ["prompt-memory", "promptmemory", "pm", "memory", "memoire"],
 } satisfies Record<BirdBotRecordType, string[]>;
 
 /** BBV7 category thresholds used by /speed and /accuracy meta records. */
@@ -311,6 +319,22 @@ export const recordsUtils = {
     adverb: {
         format: (score) => score.toString(),
         order: 17,
+    },
+    shiritori: {
+        format: (score) => score.toString(),
+        order: 18,
+    },
+    highest_sn: {
+        format: (score) => score.toString(),
+        order: 19,
+    },
+    comebacks: {
+        format: (score) => score.toString(),
+        order: 20,
+    },
+    prompt_memory: {
+        format: (score) => score.toString(),
+        order: 21,
     },
 } satisfies Record<
     BirdBotRecordType,

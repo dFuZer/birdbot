@@ -4,6 +4,7 @@ import Logger from "../../lib/class/Logger.class";
 import Utilitary from "../../lib/class/Utilitary.class";
 import BirdBot from "./BirdBot.class";
 import { birdbotLanguageToDictionaryId, dictionaryIdToBirdbotLanguage, languageEnumSchema } from "./BirdBotConstants";
+import { IS_UNSTABLE_DEV_MODE } from "./BirdBotEnv";
 import {
     BirdBotLanguage,
     BirdBotRoomMetadata,
@@ -69,18 +70,22 @@ export const birdbotPeriodicTasks: PeriodicTask[] = [
                 return !currentMainRoomLanguages.includes(language);
             });
             if (missingMainRoomLanguages[0]) {
+                const language = missingMainRoomLanguages[0];
+                const flag = t(`lib.language.${language}.flag`, { lng: "en" });
+                const roomName =
+                    IS_UNSTABLE_DEV_MODE && language === "fr" ? `BETA 🐤 BirdBot ${flag}` : `🐤 BirdBot ${flag}`;
                 Logger.log({
-                    message: `Creating main room for language ${missingMainRoomLanguages[0]}`,
+                    message: `Creating main room for language ${language}`,
                     path: "bot/src/bots/birdbot/BirdbotPeriodicTasks.ts",
                 });
                 await bot.createRoom({
                     roomCreatorAuthId: null,
                     targetConfig: {
-                        dictionaryId: birdbotLanguageToDictionaryId[missingMainRoomLanguages[0]],
+                        dictionaryId: birdbotLanguageToDictionaryId[language],
                         birdbotGameMode: "regular",
                         roomKind: "main",
                         isPublic: true,
-                        roomName: `🐤 BirdBot ${t(`lib.language.${missingMainRoomLanguages[0]}.flag`, { lng: "en" })}`,
+                        roomName,
                     },
                 });
             }

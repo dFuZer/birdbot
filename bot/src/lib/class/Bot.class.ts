@@ -1,4 +1,5 @@
 import { type Server } from "http";
+import { jklmDomain } from "../constants/gameConstants";
 import type { BotEventHandlers } from "../types/libEventTypes";
 import { startRoom } from "../jklm/http";
 import Logger from "./Logger.class";
@@ -136,7 +137,7 @@ export default class Bot {
         recovery?: boolean;
     }) {
         Logger.log({
-            message: `Joining room ${roomCode}`,
+            message: `Joining room ${roomCode} https://${jklmDomain}/${roomCode}`,
             path: "Bot.class.ts",
         });
         const token = userToken ?? Utilitary.createUserToken();

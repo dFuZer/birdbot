@@ -188,6 +188,9 @@ export default class Utilitary {
                 setWord: (word: string) => {
                     room.gameSocket?.emit("setWord", word, true);
                 },
+                previewWord: (text: string) => {
+                    room.gameSocket?.emit("setWord", text, false);
+                },
                 joinRound: () => {
                     room.gameSocket?.emit("joinRound");
                 },

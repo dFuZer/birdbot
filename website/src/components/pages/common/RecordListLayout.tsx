@@ -6,18 +6,25 @@ type RecordsListLayoutProps = {
     Rows: JSX.Element[];
     Cards: JSX.Element[];
     maxPage: number;
+    emptyMessage?: string;
 };
 
 export const gridColsTailwindClass = "grid-cols-[5rem_minmax(0,2fr)_minmax(0,1fr)]";
 
-export default function RecordsListLayout({ Cards, Rows, Selectors, maxPage }: RecordsListLayoutProps) {
+export default function RecordsListLayout({
+    Cards,
+    Rows,
+    Selectors,
+    maxPage,
+    emptyMessage = "No records available",
+}: RecordsListLayoutProps) {
     return (
         <div className="flex min-h-screen justify-center px-4 py-6 sm:py-10">
             <div className="flex flex-1 flex-col pb-6 sm:max-w-4xl sm:rounded-xl sm:bg-white/70 sm:p-4 sm:shadow-xl">
                 {Selectors}
                 {Cards.length === 0 && Rows.length === 0 && (
                     <div className="mt-8 flex flex-1 items-center justify-center text-center text-gray-600">
-                        <p>No records available</p>
+                        <p>{emptyMessage}</p>
                     </div>
                 )}
                 {Cards.length > 0 && (

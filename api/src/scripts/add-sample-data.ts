@@ -237,6 +237,10 @@ let modeArray = Object.values(GameMode);
                 plants_count: Math.floor(Math.random() * 500),
                 foods_count: Math.floor(Math.random() * 500),
                 adverbs_count: Math.floor(Math.random() * 500),
+                shiritori_count: Math.floor(Math.random() * 500),
+                highest_sn_count: Math.floor(Math.random() * 50),
+                comebacks_count: Math.floor(Math.random() * 100),
+                prompt_memory_count: Math.floor(Math.random() * 7),
             };
         })
         .filter((x) => x !== undefined);

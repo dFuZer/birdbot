@@ -22,6 +22,10 @@ export type GameRecapListRow = {
     plants_count: number;
     adverbs_count: number;
     foods_count: number;
+    shiritori_count: number;
+    highest_sn_count: number;
+    comebacks_count: number;
+    prompt_memory_count: number;
     language: PrismaLanguage;
     mode: PrismaGameMode;
     started_at: Date;
@@ -59,6 +63,10 @@ export function mapGameRecapRow(row: GameRecapListRow) {
         plantsCount: row.plants_count,
         adverbsCount: row.adverbs_count,
         foodsCount: row.foods_count,
+        shiritoriCount: row.shiritori_count,
+        highestSnCount: row.highest_sn_count,
+        comebacksCount: row.comebacks_count,
+        promptMemoryCount: row.prompt_memory_count,
         durationMs: Number(row.duration_ms),
     };
 }
@@ -84,6 +92,10 @@ export const gameRecapSelectSql = Prisma.raw(`
     gr.plants_count,
     gr.adverbs_count,
     gr.foods_count,
+    gr.shiritori_count,
+    gr.highest_sn_count,
+    gr.comebacks_count,
+    gr.prompt_memory_count,
     g.language,
     g.mode,
     g.started_at,

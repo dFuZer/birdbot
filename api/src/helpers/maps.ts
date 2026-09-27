@@ -24,6 +24,10 @@ export const recordEnumToDatabaseFieldMap = {
     plant: Prisma.GameRecapScalarFieldEnum.plants_count,
     adverb: Prisma.GameRecapScalarFieldEnum.adverbs_count,
     food: Prisma.GameRecapScalarFieldEnum.foods_count,
+    shiritori: Prisma.GameRecapScalarFieldEnum.shiritori_count,
+    highest_sn: Prisma.GameRecapScalarFieldEnum.highest_sn_count,
+    comebacks: Prisma.GameRecapScalarFieldEnum.comebacks_count,
+    prompt_memory: Prisma.GameRecapScalarFieldEnum.prompt_memory_count,
     time: "time",
 } satisfies { [key in TRecord]: Prisma.GameRecapScalarFieldEnum | "time" };
 
@@ -47,6 +51,10 @@ export const databaseFieldToRecordEnumMap = {
     plants_count: "plant",
     foods_count: "food",
     adverbs_count: "adverb",
+    shiritori_count: "shiritori",
+    highest_sn_count: "highest_sn",
+    comebacks_count: "comebacks",
+    prompt_memory_count: "prompt_memory",
 } satisfies { [key in GameRecapRecordField]: TRecord };
 
 export const languageEnumToDatabaseEnumMap = {

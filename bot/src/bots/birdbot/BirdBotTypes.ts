@@ -80,6 +80,16 @@ export type PlayerGameScores = {
     maxWordsWithoutDeath: number;
     previousSyllableScore: number;
     previousSyllable: string | null;
+    shiritori: number;
+    previousAcceptedWord: string | null;
+    highestSn: number;
+    comebacks: number;
+    /** True after a clean 1 -> 2 life gain, until the next life change. */
+    comebackAscending: boolean;
+    /** Best Prompt Memory placed in a single word this game. */
+    promptMemory: number;
+    /** This player's own previous prompts, most recent first. */
+    promptHistory: string[];
     multiSyllables: number;
     hyphenWords: number;
     moreThan20LettersWords: number;
@@ -96,6 +106,7 @@ export type GlobalGameScores = {
     flips: number;
     depletedSyllables: number;
     previousSyllables: number;
+    shiritori: number;
     hyphenWords: number;
     moreThan20LettersWords: number;
     multiSyllables: number;
@@ -140,6 +151,16 @@ export type BirdBotRoomMetadata = {
     pendingWordRegistrations: Map<string, PendingBirdBotWordRegistration>;
     flipTurnKeys: Set<string>;
     scoredWordTurnKeys: Set<string>;
+    weeklyChallenge: BirdBotWeeklyChallengeRoomState;
+};
+
+export type BirdBotWeeklyChallengeRoomState = {
+    /** Period whose rules the confirmed room rules currently match; survives across rounds. */
+    matchedPeriodId: string | null;
+    /** Players whose result for this round was already frozen (sprints) or finalized (death). */
+    completedPeerIds: string[];
+    /** A "Challenge complete!" display is owed on BirdBot's next turn. */
+    pendingCelebration: boolean;
 };
 
 export type ExperienceData = {
@@ -197,6 +218,10 @@ export type BirdBotGameRecap = {
     alphaCount: number;
     wordsWithoutDeathCount: number;
     previousSyllablesCount: number;
+    shiritoriCount: number;
+    highestSnCount: number;
+    comebacksCount: number;
+    promptMemoryCount: number;
     multiSyllablesCount: number;
     hyphenWordsCount: number;
     moreThan20LettersWordsCount: number;

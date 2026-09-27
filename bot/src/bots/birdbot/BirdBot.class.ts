@@ -2,6 +2,7 @@ import Bot, { PeriodicTask } from "../../lib/class/Bot.class";
 import Logger from "../../lib/class/Logger.class";
 import type Room from "../../lib/class/Room.class";
 import birdbotEventHandlers from "./BirdBotEventHandlers";
+import { shouldSkipRoomRestore } from "./BirdBotEnv";
 import { type BirdBotLanguage, type BirdbotRoomTargetConfig, getBirdBotRoomKind } from "./BirdBotTypes";
 import BirdBotParityApiService, { type BirdBotPersistedRoom } from "./services/BirdBotParityApi.service";
 import BirdBotRoomCheckpointService from "./services/BirdBotRoomCheckpoint.service";
@@ -122,6 +123,18 @@ export default class BirdBot extends Bot {
             return;
         }
 
+        if (shouldSkipRoomRestore()) {
+            Logger.log({
+                message: `Skipping persisted room restore (--no-restore); flushing ${rooms.length} queued recoveries`,
+                path: "BirdBot.class.ts",
+            });
+            await this.dropPersistedRooms(
+                rooms.map((room) => room.roomCode),
+                "boot flag --no-restore; flushing recovery queue",
+            );
+            return;
+        }
+
         if (rooms.length === 0) return;
 
         const first = rooms[0]!;
@@ -155,22 +168,17 @@ export default class BirdBot extends Bot {
         try {
             const targetConfig = persisted.targetConfig as BirdbotRoomTargetConfig;
             targetConfig.roomKind = getBirdBotRoomKind(targetConfig, persisted.creatorAuthId);
-            await retryWithBackoff(
-                async () => {
-                    await this.joinRoom({
-                        roomCode: persisted.roomCode,
-                        targetConfig,
-                        roomCreatorAuthId: persisted.creatorAuthId,
-                        userToken: persisted.userToken,
-                        serverUrl: persisted.serverUrl ?? undefined,
-                        recovery: true,
-                    });
-                    if (!this.hasRoom(persisted.roomCode)) {
-                        throw new Error("rejoin completed but room is no longer held");
-                    }
-                },
-                BirdBot.recoveryRetryDelaysMs,
-            );
+            await this.joinRoom({
+                roomCode: persisted.roomCode,
+                targetConfig,
+                roomCreatorAuthId: persisted.creatorAuthId,
+                userToken: persisted.userToken,
+                serverUrl: persisted.serverUrl ?? undefined,
+                recovery: true,
+            });
+            if (!this.hasRoom(persisted.roomCode)) {
+                throw new Error("rejoin completed but room is no longer held");
+            }
             return true;
         } catch (error) {
             Logger.error({

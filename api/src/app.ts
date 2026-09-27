@@ -36,6 +36,12 @@ import {
     upsertBotRoomRouteHandler,
 } from "./routes/botRooms.route";
 import { deleteStaffRouteHandler, listStaffRouteHandler, putStaffRouteHandler } from "./routes/staff.route";
+import {
+    getCurrentWeeklyChallengeRouteHandler,
+    getWeeklyChallengeLeaderboardRouteHandler,
+    getWeeklyChallengePeriodsRouteHandler,
+    submitWeeklyChallengeResultRouteHandler,
+} from "./routes/weeklyChallenges.route";
 
 const app = Fastify();
 
@@ -60,6 +66,8 @@ app.put("/players", { preHandler: authMiddleware }, addPlayersRouteHandler);
 app.put("/game", { preHandler: authMiddleware }, addGameRouteHandler);
 // Insert a game recap
 app.put("/game-recap", { preHandler: authMiddleware }, addGameRecapRouteHandler);
+// Submit a completed weekly challenge result (only the player's best is kept)
+app.put("/weekly-challenges/results", { preHandler: authMiddleware }, submitWeeklyChallengeResultRouteHandler);
 
 // --- POST ---
 
@@ -115,5 +123,12 @@ app.get("/moderation/:playerId", { preHandler: authMiddleware }, getModerationSt
 app.get("/news", { preHandler: authMiddleware }, getNewsRouteHandler);
 app.get("/staff", { preHandler: authMiddleware }, listStaffRouteHandler);
 app.get("/bot/rooms", { preHandler: authMiddleware }, listBotRoomsRouteHandler);
+app.get("/weekly-challenges/current", { preHandler: authMiddleware }, getCurrentWeeklyChallengeRouteHandler);
+app.get("/weekly-challenges", { preHandler: authMiddleware }, getWeeklyChallengePeriodsRouteHandler);
+app.get(
+    "/weekly-challenges/:periodId/leaderboard",
+    { preHandler: authMiddleware },
+    getWeeklyChallengeLeaderboardRouteHandler,
+);
 
 export default app;

@@ -2,7 +2,7 @@ import Logger from "../../../lib/class/Logger.class";
 import { API_KEY, API_URL } from "../BirdBotEnv";
 import BirdBotParityApiService from "./BirdBotParityApi.service";
 
-type QueueKind = "word" | "game-recap";
+type QueueKind = "word" | "game-recap" | "weekly-challenge";
 
 type QueueItem = {
     kind: QueueKind;
@@ -15,6 +15,8 @@ type QueueItem = {
 
 const MAX_ATTEMPTS = 7;
 const BASE_DELAY_MS = 500;
+
+class NonRetryableResponseError extends Error {}
 
 export default class BirdBotApiWriteQueue {
     private static readonly items: QueueItem[] = [];
@@ -43,6 +45,19 @@ export default class BirdBotApiWriteQueue {
                 kind: "game-recap",
                 path: "/game-recap",
                 body: wrapped,
+                idempotencyKey,
+                onSettled: resolve,
+            });
+        });
+    }
+
+    /** Resolves with the API response, or null once retries are exhausted or the API rejects the result. */
+    public static enqueueWeeklyChallengeResult(body: Record<string, unknown>, idempotencyKey: string): Promise<unknown | null> {
+        return new Promise((resolve) => {
+            this.enqueue({
+                kind: "weekly-challenge",
+                path: "/weekly-challenges/results",
+                body,
                 idempotencyKey,
                 onSettled: resolve,
             });
@@ -114,6 +129,10 @@ export default class BirdBotApiWriteQueue {
                 body: JSON.stringify(item.body),
             });
             if (!response.ok) {
+                const isClientRejection = response.status >= 400 && response.status < 500 && response.status !== 429;
+                if (item.kind === "weekly-challenge" && isClientRejection) {
+                    throw new NonRetryableResponseError(`HTTP ${response.status}`);
+                }
                 throw new Error(`HTTP ${response.status}`);
             }
             const json = response.status === 204 ? null : await response.json().catch(() => null);
@@ -126,7 +145,7 @@ export default class BirdBotApiWriteQueue {
                 error,
                 json: { idempotencyKey: item.idempotencyKey },
             });
-            if (item.attempts >= MAX_ATTEMPTS) {
+            if (item.attempts >= MAX_ATTEMPTS || error instanceof NonRetryableResponseError) {
                 item.onSettled?.(null);
                 return true;
             }
@@ -141,6 +160,10 @@ export default class BirdBotApiWriteQueue {
 
     public static makeRecapKey(gameId: string, authId: string): string {
         return BirdBotParityApiService.makeIdempotencyKey(gameId, authId, "game-recap");
+    }
+
+    public static makeWeeklyChallengeKey(periodId: string, gameId: string, authId: string): string {
+        return BirdBotParityApiService.makeIdempotencyKey(periodId, gameId, authId, "weekly-challenge");
     }
 
     public static pendingCount(): number {

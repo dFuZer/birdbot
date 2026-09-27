@@ -21,6 +21,10 @@ const recordsEnumSchema = z.enum([
     "plant",
     "food",
     "adverb",
+    "shiritori",
+    "highest_sn",
+    "comebacks",
+    "prompt_memory",
 ]);
 
 type TLanguage = z.infer<typeof languageEnumSchema>;

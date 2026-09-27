@@ -79,6 +79,18 @@ const questions: Question[] = [
                         <b>1500</b> previous syllables
                     </li>
                     <li>
+                        <b>650</b> shiritori
+                    </li>
+                    <li>
+                        <b>50</b> highest SN
+                    </li>
+                    <li>
+                        <b>100</b> comebacks
+                    </li>
+                    <li>
+                        <b>7</b> prompt memory
+                    </li>
+                    <li>
                         <b>1500</b> of any listed record (long, hyphen, etc)
                     </li>
                 </ul>
@@ -121,6 +133,26 @@ const questions: Question[] = [
         trigger: "What is the SN or the depleted syllables record ?",
         answer: "The SN or the depleted syllables record is the number of syllables you have depleted. You deplete a syllable when you place the last word that contains that syllable. For example imagine that there is only one word that contains the prompt XL and you place it, you will have depleted the XL syllable.",
         id: "depleted-syllables",
+    },
+    {
+        trigger: "What is the highest SN record ?",
+        answer: "The highest SN record is the size of the biggest syllable you have depleted in a game. When you place the last remaining word containing a syllable, your highest SN becomes the number of dictionary words containing that syllable, if it is higher than your current one. For example, if 12 words in the dictionary contain the syllable XL and you place the final word containing it, your highest SN becomes 12. Only the player placing that final word gets the score, not the players who placed the previous words containing that syllable.",
+        id: "highest-sn",
+    },
+    {
+        trigger: "What is the shiritori record ?",
+        answer: "You gain a shiritori point when you place a word that starts with the last letter of your previous word. For example, if your previous word was TABLE and you now place ELEPHANT, you gain 1 shiritori point.",
+        id: "shiritori",
+    },
+    {
+        trigger: "What is the comebacks record ?",
+        answer: "You make a comeback when you climb from 1 life back to 3 lives by completing the bonus alphabet twice in a row, without losing a life in between. Going from 2 to 3 lives alone does not count. To make another comeback, you have to fall back to 1 life first.",
+        id: "comebacks",
+    },
+    {
+        trigger: "What is the prompt memory record ?",
+        answer: "BirdBot remembers the last 15 different prompts you received. When you place a word, your prompt memory is the number of those prompts it contains in a row, starting from your most recent prompt and going back in time; it stops at the first prompt that is missing. For example, if your last three prompts were (most recent first) AN, TI and ON, the word ANTITRADITION scores 3, while ANTHEM scores only 1 because it does not contain TI. The record is your best single word of the game, not a total.",
+        id: "prompt-memory",
     },
     {
         trigger: "What is the MS or the multi syllables  ?",

@@ -20,6 +20,10 @@ export const recordsEnumSchema = z.enum([
     "plant",
     "food",
     "adverb",
+    "shiritori",
+    "highest_sn",
+    "comebacks",
+    "prompt_memory",
 ]);
 
 export type ExperienceData = {
@@ -66,8 +70,12 @@ export const RECORDS_DATA: { [key in RecordsEnum]: IRecordData } = {
     previous_syllable: { displayName: "Previous syllable" },
     flips: { displayName: "Flips" },
     depleted_syllables: { displayName: "Depleted syllables" },
+    highest_sn: { displayName: "Highest SN" },
     no_death: { displayName: "No death" },
     alpha: { displayName: "Alpha" },
+    shiritori: { displayName: "Shiritori" },
+    comebacks: { displayName: "Comebacks" },
+    prompt_memory: { displayName: "Prompt memory" },
     hyphen: { displayName: "Hyphen" },
     more_than_20_letters: { displayName: "Long words" },
     slur: { displayName: "Slur" },

@@ -54,6 +54,7 @@ export const englishTexts = {
         },
     },
     command: {
+        weeklyChallenge: { description: "Explains the weekly challenge and, in your own room, applies its rules." },
         help: {
             description: "Shows the list of commands. If a command is provided, it will show the description of that command.",
             list: "{{commandList}} — For more information about a command, use /help [command]",
@@ -337,6 +338,10 @@ export const englishTexts = {
                 placedPreviousSyllable: "placed a previous syllable: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
                 gainedMultiSyllables: "gained {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
                 depletedSyllables: "depleted {{count}} syllable(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                placedShiritori: "placed a shiritori ({{playerTotal}}/{{globalTotal}})",
+                newHighestSn: "new highest SN: {{count}}",
+                placedPromptMemory: "placed {{count}} previous prompts in a row: {{prompts}} (best {{best}})",
+                madeComeback: "made a comeback from 1 to 3 lives ({{playerTotal}})",
                 listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
             },
             listedRecordCommentIntroductions: {
@@ -399,7 +404,55 @@ export const englishTexts = {
             verificationUnavailable: "Private-room eligibility could not be verified. Please try again later.",
         },
     },
+    weeklyChallenge: {
+        explain: "🏆 Challenge of the week: {{name}} — {{objective}} Leaderboard: {{url}}",
+        howToPlay: "To play, create your room with /b, then type /challenge.",
+        countsNow: "Games will now count towards the weekly challenge leaderboard.",
+        forbidden: "You are not allowed to change the rules of this room. Create your own room with /b, then type /challenge to play the weekly challenge!",
+        inRound: "The rules cannot change during a round. Use /challenge again once the round is over.",
+        alreadyMatching: "The room rules already match the weekly challenge: games count towards the weekly leaderboard.",
+        applying: "Applying the weekly challenge rules...",
+        unavailable: "The weekly challenge is currently unavailable. Please try again later.",
+        ended: "This week's challenge is over: games no longer count towards it.",
+        completedRanked: "🏆 {{username}} completed the weekly challenge: {{score}} — {{personalBest}} — Rank #{{rank}} of {{total}}. {{url}}",
+        personalBest: "new personal best!",
+        previousBest: "personal best: {{best}}",
+        completedGuest: "🏆 {{username}} completed the weekly challenge: {{score}}. Log in to your JKLM account to appear on the weekly leaderboard!",
+        notRanked: "🏆 {{username}} completed the weekly challenge: {{score}}, but it was not ranked ({{reason}}).",
+        celebration: "Challenge complete!",
+        kinds: {
+            THIRTY_OF_A_LETTER: {
+                name: "Thirty of a Letter",
+                objective: "Complete a bonus alphabet made of 30 × {{letter}} as fast as possible, starting with 3 lives.",
+            },
+            PROMPT_MEMORY_SPRINT: {
+                name: "Prompt Memory Sprint",
+                objective: "With 3-second turns, place one word containing your {{target}} previous prompts (Prompt Memory {{target}}) as fast as possible.",
+            },
+            ALPHA_SPRINT: {
+                name: "Alpha Sprint",
+                objective: "Reach an alpha of {{target}} as fast as possible, with every letter ×2 in the bonus alphabet.",
+            },
+            FIVEFOLD_ALPHABET: {
+                name: "Fivefold Efficiency",
+                objective: "Complete a bonus alphabet with every letter ×5 in as few words as possible.",
+            },
+            BLITZ_SURVIVAL: {
+                name: "Blitz Survival",
+                objective: "Place as many words as possible before dying in Blitz mode. Blitz records count too!",
+            },
+            SUB50_SURVIVAL: {
+                name: "Sub-50 Survival",
+                objective: "Place as many words as possible before dying in Sub-50 mode. Sub-50 records count too!",
+            },
+            SUB500_LIFE_GAIN: {
+                name: "Sub-500 Life Gain",
+                objective: "Complete as many bonus alphabets as possible before dying in Sub-500 mode. Sub-500 records count too!",
+            },
+        },
+    },
     lib: {
+        customMode: "Custom",
         mode: {
             easy: "Easy",
             blitz: "Blitz",
@@ -529,6 +582,34 @@ export const englishTexts = {
                 score_other: "{{count}} slurs",
                 score_specific_one: "{{count}} slur",
                 score_specific_other: "{{count}} slurs",
+            },
+            shiritori: {
+                recordName: "Shiritori",
+                score_one: "{{count}} word",
+                score_other: "{{count}} words",
+                score_specific_one: "{{count}} shiritori",
+                score_specific_other: "{{count}} shiritori",
+            },
+            highest_sn: {
+                recordName: "Highest SN",
+                score_one: "{{count}} words",
+                score_other: "{{count}} words",
+                score_specific_one: "highest SN of {{count}}",
+                score_specific_other: "highest SN of {{count}}",
+            },
+            comebacks: {
+                recordName: "Comebacks",
+                score_one: "{{count}} comeback",
+                score_other: "{{count}} comebacks",
+                score_specific_one: "{{count}} comeback",
+                score_specific_other: "{{count}} comebacks",
+            },
+            prompt_memory: {
+                recordName: "Prompt memory",
+                score_one: "{{count}} prompt",
+                score_other: "{{count}} prompts",
+                score_specific_one: "prompt memory of {{count}}",
+                score_specific_other: "prompt memory of {{count}}",
             },
         } satisfies Record<
             BirdBotRecordType,

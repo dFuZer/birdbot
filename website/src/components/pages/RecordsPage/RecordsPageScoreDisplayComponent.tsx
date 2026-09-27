@@ -38,6 +38,10 @@ export default function ScoreDisplayComponent({ score, recordType }: ScoreDispla
             recordsEnumSchema.Values.plant,
             recordsEnumSchema.Values.food,
             recordsEnumSchema.Values.adverb,
+            recordsEnumSchema.Values.shiritori,
+            recordsEnumSchema.Values.highest_sn,
+            recordsEnumSchema.Values.comebacks,
+            recordsEnumSchema.Values.prompt_memory,
         ].includes(recordType)
     ) {
         return (

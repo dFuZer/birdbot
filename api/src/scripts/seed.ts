@@ -124,6 +124,22 @@ async function seed() {
                         gr.adverbs_count
                     ),
                     (
+                        'shiritori_count',
+                        gr.shiritori_count
+                    ),
+                    (
+                        'highest_sn_count',
+                        gr.highest_sn_count
+                    ),
+                    (
+                        'comebacks_count',
+                        gr.comebacks_count
+                    ),
+                    (
+                        'prompt_memory_count',
+                        gr.prompt_memory_count
+                    ),
+                    (
                         'time',
                         EXTRACT(
                         EPOCH
@@ -178,6 +194,10 @@ async function seed() {
                         WHEN "record_type" = 'plants_count' THEN (500 / 1500::FLOAT)
                         WHEN "record_type" = 'foods_count' THEN (500 / 1500::FLOAT)
                         WHEN "record_type" = 'adverbs_count' THEN (500 / 1500::FLOAT)
+                        WHEN "record_type" = 'shiritori_count' THEN (500 / 650::FLOAT)
+                        WHEN "record_type" = 'highest_sn_count' THEN (500 / 50::FLOAT)
+                        WHEN "record_type" = 'comebacks_count' THEN (500 / 100::FLOAT)
+                        WHEN "record_type" = 'prompt_memory_count' THEN (500 / 7::FLOAT)
                         ELSE 0
                     END
                     ) * (

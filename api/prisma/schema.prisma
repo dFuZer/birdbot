@@ -55,6 +55,18 @@ enum VipTier {
     @@map("vip_tier")
 }
 
+enum WeeklyChallengeKind {
+    THIRTY_OF_A_LETTER
+    PROMPT_MEMORY_SPRINT
+    ALPHA_SPRINT
+    FIVEFOLD_ALPHABET
+    BLITZ_SURVIVAL
+    SUB50_SURVIVAL
+    SUB500_LIFE_GAIN
+
+    @@map("weekly_challenge_kind")
+}
+
 enum BotStaffRole {
     ADMIN
     AUTOMOD
@@ -96,8 +108,48 @@ model Player {
     cosmetics    PlayerCosmetics?
     moderationState ModerationState?
     xpLedger     XpLedger[]
+    weeklyChallengeResults WeeklyChallengeBestResult[]
 
     @@map("player")
+}
+
+/// One row per UTC week. `config` is an immutable snapshot of the rules and objective for every language.
+model WeeklyChallengePeriod {
+    id             String              @id @default(uuid()) @db.Uuid
+    sequence       Int                 @unique
+    kind           WeeklyChallengeKind
+    starts_at      DateTime            @unique
+    ends_at        DateTime
+    config_version Int
+    config         Json
+    created_at     DateTime            @default(now())
+
+    results WeeklyChallengeBestResult[]
+
+    @@index([starts_at, ends_at])
+    @@map("weekly_challenge_period")
+}
+
+/// Only each player's best completed result per period and language is kept.
+model WeeklyChallengeBestResult {
+    period_id       String   @db.Uuid
+    language        Language
+    player_id       String   @db.Uuid
+    primary_value   Int
+    secondary_value Int?
+    elapsed_ms      Int
+    words_count     Int
+    /// Not a foreign key: challenge games on custom rules are never registered as ranked games.
+    game_id         String   @db.Uuid
+    achieved_at     DateTime
+    updated_at      DateTime @updatedAt
+
+    period WeeklyChallengePeriod @relation(fields: [period_id], references: [id])
+    player Player                @relation(fields: [player_id], references: [id])
+
+    @@id([period_id, language, player_id])
+    @@index([period_id, language, primary_value, secondary_value])
+    @@map("weekly_challenge_best_result")
 }
 
 model Game {
@@ -137,6 +189,12 @@ model GameRecap {
     plants_count    Int @default(0)
     adverbs_count   Int @default(0)
     foods_count     Int @default(0)
+
+    shiritori_count  Int @default(0)
+    highest_sn_count Int @default(0)
+
+    comebacks_count     Int @default(0)
+    prompt_memory_count Int @default(0)
 
     game   Game   @relation(fields: [game_id], references: [id])
     player Player @relation(fields: [player_id], references: [id])

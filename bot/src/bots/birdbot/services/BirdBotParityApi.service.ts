@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { z } from "zod";
 import { API_KEY, API_URL } from "../BirdBotEnv";
 import { bbv7MetaRecordMilestones, scoreKeyPerMetaRecord } from "../BirdBotConstants";
+import { weeklyChallengePeriodSchema } from "../BirdBotWeeklyChallengeRules";
 import type { BirdBotGameMode, BirdBotLanguage, BirdBotRecordType, BirdBotWordMilestone, PlayerGameScores } from "../BirdBotTypes";
 
 const profileSchema = z.object({
@@ -101,7 +102,26 @@ const botRoomSchema = z.object({
     updatedAt: z.string().or(z.date()).optional(),
 });
 
+const currentWeeklyChallengeSchema = z.object({
+    current: weeklyChallengePeriodSchema,
+    next: weeklyChallengePeriodSchema.nullable(),
+});
+export const weeklyChallengeSubmissionSchema = z.object({
+    improved: z.boolean(),
+    rank: z.number().int(),
+    totalPlayers: z.number().int(),
+    best: z.object({
+        primaryValue: z.number().int(),
+        secondaryValue: z.number().int().nullable(),
+        elapsedMs: z.number().int(),
+        wordsCount: z.number().int(),
+        achievedAt: z.number(),
+    }),
+});
+
 export type BirdBotPlayerProfile = z.infer<typeof profileSchema>;
+export type BirdBotCurrentWeeklyChallenge = z.infer<typeof currentWeeklyChallengeSchema>;
+export type BirdBotWeeklyChallengeSubmission = z.infer<typeof weeklyChallengeSubmissionSchema>;
 export type BirdBotEconomyProfile = z.infer<typeof economySchema>;
 export type BirdBotMilestone = z.infer<typeof milestoneSchema>;
 export type BirdBotModerationState = z.infer<typeof moderationSchema>;
@@ -307,6 +327,10 @@ export default class BirdBotParityApiService {
             "POST",
             input,
         );
+    }
+
+    public static async getCurrentWeeklyChallenge(): Promise<BirdBotCurrentWeeklyChallenge> {
+        return this.request("/weekly-challenges/current", currentWeeklyChallengeSchema);
     }
 
     public static makeIdempotencyKey(...parts: string[]): string {

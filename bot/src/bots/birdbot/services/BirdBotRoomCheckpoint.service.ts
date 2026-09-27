@@ -13,6 +13,7 @@ import {
     type GlobalGameScores,
     type PendingBirdBotWordRegistration,
     type PlayerGameScores,
+    type BirdBotWeeklyChallengeRoomState,
 } from "../BirdBotTypes";
 
 export const CHECKPOINT_SCHEMA_VERSION = 1;
@@ -33,6 +34,7 @@ export type RoomCheckpointMetadata = {
     pendingWordRegistrations: [string, PendingBirdBotWordRegistration][];
     flipTurnKeys: string[];
     scoredWordTurnKeys: string[];
+    weeklyChallenge: BirdBotWeeklyChallengeRoomState;
 };
 
 export type RoomCheckpoint = {
@@ -50,6 +52,7 @@ const EMPTY_GLOBAL_SCORES: GlobalGameScores = {
     flips: 0,
     depletedSyllables: 0,
     previousSyllables: 0,
+    shiritori: 0,
     hyphenWords: 0,
     moreThan20LettersWords: 0,
     multiSyllables: 0,
@@ -61,6 +64,56 @@ const EMPTY_GLOBAL_SCORES: GlobalGameScores = {
     foods: 0,
     adverbs: 0,
 };
+
+const EMPTY_PLAYER_SCORES: PlayerGameScores = {
+    words: 0,
+    flips: 0,
+    depletedSyllables: 0,
+    alpha: 0,
+    currentWordsWithoutDeath: 0,
+    maxWordsWithoutDeath: 0,
+    previousSyllableScore: 0,
+    previousSyllable: null,
+    shiritori: 0,
+    previousAcceptedWord: null,
+    highestSn: 0,
+    comebacks: 0,
+    comebackAscending: false,
+    promptMemory: 0,
+    promptHistory: [],
+    multiSyllables: 0,
+    hyphenWords: 0,
+    moreThan20LettersWords: 0,
+    slurs: 0,
+    creatures: 0,
+    ethnonyms: 0,
+    chemicals: 0,
+    plants: 0,
+    foods: 0,
+    adverbs: 0,
+};
+
+function withPlayerScoreDefaults(scoresByPeerId: Record<string, unknown>): Record<string, PlayerGameScores> {
+    const result: Record<string, PlayerGameScores> = {};
+    for (const [peerId, scores] of Object.entries(scoresByPeerId)) {
+        if (!isRecord(scores)) continue;
+        const merged = { ...EMPTY_PLAYER_SCORES, ...(scores as Partial<PlayerGameScores>) };
+        merged.promptHistory = Array.isArray(merged.promptHistory)
+            ? merged.promptHistory.filter((prompt): prompt is string => typeof prompt === "string")
+            : [];
+        result[peerId] = merged;
+    }
+    return result;
+}
+
+export function withWeeklyChallengeDefaults(value: unknown): BirdBotWeeklyChallengeRoomState {
+    const state = isRecord(value) ? value : {};
+    return {
+        matchedPeriodId: typeof state.matchedPeriodId === "string" ? state.matchedPeriodId : null,
+        completedPeerIds: asStringArray(state.completedPeerIds),
+        pendingCelebration: state.pendingCelebration === true,
+    };
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -100,6 +153,7 @@ export function serializeRoomCheckpoint(room: Room, savedAt = Date.now()): RoomC
             pendingWordRegistrations: [...(metadata.pendingWordRegistrations ?? new Map())],
             flipTurnKeys: [...(metadata.flipTurnKeys ?? [])],
             scoredWordTurnKeys: [...(metadata.scoredWordTurnKeys ?? [])],
+            weeklyChallenge: withWeeklyChallengeDefaults(metadata.weeklyChallenge),
         },
     };
 }
@@ -144,8 +198,8 @@ export function deserializeRoomCheckpoint(raw: unknown): RoomCheckpoint | null {
             training: (metadata.training as BirdBotTrainingState | null) ?? null,
             rankedBlockedUntilSeating: Boolean(metadata.rankedBlockedUntilSeating),
             nextDelayMs: typeof metadata.nextDelayMs === "number" ? metadata.nextDelayMs : 0,
-            scoresByPeerId: metadata.scoresByPeerId as Record<string, PlayerGameScores>,
-            globalScores: metadata.globalScores as GlobalGameScores,
+            scoresByPeerId: withPlayerScoreDefaults(metadata.scoresByPeerId),
+            globalScores: { ...EMPTY_GLOBAL_SCORES, ...(metadata.globalScores as Partial<GlobalGameScores>) },
             remainingSyllables: metadata.remainingSyllables as Record<string, number>,
             wasInitialized: metadata.wasInitialized,
             hostLeftIteration: typeof metadata.hostLeftIteration === "number" ? metadata.hostLeftIteration : 0,
@@ -153,6 +207,7 @@ export function deserializeRoomCheckpoint(raw: unknown): RoomCheckpoint | null {
             pendingWordRegistrations,
             flipTurnKeys: asStringArray(metadata.flipTurnKeys),
             scoredWordTurnKeys: asStringArray(metadata.scoredWordTurnKeys),
+            weeklyChallenge: withWeeklyChallengeDefaults(metadata.weeklyChallenge),
         },
     };
 }
@@ -179,6 +234,7 @@ export function applyRoomCheckpoint(room: Room, checkpoint: RoomCheckpoint): voi
     metadata.pendingWordRegistrations = new Map(checkpoint.metadata.pendingWordRegistrations);
     metadata.flipTurnKeys = new Set(checkpoint.metadata.flipTurnKeys);
     metadata.scoredWordTurnKeys = new Set(checkpoint.metadata.scoredWordTurnKeys);
+    metadata.weeklyChallenge = withWeeklyChallengeDefaults(checkpoint.metadata.weeklyChallenge);
 }
 
 function checkpointFileName(roomCode: string): string {

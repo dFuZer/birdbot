@@ -12,6 +12,7 @@
         "db:deploy": "npx prisma migrate deploy",
         "db:sample": "node dist/scripts/add-sample-data.js",
         "db:seed": "node dist/scripts/seed.js",
+        "test": "tsc && node --test $(find dist -name '*.test.js')",
         "db:reset": "npm run build && npx prisma db push --force-reset && npm run db:seed",
         "db:reset-sample": "npm run build && npx prisma db push --force-reset && npm run db:seed && npm run db:sample"
     },

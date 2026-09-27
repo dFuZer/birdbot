@@ -2,12 +2,17 @@ import app from "./app";
 import { ENVIRONMENT } from "./env";
 import refreshMaterializedViews from "./helpers/refreshMaterializedViews";
 import Logger from "./lib/logger";
+import { ensureWeeklyChallengePeriods } from "./services/weeklyChallenge.service";
 
 const PORT = 4000;
 
 app.listen({ port: PORT, host: ENVIRONMENT === "development" ? undefined : "0.0.0.0" }, (err, address) => {
     if (err) throw err;
     Logger.log({ message: `API now running on ${address}`, path: "index.ts" });
+});
+
+ensureWeeklyChallengePeriods().catch((err) => {
+    Logger.error({ message: `Error generating weekly challenge periods`, path: "index.ts", errorType: "unknown", error: err });
 });
 
 const s1 = performance.now();

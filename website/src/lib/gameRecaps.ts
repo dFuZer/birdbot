@@ -27,6 +27,10 @@ export type GameRecapSummary = {
     plantsCount: number;
     adverbsCount: number;
     foodsCount: number;
+    shiritoriCount: number;
+    highestSnCount: number;
+    comebacksCount: number;
+    promptMemoryCount: number;
     durationMs: number;
 };
 

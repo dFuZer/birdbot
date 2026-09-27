@@ -18,22 +18,47 @@ function persisted(roomCode: string): BirdBotPersistedRoom {
 
 async function withRecoveryStubs(run: (bot: BirdBot) => Promise<void>): Promise<void> {
     const bot = new BirdBot({ mainRoomLanguages: ["en"] });
-    const originalDelays = BirdBot.recoveryRetryDelaysMs;
     const originalList = BirdBotParityApiService.listBotRooms;
     const originalDelete = BirdBotParityApiService.deleteBotRoom;
     const originalRemove = BirdBotRoomCheckpointService.remove;
-    BirdBot.recoveryRetryDelaysMs = [];
     BirdBotRoomCheckpointService.remove = async () => undefined;
 
     try {
         await run(bot);
     } finally {
-        BirdBot.recoveryRetryDelaysMs = originalDelays;
         BirdBotParityApiService.listBotRooms = originalList;
         BirdBotParityApiService.deleteBotRoom = originalDelete;
         BirdBotRoomCheckpointService.remove = originalRemove;
     }
 }
+
+test("rejoinPersistedRooms flushes the recovery queue when --no-restore is set", async () => {
+    await withRecoveryStubs(async (bot) => {
+        const originalFlag = process.env.BIRDBOT_SKIP_ROOM_RESTORE;
+        process.env.BIRDBOT_SKIP_ROOM_RESTORE = "1";
+        const joined: string[] = [];
+        const deleted: string[] = [];
+        BirdBotParityApiService.listBotRooms = async () => [persisted("AAAA"), persisted("BBBB")];
+        BirdBotParityApiService.deleteBotRoom = async (roomCode) => {
+            deleted.push(roomCode);
+        };
+        bot.joinRoom = async ({ roomCode }) => {
+            joined.push(roomCode);
+            throw new Error("join failed");
+        };
+
+        try {
+            await bot.rejoinPersistedRooms();
+        } finally {
+            if (originalFlag === undefined) delete process.env.BIRDBOT_SKIP_ROOM_RESTORE;
+            else process.env.BIRDBOT_SKIP_ROOM_RESTORE = originalFlag;
+        }
+
+        assert.deepEqual(joined, []);
+        assert.deepEqual(deleted.sort(), ["AAAA", "BBBB"]);
+        assert.equal(Object.keys(bot.rooms).length, 0);
+    });
+});
 
 test("rejoinPersistedRooms drops the whole queue if the first room cannot be recovered", async () => {
     await withRecoveryStubs(async (bot) => {

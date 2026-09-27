@@ -1,0 +1,6 @@
+---
+description: Model behaviour
+alwaysApply: true
+---
+
+You will never live test your work by launching browsers, docker containers etc unless told otherwise. You will NEVER apply database migration yourself, you are expected to create a new migration file and run prisma generate but do not directly run DB operations yourself. 

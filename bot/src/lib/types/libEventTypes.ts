@@ -77,6 +77,8 @@ export type EventCtxUtils = {
     userIsAdmin: (authId: string | null | undefined) => boolean;
     userIsAutomod: (authId: string | null | undefined) => boolean;
     setWord: (word: string) => void;
+    /** Shows text in the word input without submitting it. */
+    previewWord: (text: string) => void;
     joinRound: () => void;
     startRoundNow: () => void;
     setRules: (rules: Record<string, unknown>) => void;

@@ -54,6 +54,7 @@ import BirdBotModerationService from "./services/BirdBotModeration.service";
 import BirdBotParityApiService from "./services/BirdBotParityApi.service";
 import BirdBotRegexService from "./services/BirdBotRegex.service";
 import BirdBotTrainingService from "./services/BirdBotTraining.service";
+import BirdBotWeeklyChallengeService from "./services/BirdBotWeeklyChallenge.service";
 import { l, t } from "./texts/BirdBotTextUtils";
 
 const c = CommandUtils.createCommandHelper;
@@ -2082,6 +2083,53 @@ const createRoomCommand = c({
     },
 }) satisfies Command;
 
+const weeklyChallengeCommand = c({
+    id: "weeklyChallenge",
+    aliases: ["challenge", "weekly", "defi", "desafio"],
+    usageDesc: "/challenge",
+    exampleUsage: "/challenge",
+    accessibleInRound: true,
+    handler: (ctx) => {
+        const lng = l(ctx);
+        const period = BirdBotWeeklyChallengeService.activePeriod();
+        const rules = period ? BirdBotWeeklyChallengeService.rulesFor(period, lng) : null;
+        if (!period || !rules) {
+            void BirdBotWeeklyChallengeService.refresh();
+            ctx.utils.sendChatMessage(t("weeklyChallenge.unavailable", { lng }), "error");
+            return;
+        }
+        ctx.utils.sendChatMessage(BirdBotWeeklyChallengeService.objectiveText(period, lng), "info");
+
+        if (!BirdBotWeeklyChallengeService.isRoomCreatorOrAdmin(ctx, ctx.gamer.authId)) {
+            ctx.utils.sendChatMessage(t("weeklyChallenge.forbidden", { lng }), "error");
+            return;
+        }
+        if (ctx.room.roomState.gameData!.milestone.name !== "seating") {
+            ctx.utils.sendChatMessage(t("weeklyChallenge.inRound", { lng }), "info");
+            return;
+        }
+        if (BirdBotWeeklyChallengeService.matchingPeriod(ctx.room)?.id === period.id) {
+            ctx.utils.sendChatMessage(t("weeklyChallenge.alreadyMatching", { lng }), "success");
+            return;
+        }
+
+        const current = ctx.room.roomState.gameData!.rules;
+        const updates: Record<string, unknown> = {};
+        for (const key of Object.keys(rules) as (keyof typeof rules)[]) {
+            if (key === "customBonusAlphabet") {
+                if (!BirdBotUtils.bonusAlphabetsEqual(current.customBonusAlphabet, rules.customBonusAlphabet)) {
+                    updates.customBonusAlphabet = { ...rules.customBonusAlphabet };
+                }
+            } else if (current[key] !== rules[key]) {
+                updates[key] = rules[key];
+            }
+        }
+        ctx.utils.sendChatMessage(t("weeklyChallenge.applying", { lng }), "info");
+        BirdBotUtils.applyLocalRuleUpdates(ctx, updates);
+        ctx.utils.setRules(updates);
+    },
+}) satisfies Command;
+
 export const birdbotCommandRegistry = createBirdBotCommandRegistry([
     {
         name: "information",
@@ -2110,6 +2158,7 @@ export const birdbotCommandRegistry = createBirdBotCommandRegistry([
         name: "room",
         commands: [
             createRoomCommand,
+            weeklyChallengeCommand,
             setGameModeCommand,
             setPlaystyleCommand,
             trainCommand,

@@ -74,6 +74,13 @@ function makeRoom(): Room {
                 maxWordsWithoutDeath: 3,
                 previousSyllableScore: 1,
                 previousSyllable: "he",
+                shiritori: 1,
+                previousAcceptedWord: "hello",
+                highestSn: 7,
+                comebacks: 2,
+                comebackAscending: true,
+                promptMemory: 3,
+                promptHistory: ["he", "ll"],
                 multiSyllables: 0,
                 hyphenWords: 0,
                 moreThan20LettersWords: 0,
@@ -90,6 +97,7 @@ function makeRoom(): Room {
             flips: 1,
             depletedSyllables: 0,
             previousSyllables: 1,
+            shiritori: 1,
             hyphenWords: 0,
             moreThan20LettersWords: 0,
             multiSyllables: 0,
@@ -108,6 +116,7 @@ function makeRoom(): Room {
         pendingWordRegistrations: new Map([["12:100", pending]]),
         flipTurnKeys: new Set(["12:100"]),
         scoredWordTurnKeys: new Set(["12:80", "99:81"]),
+        weeklyChallenge: { matchedPeriodId: "period-1", completedPeerIds: ["99"], pendingCelebration: true },
     } satisfies BirdBotRoomMetadata;
     return room;
 }
@@ -134,12 +143,58 @@ test("serializeRoomCheckpoint round-trips Maps and Sets", () => {
     assert.equal(restored.roomState.roundStartTimestamp, 1_700_000_000_000);
     assert.equal(metadata.playstyle, "alpha");
     assert.equal(metadata.scoresByPeerId["12"]?.words, 3);
+    assert.equal(metadata.scoresByPeerId["12"]?.shiritori, 1);
+    assert.equal(metadata.scoresByPeerId["12"]?.previousAcceptedWord, "hello");
+    assert.equal(metadata.scoresByPeerId["12"]?.highestSn, 7);
+    assert.equal(metadata.scoresByPeerId["12"]?.comebacks, 2);
+    assert.equal(metadata.scoresByPeerId["12"]?.comebackAscending, true);
+    assert.equal(metadata.scoresByPeerId["12"]?.promptMemory, 3);
+    assert.deepEqual(metadata.scoresByPeerId["12"]?.promptHistory, ["he", "ll"]);
+    assert.equal(metadata.globalScores.shiritori, 1);
     assert.ok(metadata.greetedPeerIds instanceof Set);
     assert.ok(metadata.greetedPeerIds.has("99"));
     assert.ok(metadata.flipTurnKeys.has("12:100"));
     assert.ok(metadata.scoredWordTurnKeys.has("12:80"));
     assert.equal(metadata.pendingWordRegistrations.get("12:100")?.data.word, "hello");
     assert.equal(metadata.nextDelayMs, 400);
+    assert.deepEqual(metadata.weeklyChallenge, {
+        matchedPeriodId: "period-1",
+        completedPeerIds: ["99"],
+        pendingCelebration: true,
+    });
+});
+
+test("deserializeRoomCheckpoint defaults record fields missing from older checkpoints", () => {
+    const serialized = JSON.parse(JSON.stringify(serializeRoomCheckpoint(makeRoom(), 123)));
+    const legacyScores = serialized.metadata.scoresByPeerId["12"];
+    delete legacyScores.shiritori;
+    delete legacyScores.previousAcceptedWord;
+    delete legacyScores.highestSn;
+    delete legacyScores.comebacks;
+    delete legacyScores.comebackAscending;
+    delete legacyScores.promptMemory;
+    delete legacyScores.promptHistory;
+    delete serialized.metadata.globalScores.shiritori;
+    delete serialized.metadata.weeklyChallenge;
+
+    const deserialized = deserializeRoomCheckpoint(serialized);
+    assert.ok(deserialized);
+    const scores = deserialized.metadata.scoresByPeerId["12"];
+    assert.equal(scores?.words, 3);
+    assert.equal(scores?.shiritori, 0);
+    assert.equal(scores?.previousAcceptedWord, null);
+    assert.equal(scores?.highestSn, 0);
+    assert.equal(scores?.comebacks, 0);
+    assert.equal(scores?.comebackAscending, false);
+    assert.equal(scores?.promptMemory, 0);
+    assert.deepEqual(scores?.promptHistory, []);
+    assert.equal(deserialized.metadata.globalScores.shiritori, 0);
+    assert.equal(deserialized.metadata.globalScores.flips, 1);
+    assert.deepEqual(deserialized.metadata.weeklyChallenge, {
+        matchedPeriodId: null,
+        completedPeerIds: [],
+        pendingCelebration: false,
+    });
 });
 
 test("deserializeRoomCheckpoint discards incompatible schema versions", () => {

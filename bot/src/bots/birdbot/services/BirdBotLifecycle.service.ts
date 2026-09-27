@@ -5,6 +5,7 @@ import BirdBotUtils from "../BirdBotUtils.class";
 import BirdBotApiWriteQueue from "./BirdBotApiWriteQueue.service";
 import BirdBotRoomCheckpointService from "./BirdBotRoomCheckpoint.service";
 import BirdBotStaffSync from "./BirdBotStaffSync.service";
+import BirdBotWeeklyChallengeService from "./BirdBotWeeklyChallenge.service";
 
 type LifecycleExit = (code: number) => void;
 
@@ -51,6 +52,7 @@ export default class BirdBotLifecycle {
             await this.bot.stopServer();
             this.bot.clearPeriodicTasks();
             BirdBotStaffSync.stop();
+            BirdBotWeeklyChallengeService.stop();
 
             for (const room of Object.values(this.bot.rooms)) {
                 BirdBotUtils.flushPendingRegistrationsOnRoom(room);

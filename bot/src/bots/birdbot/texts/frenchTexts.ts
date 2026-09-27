@@ -54,6 +54,7 @@ export const frenchTexts = {
         },
     },
     command: {
+        weeklyChallenge: { description: "Explique le défi de la semaine et, dans votre propre room, applique ses règles." },
         help: {
             description:
                 "Donne la liste des commandes et explique comment les utiliser. Usage: /help pour avoir la liste de toutes les commandes. /help [commande] pour avoir des informations sur une commande.",
@@ -356,6 +357,10 @@ export const frenchTexts = {
                 placedPreviousSyllable: "a placé une syllabe précédente: {{syllable}} ({{playerTotal}}/{{globalTotal}})",
                 gainedMultiSyllables: "a gagné {{count}} MS ({{prompt}} x {{multiplier}}) ({{playerTotal}}/{{globalTotal}})",
                 depletedSyllables: "a niqué {{count}} syllabe(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
+                placedShiritori: "a placé un shiritori ({{playerTotal}}/{{globalTotal}})",
+                newHighestSn: "nouvelle meilleure SN: {{count}}",
+                placedPromptMemory: "a placé {{count}} syllabes précédentes à la suite: {{prompts}} (meilleur {{best}})",
+                madeComeback: "a fait une remontée de 1 à 3 vies ({{playerTotal}})",
                 listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
             },
             listedRecordCommentIntroductions: {
@@ -415,7 +420,55 @@ export const frenchTexts = {
             verificationUnavailable: "Impossible de vérifier l'accès à la room privée. Réessayez plus tard.",
         },
     },
+    weeklyChallenge: {
+        explain: "🏆 Défi de la semaine : {{name}} — {{objective}} Classement : {{url}}",
+        howToPlay: "Pour jouer, créez votre room avec /b, puis tapez /challenge.",
+        countsNow: "Les parties comptent désormais pour le classement du défi de la semaine.",
+        forbidden: "Vous n'avez pas le droit de modifier les règles de cette room. Créez votre propre room avec /b, puis tapez /challenge pour jouer au défi de la semaine !",
+        inRound: "Les règles ne peuvent pas changer pendant une manche. Réutilisez /challenge une fois la manche terminée.",
+        alreadyMatching: "Les règles de la room correspondent déjà au défi de la semaine : les parties comptent pour le classement.",
+        applying: "Application des règles du défi de la semaine...",
+        unavailable: "Le défi de la semaine est indisponible pour le moment. Réessayez plus tard.",
+        ended: "Le défi de cette semaine est terminé : les parties ne comptent plus pour celui-ci.",
+        completedRanked: "🏆 {{username}} a réussi le défi de la semaine : {{score}} — {{personalBest}} — Rang n°{{rank}} sur {{total}}. {{url}}",
+        personalBest: "nouveau record personnel !",
+        previousBest: "record personnel : {{best}}",
+        completedGuest: "🏆 {{username}} a réussi le défi de la semaine : {{score}}. Connectez-vous à votre compte JKLM pour apparaître dans le classement !",
+        notRanked: "🏆 {{username}} a réussi le défi de la semaine : {{score}}, mais le résultat n'est pas classé ({{reason}}).",
+        celebration: "Défi réussi !",
+        kinds: {
+            THIRTY_OF_A_LETTER: {
+                name: "Trente d'une lettre",
+                objective: "Complétez un alphabet bonus de 30 × {{letter}} le plus vite possible, en commençant avec 3 vies.",
+            },
+            PROMPT_MEMORY_SPRINT: {
+                name: "Sprint Mémoire",
+                objective: "Avec des tours de 3 secondes, placez un mot contenant vos {{target}} syllabes précédentes (Mémoire {{target}}) le plus vite possible.",
+            },
+            ALPHA_SPRINT: {
+                name: "Sprint Alpha",
+                objective: "Atteignez un alpha de {{target}} le plus vite possible, avec chaque lettre ×2 dans l'alphabet bonus.",
+            },
+            FIVEFOLD_ALPHABET: {
+                name: "Efficacité Quintuple",
+                objective: "Complétez un alphabet bonus avec chaque lettre ×5 en utilisant le moins de mots possible.",
+            },
+            BLITZ_SURVIVAL: {
+                name: "Survie Blitz",
+                objective: "Placez le plus de mots possible avant de mourir en mode Blitz. Les records Blitz comptent aussi !",
+            },
+            SUB50_SURVIVAL: {
+                name: "Survie Sub-50",
+                objective: "Placez le plus de mots possible avant de mourir en mode Sub-50. Les records Sub-50 comptent aussi !",
+            },
+            SUB500_LIFE_GAIN: {
+                name: "Vies Sub-500",
+                objective: "Complétez le plus d'alphabets bonus possible avant de mourir en mode Sub-500. Les records Sub-500 comptent aussi !",
+            },
+        },
+    },
     lib: {
+        customMode: "Personnalisé",
         mode: {
             easy: "Facile",
             blitz: "Blitz",
@@ -545,6 +598,34 @@ export const frenchTexts = {
                 score_other: "{{count}} insultes",
                 score_specific_one: "{{count}} insulte",
                 score_specific_other: "{{count}} insultes",
+            },
+            shiritori: {
+                recordName: "Shiritori",
+                score_one: "{{count}} mot",
+                score_other: "{{count}} mots",
+                score_specific_one: "{{count}} shiritori",
+                score_specific_other: "{{count}} shiritori",
+            },
+            highest_sn: {
+                recordName: "Meilleure SN",
+                score_one: "{{count}} mots",
+                score_other: "{{count}} mots",
+                score_specific_one: "meilleure SN de {{count}}",
+                score_specific_other: "meilleure SN de {{count}}",
+            },
+            comebacks: {
+                recordName: "Remontées",
+                score_one: "{{count}} remontée",
+                score_other: "{{count}} remontées",
+                score_specific_one: "{{count}} remontée",
+                score_specific_other: "{{count}} remontées",
+            },
+            prompt_memory: {
+                recordName: "Mémoire des syllabes",
+                score_one: "{{count}} syllabe",
+                score_other: "{{count}} syllabes",
+                score_specific_one: "mémoire de {{count}} syllabe",
+                score_specific_other: "mémoire de {{count}} syllabes",
             },
         },
     },

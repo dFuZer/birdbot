@@ -94,6 +94,10 @@ export let addGameRecapRouteHandler: RouteHandlerMethod = async function (req, r
                     plants_count: gameRecapData.plantsCount,
                     foods_count: gameRecapData.foodsCount,
                     adverbs_count: gameRecapData.adverbsCount,
+                    shiritori_count: gameRecapData.shiritoriCount,
+                    highest_sn_count: gameRecapData.highestSnCount,
+                    comebacks_count: gameRecapData.comebacksCount,
+                    prompt_memory_count: gameRecapData.promptMemoryCount,
                 },
             });
         } catch (error) {

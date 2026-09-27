@@ -326,6 +326,8 @@ export default class CommonPlayerDataTrackingEventHandlers {
             state.usedLetters = "";
             state.bonusLetters = "";
             previousHandlersCtx.lostLifePeerId = playerPeerId;
+            previousHandlersCtx.previousLives = previousLives;
+            previousHandlersCtx.newLives = lives;
             if (previousLives > 0 && lives === 0) {
                 previousHandlersCtx.deadPeerId = playerPeerId;
             }
@@ -339,6 +341,8 @@ export default class CommonPlayerDataTrackingEventHandlers {
         if (gameData.milestone.name !== "round") return;
         const state = gameData.milestone.playerStatesByPeerId[String(playerPeerId)];
         if (state) {
+            previousHandlersCtx.previousLives = state.lives;
+            previousHandlersCtx.newLives = lives;
             state.lives = lives;
             state.usedLetters = "";
             state.bonusLetters = "";

@@ -104,6 +104,13 @@ test("remapPeerKeyedState moves the bot's scores and turn keys", () => {
                 maxWordsWithoutDeath: 4,
                 previousSyllableScore: 0,
                 previousSyllable: null,
+                shiritori: 2,
+                previousAcceptedWord: "hat",
+                highestSn: 5,
+                comebacks: 1,
+                comebackAscending: false,
+                promptMemory: 2,
+                promptHistory: ["ha"],
                 multiSyllables: 0,
                 hyphenWords: 0,
                 moreThan20LettersWords: 0,
@@ -124,6 +131,13 @@ test("remapPeerKeyedState moves the bot's scores and turn keys", () => {
                 maxWordsWithoutDeath: 1,
                 previousSyllableScore: 0,
                 previousSyllable: null,
+                shiritori: 0,
+                previousAcceptedWord: null,
+                highestSn: 0,
+                comebacks: 0,
+                comebackAscending: false,
+                promptMemory: 0,
+                promptHistory: [],
                 multiSyllables: 0,
                 hyphenWords: 0,
                 moreThan20LettersWords: 0,
@@ -161,6 +175,11 @@ test("remapPeerKeyedState moves the bot's scores and turn keys", () => {
 
     remapPeerKeyedState(metadata as BirdBotRoomMetadata, 7, 21);
     assert.equal(metadata.scoresByPeerId["21"]?.words, 4);
+    assert.equal(metadata.scoresByPeerId["21"]?.shiritori, 2);
+    assert.equal(metadata.scoresByPeerId["21"]?.previousAcceptedWord, "hat");
+    assert.equal(metadata.scoresByPeerId["21"]?.highestSn, 5);
+    assert.equal(metadata.scoresByPeerId["21"]?.comebacks, 1);
+    assert.deepEqual(metadata.scoresByPeerId["21"]?.promptHistory, ["ha"]);
     assert.equal(metadata.scoresByPeerId["7"], undefined);
     assert.equal(metadata.scoresByPeerId["3"]?.words, 1);
     assert.ok(metadata.greetedPeerIds.has("21"));
