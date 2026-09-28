@@ -113,7 +113,7 @@ model Player {
     @@map("player")
 }
 
-/// One row per UTC week. `config` is an immutable snapshot of the rules and objective for every language.
+/// One row per UTC week. `config` is fixed once a result is submitted. Open weeks with no results are refreshed when the builder changes.
 model WeeklyChallengePeriod {
     id             String              @id @default(uuid()) @db.Uuid
     sequence       Int                 @unique

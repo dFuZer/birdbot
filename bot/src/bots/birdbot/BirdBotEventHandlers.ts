@@ -15,6 +15,7 @@ import {
 } from "./BirdBotConstants";
 import {
     getHighestSnCandidate,
+    formatPromptMemorySyllables,
     getPromptMemoryChain,
     isShiritoriWord,
     nextComebackState,
@@ -188,7 +189,7 @@ function handleSuccessfulWord(ctx: Parameters<typeof BirdBotUtils.handleMyTurn>[
         turnComments.push(
             t("eventHandler.submit.comments.placedPromptMemory", {
                 count: promptMemoryChain.length,
-                prompts: promptMemoryChain.join(", ").toUpperCase(),
+                prompts: formatPromptMemorySyllables(currentPrompt, promptMemoryChain),
                 best: playerScores.promptMemory,
                 lng: l(ctx),
             }),

@@ -340,7 +340,7 @@ export const englishTexts = {
                 depletedSyllables: "depleted {{count}} syllable(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
                 placedShiritori: "placed a shiritori ({{playerTotal}}/{{globalTotal}})",
                 newHighestSn: "new highest SN: {{count}}",
-                placedPromptMemory: "placed {{count}} previous prompts in a row: {{prompts}} (best {{best}})",
+                placedPromptMemory: "placed {{count}} previous prompts in a row (best {{best}}): {{prompts}}",
                 madeComeback: "made a comeback from 1 to 3 lives ({{playerTotal}})",
                 listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
             },
@@ -427,7 +427,7 @@ export const englishTexts = {
             },
             PROMPT_MEMORY_SPRINT: {
                 name: "Prompt Memory Sprint",
-                objective: "With 3-second turns, place one word containing your {{target}} previous prompts (Prompt Memory {{target}}) as fast as possible.",
+                objective: "With 7-second turns and prompts of at least 300 words, place one word containing your {{target}} previous prompts (Prompt Memory {{target}}) as fast as possible.",
             },
             ALPHA_SPRINT: {
                 name: "Alpha Sprint",

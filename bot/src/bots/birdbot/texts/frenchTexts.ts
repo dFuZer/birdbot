@@ -359,7 +359,7 @@ export const frenchTexts = {
                 depletedSyllables: "a niqué {{count}} syllabe(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
                 placedShiritori: "a placé un shiritori ({{playerTotal}}/{{globalTotal}})",
                 newHighestSn: "nouvelle meilleure SN: {{count}}",
-                placedPromptMemory: "a placé {{count}} syllabes précédentes à la suite: {{prompts}} (meilleur {{best}})",
+                placedPromptMemory: "a placé {{count}} syllabes précédentes à la suite (meilleur {{best}}): {{prompts}}",
                 madeComeback: "a fait une remontée de 1 à 3 vies ({{playerTotal}})",
                 listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
             },
@@ -443,7 +443,7 @@ export const frenchTexts = {
             },
             PROMPT_MEMORY_SPRINT: {
                 name: "Sprint Mémoire",
-                objective: "Avec des tours de 3 secondes, placez un mot contenant vos {{target}} syllabes précédentes (Mémoire {{target}}) le plus vite possible.",
+                objective: "Avec des tours de 7 secondes et des syllabes d'au moins 300 mots, placez un mot contenant vos {{target}} syllabes précédentes (Mémoire {{target}}) le plus vite possible.",
             },
             ALPHA_SPRINT: {
                 name: "Sprint Alpha",

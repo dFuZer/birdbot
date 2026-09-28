@@ -349,7 +349,7 @@ export const spanishTexts = {
                 depletedSyllables: "ha agotado {{count}} sílaba(s): {{syllables}} ({{playerTotal}}/{{globalTotal}})",
                 placedShiritori: "ha colocado un shiritori ({{playerTotal}}/{{globalTotal}})",
                 newHighestSn: "nuevo SN más alto: {{count}}",
-                placedPromptMemory: "ha colocado {{count}} sílabas anteriores seguidas: {{prompts}} (mejor {{best}})",
+                placedPromptMemory: "ha colocado {{count}} sílabas anteriores seguidas (mejor {{best}}): {{prompts}}",
                 madeComeback: "ha remontado de 1 a 3 vidas ({{playerTotal}})",
                 listedRecord: "{{commentIntroduction}} ({{playerTotal}}/{{globalTotal}})",
             },
@@ -430,7 +430,7 @@ export const spanishTexts = {
             },
             PROMPT_MEMORY_SPRINT: {
                 name: "Sprint de Memoria",
-                objective: "Con turnos de 3 segundos, coloca una palabra que contenga tus {{target}} sílabas anteriores (Memoria {{target}}) lo más rápido posible.",
+                objective: "Con turnos de 7 segundos y sílabas de al menos 300 palabras, coloca una palabra que contenga tus {{target}} sílabas anteriores (Memoria {{target}}) lo más rápido posible.",
             },
             ALPHA_SPRINT: {
                 name: "Sprint Alfa",

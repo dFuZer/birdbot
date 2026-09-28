@@ -60,6 +60,11 @@ export function getPromptMemoryChain(word: string, history: readonly string[], c
     return chain;
 }
 
+/** Newest syllable first, so the next prompt-memory word can be read straight from chat. */
+export function formatPromptMemorySyllables(currentPrompt: string, chain: readonly string[]): string {
+    return [currentPrompt, ...chain].join(" + ").toUpperCase();
+}
+
 /**
  * A comeback is a clean climb from 1 to 3 lives: two consecutive life gains with no life lost in between.
  * `ascending` is true once the player has gained 1 -> 2 and has not lost a life since.

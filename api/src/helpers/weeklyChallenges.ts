@@ -157,7 +157,13 @@ function rulesFor(kind: WeeklyChallengeKind, language: TLanguage, sequence: numb
         case "PROMPT_MEMORY_SPRINT":
             return {
                 targetLetter: null,
-                rules: { ...regularRules, minTurnDuration: 3, dictionaryId, customBonusAlphabet: defaultBonusAlphabet(language) },
+                rules: {
+                    ...regularRules,
+                    minTurnDuration: 7,
+                    customPromptDifficulty: 300,
+                    dictionaryId,
+                    customBonusAlphabet: defaultBonusAlphabet(language),
+                },
             };
         case "ALPHA_SPRINT":
             return { targetLetter: null, rules: { ...regularRules, dictionaryId, customBonusAlphabet: uniformAlphabet(2) } };
@@ -185,7 +191,7 @@ const objectiveByKind: Record<
     },
     PROMPT_MEMORY_SPRINT: {
         baseMode: "custom",
-        objective: { type: "prompt_memory", target: 5 },
+        objective: { type: "prompt_memory", target: 4 },
         ranking: { primary: elapsedAsc, secondary: null },
     },
     ALPHA_SPRINT: {

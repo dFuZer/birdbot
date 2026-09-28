@@ -64,7 +64,7 @@ export function getWeeklyChallengeObjective(period: IWeeklyChallengePeriod, lang
             return `Place 30 copies of the letter ${letter} as fast as possible.`;
         }
         case "PROMPT_MEMORY_SPRINT":
-            return "Play one word reaching Prompt Memory 5 as fast as possible, with 3-second turns.";
+            return "Play one word reaching Prompt Memory 4 as fast as possible, with 7-second turns and prompts of at least 300 words.";
         case "ALPHA_SPRINT":
             return "Score 5 alpha points as fast as possible, with every letter required twice.";
         case "FIVEFOLD_ALPHABET":

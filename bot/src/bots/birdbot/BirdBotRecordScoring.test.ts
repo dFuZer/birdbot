@@ -3,6 +3,7 @@ import test from "node:test";
 import {
     getHighestSnCandidate,
     getHighestSnValueForSyllable,
+    formatPromptMemorySyllables,
     getPromptMemoryChain,
     isShiritoriWord,
     nextComebackState,
@@ -64,6 +65,10 @@ test("getPromptMemoryChain stops at the first missing prompt", () => {
 
 test("getPromptMemoryChain skips the current prompt", () => {
     assert.deepEqual(getPromptMemoryChain("anti", ["ti", "an"], "ti"), ["an"]);
+});
+
+test("formatPromptMemorySyllables lists the new prompt before older ones", () => {
+    assert.equal(formatPromptMemorySyllables("er", ["fa", "ti", "on"]), "ER + FA + TI + ON");
 });
 
 test("nextComebackState scores a clean 1 -> 2 -> 3 climb", () => {

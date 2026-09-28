@@ -39,8 +39,9 @@ test("Thirty of a Letter walks each language pool in order", () => {
 
 test("challenge rule profiles match the specification", () => {
     const sprint = buildWeeklyChallengeConfig(1);
-    assert.equal(sprint.languages.en.rules.minTurnDuration, 3);
-    assert.deepEqual(sprint.objective, { type: "prompt_memory", target: 5 });
+    assert.equal(sprint.languages.en.rules.minTurnDuration, 7);
+    assert.equal(sprint.languages.en.rules.customPromptDifficulty, 300);
+    assert.deepEqual(sprint.objective, { type: "prompt_memory", target: 4 });
 
     const alpha = buildWeeklyChallengeConfig(2);
     assert.ok(Object.keys(alpha.languages.de.rules.customBonusAlphabet).every((l) => alpha.languages.de.rules.customBonusAlphabet[l] === 2));

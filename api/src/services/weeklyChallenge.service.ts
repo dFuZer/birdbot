@@ -62,7 +62,39 @@ async function ensureWeeklyChallengePeriods(now = new Date()): Promise<void> {
     if (rows.length > 0) {
         await prisma.weeklyChallengePeriod.createMany({ data: rows, skipDuplicates: true });
     }
+    await refreshUpcomingWeeklyChallengeConfigs(now);
     ensuredThroughWeekStart = currentWeekStart;
+}
+
+/** Rewrites open weeks that have no results yet, so a builder change reaches the live horizon. */
+async function refreshUpcomingWeeklyChallengeConfigs(now: Date): Promise<void> {
+    const upcoming = await prisma.weeklyChallengePeriod.findMany({
+        where: { ends_at: { gt: now }, results: { none: {} } },
+        select: { id: true, sequence: true, config: true },
+    });
+    for (const period of upcoming) {
+        const config = buildWeeklyChallengeConfig(period.sequence);
+        const stored = period.config as unknown as WeeklyChallengeConfig;
+        const rulesChanged = (Object.keys(config.languages) as TLanguage[]).some(
+            (language) => stored.languages?.[language]?.fingerprint !== config.languages[language].fingerprint,
+        );
+        const unchanged =
+            !rulesChanged &&
+            stored.kind === config.kind &&
+            stored.version === config.version &&
+            stored.baseMode === config.baseMode &&
+            JSON.stringify(stored.objective) === JSON.stringify(config.objective) &&
+            JSON.stringify(stored.ranking) === JSON.stringify(config.ranking);
+        if (unchanged) continue;
+        await prisma.weeklyChallengePeriod.update({
+            where: { id: period.id },
+            data: {
+                kind: config.kind,
+                config_version: config.version,
+                config: config as unknown as Prisma.InputJsonObject,
+            },
+        });
+    }
 }
 
 function serializePeriod(period: WeeklyChallengePeriod) {
